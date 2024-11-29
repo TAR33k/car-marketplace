@@ -7,6 +7,7 @@ import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {MyAuthInterceptor} from './services/auth-services/my-auth-interceptor.service';
 import {MyAuthService} from './services/auth-services/my-auth.service';
 import {SharedModule} from './modules/shared/shared.module';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -16,6 +17,7 @@ import {SharedModule} from './modules/shared/shared.module';
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
+    BrowserAnimationsModule,
     SharedModule // Omogućava korištenje UnauthorizedComponent u AppRoutingModule
   ],
   providers: [

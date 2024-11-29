@@ -1,0 +1,234 @@
+<div class="landing-page">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>Find Your Perfect Car</h1>
+      <p>The largest vehicle marketplace in Bosnia and Herzegovina</p>
+    </div>
+  </section>
+
+  <!-- Main Search Section -->
+  <section class="search-section">
+    <div class="container">
+      <!-- Advanced Filters -->
+      <!-- Update the filters section -->
+      <mat-card class="filters-card">
+        <mat-card-header>
+          <mat-card-title>Search Filters</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+            <div class="filters-grid">
+              <!-- Primary Filters Row -->
+              <div class="filter-row primary-filters">
+                <mat-form-field appearance="outline">
+                  <mat-label>Make</mat-label>
+                  <mat-select formControlName="make" #makeSelect>
+                    <mat-option [value]="''">Any Make</mat-option>
+                    <mat-option *ngFor="let make of makes" [value]="make">
+                      {{make}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Model</mat-label>
+                  <mat-select formControlName="model" [disabled]="!filterForm.get('make')?.value" #modelSelect>
+                    <mat-option [value]="''">Any Model</mat-option>
+                    <mat-option *ngFor="let model of models" [value]="model">
+                      {{model}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Vehicle Condition</mat-label>
+                  <mat-select formControlName="condition" #conditionSelect>
+                    <mat-option value="all">All Vehicles</mat-option>
+                    <mat-option value="new">New</mat-option>
+                    <mat-option value="used">Used</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Range Filters Row -->
+              <div class="filter-row range-filters">
+                <!-- Replace your existing slider with this -->
+                <div class="range-container">
+                  <div class="range-header">
+                    <label>Price Range</label>
+                    <div class="range-values">
+                      <span>{{priceRange[0] | number}} €</span>
+                      <span>-</span>
+                      <span>{{priceRange[1] | number}} €</span>
+                    </div>
+                  </div>
+                  <mat-slider class="custom-range-slider" [min]="0" [max]="200000" [step]="1000" [discrete]="true">
+                    <input matSliderStartThumb [(ngModel)]="priceRange[0]" [ngModelOptions]="{standalone: true}">
+                    <input matSliderEndThumb [(ngModel)]="priceRange[1]" [ngModelOptions]="{standalone: true}">
+                  </mat-slider>
+                </div>
+
+                <div class="range-container">
+                  <div class="range-header">
+                    <label>Year Range</label>
+                    <div class="range-values">
+                      <span>{{yearRange[0]}}</span>
+                      <span>-</span>
+                      <span>{{yearRange[1]}}</span>
+                    </div>
+                  </div>
+                  <mat-slider class="custom-slider" [min]="1990" [max]="currentYear" [step]="1" [discrete]="true">
+                    <input matSliderStartThumb [(ngModel)]="yearRange[0]" [ngModelOptions]="{standalone: true}">
+                    <input matSliderEndThumb [(ngModel)]="yearRange[1]" [ngModelOptions]="{standalone: true}">
+                  </mat-slider>
+                </div>
+              </div>
+
+              <!-- Secondary Filters Row -->
+              <div class="filter-row secondary-filters">
+                <mat-form-field appearance="outline">
+                  <mat-label>Fuel Type</mat-label>
+                  <mat-select formControlName="fuelType" #fuelSelect>
+                    <mat-option [value]="''">Any Fuel Type</mat-option>
+                    <mat-option *ngFor="let fuel of fuelTypes" [value]="fuel">
+                      {{fuel}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Transmission</mat-label>
+                  <mat-select formControlName="transmission" #transmissionSelect>
+                    <mat-option [value]="''">Any Transmission</mat-option>
+                    <mat-option *ngFor="let trans of transmissions" [value]="trans">
+                      {{trans}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Maximum Mileage</mat-label>
+                  <input matInput type="number" formControlName="mileageTo">
+                  <span matSuffix>&nbsp;km</span>
+                </mat-form-field>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="filter-actions">
+                <button type="button" mat-button (click)="resetFilters()">
+                  Reset Filters
+                </button>
+                <button type="submit" mat-raised-button color="primary">
+                  <mat-icon>search</mat-icon>
+                  Search
+                </button>
+              </div>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Popular Categories -->
+      <mat-card class="categories-card">
+        <mat-card-header>
+          <mat-card-title>Popular Categories</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="body-types-grid">
+            <div class="body-type-card" *ngFor="let type of bodyTypes"
+                 (click)="onBodyTypeSelect(type.id)"
+                 [class.selected]="filterForm.get('bodyType')?.value === type.id">
+              <mat-icon>{{type.icon}}</mat-icon>
+              <span class="type-name">{{type.name}}</span>
+              <span class="type-count">{{type.count}} vehicles</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Add after your categories card -->
+      <mat-card class="featured-cars-card">
+        <mat-card-header>
+          <mat-card-title>Featured Cars</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <!-- Loading State -->
+          <div class="loading-state" *ngIf="isLoading">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading cars...</p>
+          </div>
+
+          <!-- Error State -->
+          <div class="error-state" *ngIf="error">
+            <mat-icon color="warn">error</mat-icon>
+            <p>{{error}}</p>
+            <button mat-stroked-button color="primary" (click)="loadCars()">
+              Try Again
+            </button>
+          </div>
+
+          <!-- Cars Grid -->
+          <div class="cars-grid" *ngIf="!isLoading && !error">
+            <div class="car-card" *ngFor="let car of visibleCars">
+              <div class="car-image">
+                <!-- You might want to add a default image here -->
+                <img src="assets/images/car-placeholder.jpg" [alt]="car.name">
+              </div>
+              <div class="car-content">
+                <h3 class="car-title">{{car.name}}</h3>
+                <div class="car-features">
+                  <div class="feature">
+                    <mat-icon>calendar_today</mat-icon>
+                    <span>{{car.year}}</span>
+                  </div>
+                  <div class="feature">
+                    <mat-icon>local_gas_station</mat-icon>
+                    <span>{{car.fuelType}}</span>
+                  </div>
+                  <div class="feature">
+                    <mat-icon>settings</mat-icon>
+                    <span>{{car.transmission}}</span>
+                  </div>
+                  <div class="feature">
+                    <mat-icon>door_front</mat-icon>
+                    <span>{{car.doors}} doors</span>
+                  </div>
+                  <div class="feature">
+                    <mat-icon>speed</mat-icon>
+                    <span>{{car.engineCapacity}} L</span>
+                  </div>
+                  <div class="feature">
+                    <mat-icon>local_gas_station</mat-icon>
+                    <span>{{car.fuelConsumption}} L/100km</span>
+                  </div>
+                </div>
+                <div class="car-location" *ngIf="car.city">
+                  <mat-icon>location_on</mat-icon>
+                  <span>{{car.city.name}}</span>
+                </div>
+                <div class="car-body-type" *ngIf="car.bodyType">
+                  <mat-icon>directions_car</mat-icon>
+                  <span>{{car.bodyType.name}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Load More Button -->
+          <div class="load-more" *ngIf="!isLoading && !error && displayedCars < featuredCars.length">
+            <button mat-stroked-button color="primary" (click)="loadMore()">
+              Load More
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </section>
+
+  <!-- Loading Indicator -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div>

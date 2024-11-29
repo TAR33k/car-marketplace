@@ -1,0 +1,128 @@
+@use '@angular/material' as mat;
+
+// Custom Palettes
+$primary: mat.define-palette(mat.$deep-orange-palette, 500);
+$accent: mat.define-palette(mat.$blue-grey-palette, 500);
+$warn: mat.define-palette(mat.$red-palette);
+
+// Custom Theme
+$theme: mat.define-light-theme((
+  color: (
+    primary: $primary,
+    accent: $accent,
+    warn: $warn,
+  ),
+  typography: mat.define-typography-config(),
+  density: 0,
+));
+
+// Apply theme
+@include mat.all-component-themes($theme);
+
+// CSS Variables
+:root {
+  --primary-color: #ff5722;
+  --accent-color: #607d8b;
+}
+
+// Global Styles
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f5f5f5;
+}
+
+// Form Field Styles
+.mat-form-field {
+  width: 100%;
+
+  .mat-form-field-wrapper {
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+  }
+
+  .mat-form-field-flex {
+    background-color: white;
+  }
+
+  .mat-form-field-outline {
+    background-color: white;
+  }
+}
+
+// Overlay Styles
+.cdk-overlay-container {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cdk-overlay-connected-position-bounding-box {
+  position: absolute !important;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.cdk-overlay-pane {
+  position: relative !important;
+  pointer-events: auto;
+  transform-origin: center top !important;
+}
+
+// Select Panel Styles
+.mat-select-panel {
+  background: white;
+  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),
+  0 4px 5px 0 rgba(0,0,0,.14),
+  0 1px 10px 0 rgba(0,0,0,.12) !important;
+  min-width: calc(100% + 32px) !important;
+  margin-top: 4px !important;
+  border-radius: 4px;
+  position: relative !important;
+  max-height: 256px !important;
+}
+
+.mat-select-panel-wrap {
+  position: relative !important;
+  flex-grow: 1;
+}
+
+// Option Styles
+.mat-option {
+  line-height: 3rem;
+  height: 3rem;
+}
+
+.mat-select-arrow-wrapper {
+  transform: translateY(0) !important;
+}
+
+// Slider Overrides
+.mat-mdc-slider {
+  --mdc-slider-handle-height: 14px;
+  --mdc-slider-handle-width: 14px;
+  --mdc-slider-active-track-height: 2px;
+  --mdc-slider-inactive-track-height: 2px;
+  --mdc-slider-hover-state-layer-color: transparent;
+  --mdc-slider-focus-state-layer-color: transparent;
+  --mdc-slider-active-state-layer-color: transparent;
+}
+
+// Add at the end of styles.scss
+.mat-mdc-slider {
+  .mdc-slider__thumb-container {
+    --mdc-slider-hover-state-layer-color: transparent !important;
+    --mdc-slider-focus-state-layer-color: transparent !important;
+    --mdc-slider-active-state-layer-color: transparent !important;
+
+    &::before,
+    &::after {
+      display: none !important;
+    }
+  }
+}

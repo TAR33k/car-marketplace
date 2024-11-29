@@ -1,30 +1,50 @@
-import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Routes } from '@angular/router';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
-import {PublicRoutingModule} from './public-routing.module';
-import {AboutComponent} from './about/about.component';
-import {BlogComponent} from './blog/blog.component';
-import {ContactUsComponent} from './contact-us/contact-us.component';
-import {HomeComponent} from './home/home.component';
-import {PublicLayoutComponent} from './public-layout/public-layout.component';
-import {TravelsComponent} from './travels/travels.component';
-import {FormsModule} from '@angular/forms';
+// Material Imports
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+
+import { SharedModule } from '../shared/shared.module';
+import { LandingPageComponent } from './landing-page/landing-page.component';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {OverlayModule} from '@angular/cdk/overlay';
+import {MatSliderModule} from '@angular/material/slider';
+
+const routes: Routes = [
+  {
+    path: '',
+    component: LandingPageComponent
+  }
+];
 
 @NgModule({
   declarations: [
-    AboutComponent,
-    BlogComponent,
-    ContactUsComponent,
-    HomeComponent,
-    PublicLayoutComponent,
-    TravelsComponent
+    LandingPageComponent
   ],
   imports: [
     CommonModule,
-    PublicRoutingModule,
+    RouterModule.forChild(routes),
+    ReactiveFormsModule,
+    SharedModule,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatButtonToggleModule,
+    MatProgressSpinnerModule,
+    OverlayModule,
+    MatSliderModule,
     FormsModule
-  ],
-
+  ]
 })
-export class PublicModule {
-}
+export class PublicModule { }

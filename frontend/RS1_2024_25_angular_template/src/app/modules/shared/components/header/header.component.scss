@@ -1,0 +1,59 @@
+:host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.toolbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+}
+
+.brand {
+  text-decoration: none;
+  color: white;
+  display: flex;
+  align-items: center;
+
+  .brand-name {
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+  margin: 0 2rem;
+
+  a {
+    color: rgba(255, 255, 255, 0.87);
+    text-decoration: none;
+
+    &.active {
+      color: white;
+      font-weight: 500;
+    }
+  }
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+}
