@@ -1,0 +1,41 @@
+<h1>User Management</h1>
+
+<div class="table-container">
+  <!-- Add User Button Positioned Above the Table -->
+  <div class="add-user-btn-container">
+    <button class="add-user" (click)="addUser()">Add User</button>
+  </div>
+
+  <!-- User Table -->
+  <table>
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Username</th>
+      <th>First Name</th>
+      <th>Last Name</th>
+      <th>Email</th>
+      <th>Address</th>
+      <th>Phone Number</th>
+      <th>Is Admin</th>
+      <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let user of users">
+      <td>{{ user.id }}</td>
+      <td>{{ user.username }}</td>
+      <td>{{ user.firstName }}</td>
+      <td>{{ user.lastName }}</td>
+      <td>{{ user.email }}</td>
+      <td>{{ user.address }}</td>
+      <td>{{ user.phoneNumber }}</td>
+      <td>{{ user.isAdmin ? 'Yes' : 'No' }}</td>
+      <td>
+        <button (click)="editUser(user.id)">Edit</button>
+        <button (click)="deleteUser(user.id)">Delete</button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>

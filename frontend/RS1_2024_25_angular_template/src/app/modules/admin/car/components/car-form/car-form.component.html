@@ -1,0 +1,149 @@
+<div class="car-form-container">
+  <h2>{{ carId ? 'Edit Car' : 'Add New Car' }}</h2>
+
+  <form (ngSubmit)="updateCar()">
+    <!-- Name -->
+    <div class="form-group">
+      <label for="name">Name:</label>
+      <input
+        id="name"
+        type="text"
+        [(ngModel)]="car.name"
+        name="name"
+        class="form-control"
+        placeholder="Enter car name"
+        required
+      />
+    </div>
+
+    <!-- Year -->
+    <div class="form-group">
+      <label for="year">Year:</label>
+      <input
+        id="year"
+        type="number"
+        [(ngModel)]="car.year"
+        name="year"
+        class="form-control"
+        placeholder="Enter car year"
+        min="1900"
+        max="2099"
+        required
+      />
+    </div>
+
+    <!-- Engine Capacity -->
+    <div class="form-group">
+      <label for="engineCapacity">Engine Capacity (L):</label>
+      <input
+        id="engineCapacity"
+        type="number"
+        [(ngModel)]="car.engineCapacity"
+        name="engineCapacity"
+        class="form-control"
+        placeholder="Enter engine capacity"
+        step="0.1"
+        required
+      />
+    </div>
+
+    <!-- Fuel Type -->
+    <div class="form-group">
+      <label for="fuelType">Fuel Type:</label>
+      <select
+        id="fuelType"
+        [(ngModel)]="car.fuelType"
+        name="fuelType"
+        class="form-control"
+        required
+      >
+        <option value="Petrol">Petrol</option>
+        <option value="Diesel">Diesel</option>
+        <option value="Electric">Electric</option>
+        <option value="Hybrid">Hybrid</option>
+      </select>
+    </div>
+
+    <!-- Transmission -->
+    <div class="form-group">
+      <label for="transmission">Transmission:</label>
+      <select
+        id="transmission"
+        [(ngModel)]="car.transmission"
+        name="transmission"
+        class="form-control"
+        required
+      >
+        <option value="Manual">Manual</option>
+        <option value="Automatic">Automatic</option>
+      </select>
+    </div>
+
+    <!-- Doors -->
+    <div class="form-group">
+      <label for="doors">Doors:</label>
+      <input
+        id="doors"
+        type="number"
+        [(ngModel)]="car.doors"
+        name="doors"
+        class="form-control"
+        placeholder="Enter number of doors"
+        min="2"
+        max="6"
+        required
+      />
+    </div>
+
+    <!-- Fuel Consumption -->
+    <div class="form-group">
+      <label for="fuelConsumption">Fuel Consumption (L/100km):</label>
+      <input
+        id="fuelConsumption"
+        type="number"
+        [(ngModel)]="car.fuelConsumption"
+        name="fuelConsumption"
+        class="form-control"
+        placeholder="Enter fuel consumption"
+        step="0.1"
+        required
+      />
+    </div>
+
+    <!-- Body Type -->
+    <div class="form-group">
+      <label for="bodyID">Body Type:</label>
+      <input
+        id="bodyID"
+        type="number"
+        [(ngModel)]="car.bodyID"
+        name="bodyID"
+        class="form-control"
+        placeholder="Enter body type ID"
+        required
+      />
+    </div>
+
+    <!-- City -->
+    <div class="form-group">
+      <label for="cityID">City:</label>
+      <input
+        id="cityID"
+        type="number"
+        [(ngModel)]="car.cityID"
+        name="cityID"
+        class="form-control"
+        placeholder="Enter city ID"
+        required
+      />
+    </div>
+
+    <!-- Buttons -->
+    <button type="submit" class="btn btn-primary">
+      {{ carId ? 'Update Car' : 'Add Car' }}
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="router.navigate(['/admin/cars'])">
+      Cancel
+    </button>
+  </form>
+</div>

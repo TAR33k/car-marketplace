@@ -1,0 +1,25 @@
+<button [routerLink]="['/cars/form']" class="btn btn-success">Add New Car</button>
+<table>
+  <thead>
+  <tr>
+    <th>Name</th>
+    <th>Year</th>
+    <th>Engine Capacity</th>
+    <th>Fuel Type</th>
+    <th>Transmission</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let car of cars">
+    <td>{{ car.name }}</td>
+    <td>{{ car.year }}</td>
+    <td>{{ car.engineCapacity }}</td>
+    <td>{{ car.fuelType }}</td>
+    <td>{{ car.transmission }}</td>
+    <td>
+      <button [routerLink]="['/cars/form', car.id]">Edit</button>
+      <button (click)="deleteCar(car.id)">Delete</button>
+    </td>
+  </tr>
+  </tbody>
+</table>
