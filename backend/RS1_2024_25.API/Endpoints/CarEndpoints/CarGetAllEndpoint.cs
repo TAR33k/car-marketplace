@@ -1,91 +1,137 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RS1_2024_25.API.Data;
-using RS1_2024_25.API.Helper.Api;
-using RS1_2024_25.API.Helper;
-using static CarGetAllEndpoint;
 using Microsoft.EntityFrameworkCore;
+using RS1_2024_25.API.Data;
+using RS1_2024_25.API.Data.Enums;
+using RS1_2024_25.API.Helper;
+using RS1_2024_25.API.Helper.Api;
+using static RS1_2024_25.API.Endpoints.CarEndpoints.CarGetAllEndpoint;
 
-[Route("cars")]
-public class CarGetAllEndpoint(ApplicationDbContext db) : MyEndpointBaseAsync
-    .WithRequest<CarGetAllRequest>
-    .WithResult<List<CarGetAllResponse>>  
+namespace RS1_2024_25.API.Endpoints.CarEndpoints
 {
-    [HttpGet("filter")]
-    public override async Task<List<CarGetAllResponse>> HandleAsync(
-        [FromQuery] CarGetAllRequest request,
-        CancellationToken cancellationToken = default)
+    [Route("cars")]
+    public class CarGetAllEndpoint(ApplicationDbContext db) : MyEndpointBaseAsync
+        .WithRequest<CarGetAllRequest>
+        .WithActionResult<MyPagedList<CarGetAllResponse>>
     {
-        var query = db.Cars
-            .Include(c => c.BodyType)
-            .Include(c => c.City)
-            .AsQueryable();
-
-     
-        if (!string.IsNullOrWhiteSpace(request.FilterCarName))
+        [HttpGet]
+        public override async Task<ActionResult<MyPagedList<CarGetAllResponse>>> HandleAsync(
+            [FromQuery] CarGetAllRequest request,
+            CancellationToken cancellationToken = default)
         {
-            query = query.Where(c => c.Name.Contains(request.FilterCarName));
+            var query = db.Cars
+                .Include(c => c.BodyType)
+                .Include(c => c.City)
+                    .ThenInclude(city => city.Country)
+                .Include(c => c.Model)
+                    .ThenInclude(m => m.Manufacturer)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                query = query.Where(c =>
+                    c.Name.Contains(request.SearchTerm) ||
+                    c.Model.Name.Contains(request.SearchTerm) ||
+                    c.Model.Manufacturer.Name.Contains(request.SearchTerm));
+            }
+
+            if (request.ManufacturerId.HasValue)
+            {
+                query = query.Where(c => c.Model.ManufacturerID == request.ManufacturerId);
+            }
+
+            if (request.ModelId.HasValue)
+            {
+                query = query.Where(c => c.ModelID == request.ModelId);
+            }
+
+            if (request.MinYear.HasValue)
+            {
+                query = query.Where(c => c.Year >= request.MinYear);
+            }
+
+            if (request.MaxYear.HasValue)
+            {
+                query = query.Where(c => c.Year <= request.MaxYear);
+            }
+
+            if (request.FuelType.HasValue)
+            {
+                query = query.Where(c => c.FuelType == request.FuelType);
+            }
+
+            if (request.Transmission.HasValue)
+            {
+                query = query.Where(c => c.Transmission == request.Transmission);
+            }
+
+            if (request.MinMileage.HasValue)
+            {
+                query = query.Where(c => c.Mileage >= request.MinMileage);
+            }
+
+            if (request.MaxMileage.HasValue)
+            {
+                query = query.Where(c => c.Mileage <= request.MaxMileage);
+            }
+
+            var projectedQuery = query.Select(c => new CarGetAllResponse
+            {
+                ID = c.ID,
+                Name = c.Name,
+                Year = c.Year,
+                EngineCapacity = c.EngineCapacity,
+                FuelType = c.FuelType,
+                Transmission = c.Transmission,
+                Doors = c.Doors,
+                FuelConsumption = c.FuelConsumption,
+                Mileage = c.Mileage,
+                Color = c.Color,
+                HasServiceHistory = c.HasServiceHistory,
+                BodyTypeName = c.BodyType.Name,
+                CityName = c.City.Name,
+                CountryName = c.City.Country.Name,
+                ModelName = c.Model.Name,
+                ManufacturerName = c.Model.Manufacturer.Name
+            });
+
+            return await MyPagedList<CarGetAllResponse>.CreateAsync(
+                projectedQuery,
+                request,  
+                cancellationToken);
         }
 
-        if (request.FilterYear.HasValue)
+        public class CarGetAllRequest : MyPagedRequest
         {
-            query = query.Where(c => c.Year == request.FilterYear.Value);
+            public string? SearchTerm { get; set; }
+            public int? ManufacturerId { get; set; }
+            public int? ModelId { get; set; }
+            public int? MinYear { get; set; }
+            public int? MaxYear { get; set; }
+            public FuelType? FuelType { get; set; }
+            public TransmissionType? Transmission { get; set; }
+            public int? MinMileage { get; set; }
+            public int? MaxMileage { get; set; }
         }
 
-        if (!string.IsNullOrWhiteSpace(request.FilterFuelType))
+        public class CarGetAllResponse
         {
-            query = query.Where(c => c.FuelType.Contains(request.FilterFuelType));
+            public int ID { get; set; }
+            public string Name { get; set; }
+            public int Year { get; set; }
+            public decimal EngineCapacity { get; set; }
+            public FuelType FuelType { get; set; }
+            public TransmissionType Transmission { get; set; }
+            public int Doors { get; set; }
+            public decimal FuelConsumption { get; set; }
+            public int Mileage { get; set; }
+            public string Color { get; set; }
+            public bool HasServiceHistory { get; set; }
+            public string BodyTypeName { get; set; }
+            public string CityName { get; set; }
+            public string CountryName { get; set; }
+            public string ModelName { get; set; }
+            public string ManufacturerName { get; set; }
         }
-
-        if (!string.IsNullOrWhiteSpace(request.FilterTransmission))
-        {
-            query = query.Where(c => c.Transmission.Contains(request.FilterTransmission));
-        }
-
-        
-        var projectedQuery = query.Select(c => new CarGetAllResponse
-        {
-            ID = c.ID,
-            Name = c.Name,
-            Year = c.Year,
-            EngineCapacity = c.EngineCapacity,
-            FuelType = c.FuelType,
-            Transmission = c.Transmission,
-            Doors = c.Doors,
-            FuelConsumption = c.FuelConsumption,
-            BodyTypeName = c.BodyType != null ? c.BodyType.Name : "",
-            CityName = c.City != null ? c.City.Name : ""
-        });
-
-       
-        var paginatedQuery = projectedQuery
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize);
-
-       
-        var result = await paginatedQuery.ToListAsync(cancellationToken);
-
-        return result;  
-    }
-
-    public class CarGetAllRequest : MyPagedRequest
-    {
-        public string FilterCarName { get; set; } = string.Empty;
-        public int? FilterYear { get; set; }
-        public string FilterFuelType { get; set; } = string.Empty;
-        public string FilterTransmission { get; set; } = string.Empty;
-    }
-
-    public class CarGetAllResponse
-    {
-        public required int ID { get; set; }
-        public required string Name { get; set; }
-        public required int Year { get; set; }
-        public required decimal EngineCapacity { get; set; }
-        public required string FuelType { get; set; }
-        public required string Transmission { get; set; }
-        public required int Doors { get; set; }
-        public required decimal FuelConsumption { get; set; }
-        public required string BodyTypeName { get; set; }
-        public required string CityName { get; set; }
     }
 }

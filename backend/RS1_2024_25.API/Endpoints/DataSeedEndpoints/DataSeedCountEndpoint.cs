@@ -23,8 +23,13 @@
                     { "Country", db.Countries.Count() },
                     { "City", db.Cities.Count() },
                     { "User", db.Users.Count() },
+                    { "Manufacturer", db.Manufacturers.Count() },
+                    { "Car Model", db.CarModels.Count() },
                     { "Car", db.Cars.Count()},
-                    { "Body Type" , db.BodyTypes.Count()}
+                    { "Body Type" , db.BodyTypes.Count()},
+                    { "Status Type", db.StatusTypes.Count() },
+                    { "Advertisement", db.Advertisements.Count() },
+                    { "Car Image", db.CarImages.Count() }
                 };
 
                 return dataCounts;

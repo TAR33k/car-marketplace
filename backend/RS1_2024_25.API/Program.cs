@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using RS1_2024_25.API.Data;
 using RS1_2024_25.API.Helper;
 using RS1_2024_25.API.Helper.Auth;
+using RS1_2024_25.API.Options;
 using RS1_2024_25.API.Services;
+using RS1_2024_25.API.Services.Interfaces;
 
 
 var config = new ConfigurationBuilder()
@@ -25,6 +27,11 @@ builder.Services.AddHttpContextAccessor();
 //dodajte vaše servise
 builder.Services.AddTransient<MyAuthService>();
 builder.Services.AddTransient<MyTokenGenerator>();
+builder.Services.Configure<ImageOptions>(
+builder.Configuration.GetSection("ImageOptions"));
+builder.Services.AddScoped<IImageValidator, ImageValidator>();
+builder.Services.AddScoped<IImageProcessor, ImageProcessor>();
+builder.Services.AddScoped<IImageStorage, LocalImageStorage>();
 
 var app = builder.Build();
 
@@ -42,6 +49,7 @@ app.UseCors(
 
 
 app.UseAuthorization();
+app.UseStaticFiles();
 
 app.MapControllers();
 

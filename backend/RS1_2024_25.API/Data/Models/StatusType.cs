@@ -7,6 +7,6 @@ namespace RS1_2024_25.API.Data.Models
     {
         [Key]
         public int ID { get; set; }
-        public string StatusName { get; set; }
+        public string Name { get; set; }
     }
 }

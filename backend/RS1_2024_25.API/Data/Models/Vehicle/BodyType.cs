@@ -7,6 +7,12 @@ namespace RS1_2024_25.API.Data.Models
     {
         [Key]
         public int ID { get; set; }
+
+        [Required]
+        [MaxLength(50)]
         public string Name { get; set; }
+
+        // Navigation property
+        public virtual ICollection<Car>? Cars { get; set; }
     }
 }
