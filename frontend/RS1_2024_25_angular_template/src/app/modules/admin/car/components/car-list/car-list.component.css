@@ -1,60 +1,261 @@
+/* car-list.component.css */
 
-table {
-  width: 100%;
-  margin: 30px 0;
-  border-collapse: collapse;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* Table Styles */
+.table {
+  margin-bottom: 0;
 }
 
-thead {
-  background-color: #f1f1f1;
+.table th {
+  border-top: none;
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
 }
 
-th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
+.table td {
+  vertical-align: middle;
 }
 
-th {
-  background-color: #007bff;
-  color: white;
+/* Make table responsive with horizontal scroll on small screens */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-td button {
-  padding: 5px 10px;
-  font-size: 14px;
+/* Hover effect on table rows */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
   cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
 }
 
+/* Badge Styles */
+.badge {
+  padding: 0.5em 0.8em;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
 
-td button:nth-child(1) {
-  background-color: #28a745;
+/* Custom badge colors for fuel types */
+.badge.bg-success {
+  background-color: #198754 !important;
+}
+
+.badge.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+.badge.bg-secondary {
+  background-color: #6c757d !important;
+}
+
+.badge.bg-light {
+  background-color: #f8f9fa !important;
+  border: 1px solid #dee2e6;
+}
+
+/* Button Styles */
+.btn-group .btn {
+  padding: 0.25rem 0.5rem;
+}
+
+.btn-group .btn i {
+  font-size: 0.875rem;
+}
+
+/* Prevent button group from wrapping */
+.btn-group {
+  white-space: nowrap;
+}
+
+/* Filter Card Styles */
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-title {
+  margin-bottom: 1.25rem;
+  color: #495057;
+}
+
+/* Input Group Styles */
+.input-group-text {
+  background-color: #f8f9fa;
+  border-right: none;
+}
+
+.input-group .form-control:focus {
+  border-color: #86b7fe;
+  box-shadow: none;
+}
+
+/* Select Styles */
+.form-select {
+  cursor: pointer;
+}
+
+/* Pagination Styles */
+.pagination {
+  margin-bottom: 0;
+}
+
+.pagination .page-link {
+  padding: 0.375rem 0.75rem;
+  color: #0d6efd;
+  cursor: pointer;
+  border: 1px solid #dee2e6;
+}
+
+.pagination .page-link:hover {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
   color: white;
 }
 
-
-td button:nth-child(1):hover {
-  background-color: #218838;
+.pagination .page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #fff;
+  border-color: #dee2e6;
 }
 
-
-td button:nth-child(2) {
-  background-color: #dc3545;
-  color: white;
-  margin-left: 10px;
+/* Loading Spinner */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  color: #0d6efd;
 }
 
-td button:nth-child(2):hover {
-  background-color: #c82333;
-}
-
-.no-cars-message {
+/* Empty State */
+.empty-state {
+  padding: 3rem 1rem;
   text-align: center;
-  color: #888;
-  font-size: 18px;
-  margin-top: 20px;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  /* Stack filter elements on small screens */
+  .filter-row > div {
+    margin-bottom: 1rem;
+  }
+
+  /* Adjust table for small screens */
+  .table td, .table th {
+    white-space: nowrap;
+  }
+
+  /* Make pagination smaller on mobile */
+  .pagination .page-link {
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Animation for loading state */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Tooltip styles */
+[title] {
+  position: relative;
+  cursor: help;
+}
+
+/* Status indicator styles */
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+/* Card header with gradient */
+.card-header {
+  background: linear-gradient(to right, #f8f9fa, #ffffff);
+  border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+/* Search input styling */
+.search-input {
+  border-left: none;
+}
+
+.search-input:focus {
+  box-shadow: none;
+}
+
+/* Filter button styles */
+.filter-buttons {
+  gap: 0.5rem;
+}
+
+/* Year range inputs */
+.year-range input {
+  width: 100px;
+}
+
+/* Improve focus visibility for accessibility */
+.btn:focus, .form-control:focus, .form-select:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  outline: none;
+}
+
+/* Add transition effects */
+.btn, .badge, .page-link {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Improve table cell padding */
+.table td, .table th {
+  padding: 1rem;
+}
+
+/* Style for nested information in table cells */
+.cell-main {
+  font-weight: 500;
+  color: #212529;
+}
+
+.cell-sub {
+  font-size: 0.875rem;
+  color: #6c757d;
 }

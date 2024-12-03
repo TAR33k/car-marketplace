@@ -10,20 +10,31 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
 {
     [Route("advertisements")]
     public class AdvertisementGetAllEndpoint(ApplicationDbContext db) : MyEndpointBaseAsync
-        .WithRequest<AdvertGetAllRequest>
-        .WithResult<MyPagedList<AdvertGetAllResponse>>
+    .WithRequest<AdvertGetAllRequest>
+    .WithResult<MyPagedList<AdvertGetAllResponse>>
     {
-        [HttpGet("filter")]
+        [HttpGet]
         public override async Task<MyPagedList<AdvertGetAllResponse>> HandleAsync(
             [FromQuery] AdvertGetAllRequest request,
             CancellationToken cancellationToken = default)
         {
+            // Validate and clean the request
+            if (request == null)
+            {
+                request = new AdvertGetAllRequest
+                {
+                    PageNumber = 1,
+                    PageSize = 10
+                };
+            }
+
             var query = db.Advertisements
                 .Include(a => a.Car)
                 .Include(a => a.Status)
                 .Include(a => a.User)
                 .AsQueryable();
 
+            // Only apply filters if they have values
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 query = query.Where(a =>

@@ -10,7 +10,12 @@ li {
   padding: 5px;
 }
 
-li.active {
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.active {
   font-weight: bold;
-  color: #007bff; /* Customize active color */
+  color: #007bff;
 }

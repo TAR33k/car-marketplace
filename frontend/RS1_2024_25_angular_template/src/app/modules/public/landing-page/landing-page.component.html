@@ -204,13 +204,13 @@
                     <span>{{car.fuelConsumption}} L/100km</span>
                   </div>
                 </div>
-                <div class="car-location" *ngIf="car.city">
+                <div class="car-location" *ngIf="car.cityName">
                   <mat-icon>location_on</mat-icon>
-                  <span>{{car.city.name}}</span>
+                  <span>{{car.cityName}}</span>
                 </div>
-                <div class="car-body-type" *ngIf="car.bodyType">
+                <div class="car-body-type" *ngIf="car.bodyTypeName">
                   <mat-icon>directions_car</mat-icon>
-                  <span>{{car.bodyType.name}}</span>
+                  <span>{{car.bodyTypeName}}</span>
                 </div>
               </div>
             </div>

@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CarService } from '../../../services/car-services/car.service';
 import { MatSelect } from '@angular/material/select';
-import {CarGetAllResponse, CarGetAllService} from '../../../endpoints/car-endpoints/car-get-all-endpoint.service';
+import {CarGetAllResponse, CarGetAllEndpointService} from '../../../endpoints/car-endpoints/car-get-all-endpoint.service';
 
 interface BodyType {
   id: string;
@@ -69,7 +69,7 @@ export class LandingPageComponent implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private carService: CarService,
-    private carService1: CarGetAllService,
+    private carService1: CarGetAllEndpointService,
   ) {
     this.initializeForm();
   }
@@ -131,9 +131,19 @@ export class LandingPageComponent implements OnInit {
 
   protected loadCars() {
     this.isLoading = true;
-    this.carService1.handleAsync().subscribe({
-      next: (cars) => {
-        this.featuredCars = cars;
+
+    const request = {
+      pageNumber: 1,
+      pageSize: 10 // Or however many featured cars you want to show
+    };
+
+    this.carService1.handleAsync(request).subscribe({
+      next: (response) => {
+        if (response && response.data) {
+          this.featuredCars = response.data;
+        } else {
+          this.featuredCars = [];
+        }
         this.isLoading = false;
       },
       error: (error) => {

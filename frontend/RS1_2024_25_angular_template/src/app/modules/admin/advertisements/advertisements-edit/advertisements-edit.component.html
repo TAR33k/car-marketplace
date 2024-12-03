@@ -1,0 +1,190 @@
+<div class="container">
+  <h2 *ngIf="advertisementId!=0">Edit Advertisement</h2>
+  <h2 *ngIf="advertisementId==0">Add new Advertisement</h2>
+
+  <form (ngSubmit)="updateAdvertisement()">
+    <!-- Advertisement Details -->
+    <div class="section">
+      <h3>Advertisement Details</h3>
+
+      <div class="form-group">
+        <label for="title">Title:</label>
+        <input class="form-control" [(ngModel)]="advertisement.title" id="title" name="title" required/>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description:</label>
+        <textarea class="form-control" [(ngModel)]="advertisement.description" id="description" name="description" rows="4"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="condition">Condition:</label>
+        <select class="form-control" [(ngModel)]="advertisement.condition" id="condition" name="condition" required>
+          <option [ngValue]="null">Select condition</option>
+          <option *ngFor="let condition of conditions" [ngValue]="condition">
+            {{condition}}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="price">Price:</label>
+        <input class="form-control" type="number" [(ngModel)]="advertisement.price" id="price" name="price" required/>
+      </div>
+
+      <div class="form-group">
+        <label for="expirationDate">Expiration Date:</label>
+        <input class="form-control" type="date" [(ngModel)]="advertisement.expirationDate" id="expirationDate" name="expirationDate"/>
+      </div>
+    </div>
+
+    <!-- Car Selection Section -->
+    <div class="section">
+      <h3>Car Details</h3>
+
+      <div class="form-group">
+        <div class="car-selection-mode">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="existingCar" name="carMode"
+                   [checked]="!isNewCar" (change)="toggleCarMode()">
+            <label class="form-check-label" for="existingCar">Select Existing Car</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="newCar" name="carMode"
+                   [checked]="isNewCar" (change)="toggleCarMode()">
+            <label class="form-check-label" for="newCar">Create New Car</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Existing Car Selection -->
+      <div *ngIf="!isNewCar" class="form-group">
+        <label for="carId">Select Car:</label>
+        <select class="form-control" [(ngModel)]="advertisement.carId" id="carId" name="carId" required>
+          <option [ngValue]="0">Select a car</option>
+          <option *ngFor="let car of cars" [ngValue]="car.id">
+            {{ car.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- New Car Form -->
+      <div *ngIf="isNewCar" class="new-car-form">
+        <div class="form-group">
+          <label for="carName">Car Name:</label>
+          <input class="form-control" [(ngModel)]="newCar.name" id="carName" name="carName" required/>
+        </div>
+
+        <div class="form-group">
+          <label for="carYear">Year:</label>
+          <input class="form-control" type="number" [(ngModel)]="newCar.year" id="carYear" name="carYear" required/>
+        </div>
+
+        <div class="form-group">
+          <label for="engineCapacity">Engine Capacity:</label>
+          <input class="form-control" type="number" [(ngModel)]="newCar.engineCapacity" id="engineCapacity" name="engineCapacity" required/>
+        </div>
+
+        <div class="form-group">
+          <label for="fuelType">Fuel Type:</label>
+          <select class="form-control" [(ngModel)]="newCar.fuelType" id="fuelType" name="fuelType" required>
+            <option [ngValue]="null">Select fuel type</option>
+            <option *ngFor="let type of fuelTypes" [ngValue]="type">
+              {{getFuelTypeName(type)}}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="transmission">Transmission:</label>
+          <select class="form-control" [(ngModel)]="newCar.transmission" id="transmission" name="transmission" required>
+            <option [ngValue]="null">Select transmission</option>
+            <option *ngFor="let type of transmissionTypes" [ngValue]="type">
+              {{getTransmissionTypeName(type)}}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="doors">Number of Doors:</label>
+          <input class="form-control" type="number" [(ngModel)]="newCar.doors" id="doors" name="doors" required min="2" max="8"/>
+        </div>
+
+        <div class="form-group">
+          <label for="fuelConsumption">Fuel Consumption (L/100km):</label>
+          <input class="form-control" type="number" [(ngModel)]="newCar.fuelConsumption" id="fuelConsumption" name="fuelConsumption" required/>
+        </div>
+
+        <div class="form-group">
+          <label for="mileage">Mileage (km):</label>
+          <input class="form-control" type="number" [(ngModel)]="newCar.mileage" id="mileage" name="mileage" required/>
+        </div>
+
+        <div class="form-group">
+          <label for="color">Color:</label>
+          <input class="form-control" [(ngModel)]="newCar.color" id="color" name="color" required/>
+        </div>
+
+        <div class="form-group">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" [(ngModel)]="newCar.hasServiceHistory" id="hasServiceHistory" name="hasServiceHistory">
+            <label class="form-check-label" for="hasServiceHistory">Has Service History</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="bodyID">Body Type:</label>
+          <select class="form-control" [(ngModel)]="newCar.bodyID" id="bodyID" name="bodyID" required>
+            <option [ngValue]="0">Select body type</option>
+            <option *ngFor="let type of bodyTypes" [ngValue]="type.id">{{type.name}}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="cityID">City:</label>
+          <select class="form-control" [(ngModel)]="newCar.cityID" id="cityID" name="cityID" required>
+            <option [ngValue]="0">Select city</option>
+            <option *ngFor="let city of cities" [ngValue]="city.id">{{city.name}}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="modelID">Model:</label>
+          <select class="form-control" [(ngModel)]="newCar.modelID" id="modelID" name="modelID" required>
+            <option [ngValue]="0">Select model</option>
+            <option *ngFor="let model of models" [ngValue]="model.id">{{model.name}}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+        {{ isLoading ? 'Saving...' : 'Save Changes' }}
+      </button>
+      <button routerLink="/admin/advertisements" type="button" class="btn btn-secondary">Cancel</button>
+    </div>
+
+    <!-- Error Message -->
+    <div class="alert alert-danger" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+  </form>
+
+  <!-- Images Section -->
+  <div *ngIf="advertisementId" class="images-section">
+    <h3>Advertisement Images</h3>
+    <div class="image-grid">
+      <div *ngFor="let image of advertisement.images" class="image-item">
+        <img [src]="image.url" [alt]="advertisement.title">
+        <div class="image-actions">
+          <button class="btn btn-sm btn-primary" *ngIf="!image.isPrimary" (click)="setPrimaryImage(image.id)">
+            Set as Primary
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="deleteImage(image.id)">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

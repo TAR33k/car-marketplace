@@ -11,6 +11,9 @@ import {FormsModule} from '@angular/forms';
 import {SharedModule} from '../shared/shared.module';
 import { UsersComponent } from './users/users.component';
 import { UsersEditComponent } from './users/users-edit/users-edit.component';
+import { AdvertisementsComponent } from './advertisements/advertisements.component';
+import { AdvertisementsEditComponent } from './advertisements/advertisements-edit/advertisements-edit.component';
+import {BodyTypeGetAllEndpointService} from '../../endpoints/body-type-endpoints/body-type-get-all-endpoint.service';
 
 
 @NgModule({
@@ -22,6 +25,8 @@ import { UsersEditComponent } from './users/users-edit/users-edit.component';
     CitiesEditComponent,
     UsersComponent,
     UsersEditComponent,
+    AdvertisementsComponent,
+    AdvertisementsEditComponent
   ],
   imports: [
     CommonModule,
@@ -29,7 +34,9 @@ import { UsersEditComponent } from './users/users-edit/users-edit.component';
     FormsModule,
     SharedModule // Omogućava pristup svemu što je eksportovano iz SharedModule
   ],
-  providers: []
+  providers: [
+    BodyTypeGetAllEndpointService
+  ]
 })
 export class AdminModule {
 }

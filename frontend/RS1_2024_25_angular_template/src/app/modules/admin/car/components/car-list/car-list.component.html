@@ -1,25 +1,216 @@
-<button [routerLink]="['/cars/form']" class="btn btn-success">Add New Car</button>
-<table>
-  <thead>
-  <tr>
-    <th>Name</th>
-    <th>Year</th>
-    <th>Engine Capacity</th>
-    <th>Fuel Type</th>
-    <th>Transmission</th>
-  </tr>
-  </thead>
-  <tbody>
-  <tr *ngFor="let car of cars">
-    <td>{{ car.name }}</td>
-    <td>{{ car.year }}</td>
-    <td>{{ car.engineCapacity }}</td>
-    <td>{{ car.fuelType }}</td>
-    <td>{{ car.transmission }}</td>
-    <td>
-      <button [routerLink]="['/cars/form', car.id]">Edit</button>
-      <button (click)="deleteCar(car.id)">Delete</button>
-    </td>
-  </tr>
-  </tbody>
-</table>
+<div class="container mt-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Cars</h2>
+    <button class="btn btn-primary" routerLink="new">
+      <i class="bi bi-plus-lg me-2"></i>Add New Car
+    </button>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">
+        <i class="bi bi-funnel me-2"></i>Filters
+      </h5>
+      <div class="row g-3">
+        <!-- Search -->
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text"
+                   class="form-control"
+                   placeholder="Search by name, model, or manufacturer..."
+                   [(ngModel)]="filters.searchTerm"
+                   (keyup.enter)="onSearch()">
+          </div>
+        </div>
+
+        <!-- Year Range -->
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text">Year</span>
+            <input type="number"
+                   class="form-control"
+                   placeholder="Min"
+                   [(ngModel)]="filters.minYear">
+            <input type="number"
+                   class="form-control"
+                   placeholder="Max"
+                   [(ngModel)]="filters.maxYear">
+          </div>
+        </div>
+
+        <!-- Fuel Type -->
+        <div class="col-md-2">
+          <select class="form-select" [(ngModel)]="filters.fuelType">
+            <option [ngValue]="undefined">All Fuel Types</option>
+            <option *ngFor="let option of fuelTypeOptions" [ngValue]="option.value">
+              {{option.label}}
+            </option>
+          </select>
+        </div>
+
+        <!-- Transmission -->
+        <div class="col-md-2">
+          <select class="form-select" [(ngModel)]="filters.transmission">
+            <option [ngValue]="undefined">All Transmissions</option>
+            <option *ngFor="let option of transmissionTypeOptions" [ngValue]="option.value">
+              {{option.label}}
+            </option>
+          </select>
+        </div>
+
+        <!-- Mileage Range -->
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text">Mileage</span>
+            <input type="number"
+                   class="form-control"
+                   placeholder="Min"
+                   [(ngModel)]="filters.minMileage">
+            <input type="number"
+                   class="form-control"
+                   placeholder="Max"
+                   [(ngModel)]="filters.maxMileage">
+          </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="col-12">
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" (click)="onSearch()">
+              <i class="bi bi-search me-2"></i>Search
+            </button>
+            <button class="btn btn-outline-secondary" (click)="clearFilters()">
+              <i class="bi bi-x-circle me-2"></i>Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cars Table Card -->
+  <div class="card">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Table Content -->
+    <div class="table-responsive" *ngIf="!isLoading && cars && cars.length > 0">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+        <tr>
+          <th>Name</th>
+          <th>Year</th>
+          <th>Engine</th>
+          <th>Fuel Type</th>
+          <th>Transmission</th>
+          <th>Mileage</th>
+          <th>Color</th>
+          <th>Location</th>
+          <th class="text-end">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let car of cars">
+          <td>
+            <div class="fw-bold">{{car.name}}</div>
+            <small class="text-muted">{{car.modelName}} | {{car.manufacturerName}}</small>
+          </td>
+          <td>{{car.year}}</td>
+          <td>{{car.engineCapacity}}L</td>
+          <td>
+            <span class="badge" [ngClass]="getFuelTypeBadgeClass(car.fuelType)">
+              {{getEnumLabel(FuelType, car.fuelType)}}
+            </span>
+          </td>
+          <td>{{getEnumLabel(TransmissionType, car.transmission)}}</td>
+          <td>{{car.mileage | number}} km</td>
+          <td>
+            <span class="badge bg-light text-dark">{{car.color}}</span>
+          </td>
+          <td>{{car.cityName}}, {{car.countryName}}</td>
+          <td>
+            <div class="btn-group float-end">
+              <button class="btn btn-sm btn-outline-primary"
+                      (click)="editCar(car.id)"
+                      title="Edit Car">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger"
+                      (click)="deleteCar(car.id)"
+                      title="Delete Car">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && (!cars || cars.length === 0)" class="text-center py-5">
+      <i class="bi bi-inbox display-1 text-muted"></i>
+      <h5 class="mt-3">No Cars Found</h5>
+      <p class="text-muted">Try adjusting your filters or add a new car.</p>
+      <button class="btn btn-primary" routerLink="new">
+        <i class="bi bi-plus-lg me-2"></i>Add New Car
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination Section -->
+  <div class="d-flex justify-content-between align-items-center mt-4"
+       *ngIf="!isLoading && cars && cars.length > 0">
+    <!-- Items per page info -->
+    <div class="text-muted">
+      Showing {{(currentPage - 1) * pageSize + 1}} to
+      {{Math.min(currentPage * pageSize, totalItems)}} of {{totalItems}} items
+    </div>
+
+    <!-- Pagination controls -->
+    <nav *ngIf="totalPages > 1" aria-label="Page navigation">
+      <ul class="pagination mb-0">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" (click)="onPageChange(1)" role="button" title="First Page">
+            <i class="bi bi-chevron-double-left"></i>
+          </a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" (click)="onPageChange(currentPage - 1)" role="button">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        <li class="page-item"
+            *ngFor="let page of getPaginationRange()"
+            [class.active]="currentPage === page">
+          <a class="page-link" (click)="onPageChange(page)" role="button">{{page}}</a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" (click)="onPageChange(currentPage + 1)" role="button">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" (click)="onPageChange(totalPages)" role="button" title="Last Page">
+            <i class="bi bi-chevron-double-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>

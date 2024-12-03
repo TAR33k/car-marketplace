@@ -12,15 +12,15 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
 {
     [Route("advertisements")]
     public class AdvertisementUpdateOrInsertEndpoint(
-        ApplicationDbContext db,
-        MyAuthService myAuthService) : MyEndpointBaseAsync
-        .WithRequest<AdvertUpdateOrInsertRequest>
-        .WithActionResult<AdvertUpdateOrInsertResponse>
+    ApplicationDbContext db,
+    MyAuthService myAuthService) : MyEndpointBaseAsync
+    .WithRequest<AdvertUpdateOrInsertRequest>
+    .WithActionResult<AdvertUpdateOrInsertResponse>
     {
         [HttpPost]
         public override async Task<ActionResult<AdvertUpdateOrInsertResponse>> HandleAsync(
-            [FromBody] AdvertUpdateOrInsertRequest request,
-            CancellationToken cancellationToken = default)
+    [FromBody] AdvertUpdateOrInsertRequest request,
+    CancellationToken cancellationToken = default)
         {
             MyAuthInfo authInfo = myAuthService.GetAuthInfo();
             if (!authInfo.IsLoggedIn)
@@ -30,6 +30,12 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
             var carExists = await db.Cars.AnyAsync(c => c.ID == request.CarID, cancellationToken);
             if (!carExists)
                 return BadRequest("Invalid CarID");
+
+            // Get active status by name
+            var activeStatus = await db.StatusTypes
+                .FirstOrDefaultAsync(s => s.Name == "Active", cancellationToken);
+            if (activeStatus == null)
+                return BadRequest("Active status type not found in the system");
 
             bool isInsert = (request.ID == null || request.ID == 0);
             Advertisement? advertisement;
@@ -41,7 +47,7 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                     UserID = authInfo.UserId,
                     ListingDate = DateTime.Now,
                     ViewCount = 0,
-                    StatusID = 1 // Active status
+                    StatusID = activeStatus.ID  // Use the found status ID
                 };
                 db.Advertisements.Add(advertisement);
             }
@@ -64,7 +70,16 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
             advertisement.ExpirationDate = request.ExpirationDate;
             advertisement.CarID = request.CarID;
 
-            await db.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"Error saving advertisement: {ex.Message}");
+                Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
+                return StatusCode(500, "Error saving advertisement. Please ensure all required data is valid.");
+            }
 
             return new AdvertUpdateOrInsertResponse
             {

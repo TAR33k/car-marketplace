@@ -1,0 +1,81 @@
+<div class="container">
+  <div class="header">
+    <h2>Advertisement Management</h2>
+    <button class="btn btn-primary" routerLink="./new">New Advertisement</button>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Price</th>
+        <th>Status</th>
+        <th>Car</th>
+        <th>User</th>
+        <th>Views</th>
+        <th>Image</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let ad of advertisements">
+        <td>{{ ad.id }}</td>
+        <td>{{ ad.title }}</td>
+        <td>{{ ad.price | currency:'USD':'symbol':'1.2-2' }}</td>
+        <td>{{ ad.status }}</td>
+        <td>{{ ad.carName || 'N/A' }}</td>
+        <td>{{ ad.userName || 'N/A' }}</td>
+        <td>{{ ad.viewCount }}</td>
+        <td>
+          <img *ngIf="ad.primaryImageUrl"
+               [src]="ad.primaryImageUrl"
+               alt="Primary Image"
+               class="thumbnail-img">
+          <span *ngIf="!ad.primaryImageUrl">No image</span>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-primary me-2" (click)="editAdvertisement(ad.id)">
+            Edit
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="deleteAdvertisement(ad.id)">
+            Delete
+          </button>
+        </td>
+      </tr>
+      <tr *ngIf="advertisements.length === 0">
+        <td colspan="9" class="text-center">No advertisements found</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination-controls d-flex align-items-center gap-3">
+    <div class="page-size-selector">
+      <select class="form-select" [ngModel]="request.pageSize" (ngModelChange)="onPageSizeChange($event)">
+        <option [value]="10">10 per page</option>
+        <option [value]="25">25 per page</option>
+        <option [value]="50">50 per page</option>
+      </select>
+    </div>
+
+    <div class="pagination-buttons">
+      <button class="btn btn-outline-primary"
+              [disabled]="currentPage === 1"
+              (click)="onPageChange(currentPage - 1)">
+        Previous
+      </button>
+
+      <span class="mx-3">
+        Page {{ currentPage }} of {{ totalPages }}
+      </span>
+
+      <button class="btn btn-outline-primary"
+              [disabled]="currentPage === totalPages"
+              (click)="onPageChange(currentPage + 1)">
+        Next
+      </button>
+    </div>
+  </div>
+</div>

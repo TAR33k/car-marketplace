@@ -1,149 +1,293 @@
-<div class="car-form-container">
-  <h2>{{ carId ? 'Edit Car' : 'Add New Car' }}</h2>
+<div class="container mt-4">
+  <h2>{{ carId !== 0 ? 'Edit' : 'Add New' }} Car</h2>
 
-  <form (ngSubmit)="updateCar()">
-    <!-- Name -->
-    <div class="form-group">
-      <label for="name">Name:</label>
-      <input
-        id="name"
-        type="text"
-        [(ngModel)]="car.name"
-        name="name"
-        class="form-control"
-        placeholder="Enter car name"
-        required
-      />
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <form (ngSubmit)="updateCar()" #carForm="ngForm" *ngIf="!isLoading">
+    <div class="card mb-4">
+      <div class="card-header">
+        Basic Information
+      </div>
+      <div class="card-body">
+        <div class="form-group mb-3">
+          <label for="name" class="form-label">Name *</label>
+          <input type="text"
+                 class="form-control"
+                 [class.is-invalid]="!isFieldValid(car.name)"
+                 id="name"
+                 [(ngModel)]="car.name"
+                 name="name"
+                 required>
+          <div class="invalid-feedback" *ngIf="!isFieldValid(car.name)">
+            Name is required
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="manufacturer" class="form-label">Manufacturer *</label>
+            <select class="form-select"
+                    [class.is-invalid]="!isFieldValid(car.model.manufacturer.id)"
+                    id="manufacturer"
+                    [(ngModel)]="car.model.manufacturer.id"
+                    (ngModelChange)="onManufacturerChange($event)"
+                    name="manufacturer"
+                    required>
+              <option [ngValue]="0">Select Manufacturer</option>
+              <option *ngFor="let manufacturer of manufacturers" [value]="manufacturer.id">
+                {{manufacturer.name}} ({{manufacturer.country}})
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.model.manufacturer.id)">
+              Please select a manufacturer
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="model" class="form-label">Model *</label>
+            <select class="form-select"
+                    [class.is-invalid]="!isFieldValid(car.model.id)"
+                    id="model"
+                    [(ngModel)]="car.model.id"
+                    name="model"
+                    [disabled]="!car.model.manufacturer.id"
+                    required>
+              <option [ngValue]="0">Select Model</option>
+              <option *ngFor="let model of models" [value]="model.id">
+                {{model.name}} ({{model.startYear}} - {{model.endYear || 'Present'}})
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.model.id)">
+              Please select a model
+            </div>
+          </div>
+
+          <!-- Replace the year input section in car-form.component.html -->
+          <div class="col-md-4 mb-3">
+            <label for="year" class="form-label">Year *</label>
+            <input type="number"
+                   class="form-control"
+                   [class.is-invalid]="!isFieldValid(car.year)"
+                   id="year"
+                   [(ngModel)]="car.year"
+                   name="year"
+                   required
+                   [min]="1900"
+                   [max]="maxYear">
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.year)">
+              Please enter a valid year between 1900 and {{maxYear}}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Year -->
-    <div class="form-group">
-      <label for="year">Year:</label>
-      <input
-        id="year"
-        type="number"
-        [(ngModel)]="car.year"
-        name="year"
-        class="form-control"
-        placeholder="Enter car year"
-        min="1900"
-        max="2099"
-        required
-      />
+    <div class="card mb-4">
+      <div class="card-header">
+        Technical Specifications
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label for="engineCapacity" class="form-label">Engine Capacity (L) *</label>
+            <input type="number"
+                   class="form-control"
+                   [class.is-invalid]="!isFieldValid(car.engineCapacity)"
+                   id="engineCapacity"
+                   [(ngModel)]="car.engineCapacity"
+                   name="engineCapacity"
+                   required
+                   step="0.1"
+                   min="0"
+                   max="10">
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.engineCapacity)">
+              Please enter a valid engine capacity
+            </div>
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label for="fuelType" class="form-label">Fuel Type *</label>
+            <select class="form-select"
+                    [class.is-invalid]="!isFieldValid(car.fuelType)"
+                    id="fuelType"
+                    [(ngModel)]="car.fuelType"
+                    name="fuelType"
+                    required>
+              <option *ngFor="let option of fuelTypeOptions"
+                      [ngValue]="option.value">
+                {{option.label}}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.fuelType)">
+              Please select a fuel type
+            </div>
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label for="transmission" class="form-label">Transmission *</label>
+            <select class="form-select"
+                    [class.is-invalid]="!isFieldValid(car.transmission)"
+                    id="transmission"
+                    [(ngModel)]="car.transmission"
+                    name="transmission"
+                    required>
+              <option *ngFor="let option of transmissionTypeOptions"
+                      [ngValue]="option.value">
+                {{option.label}}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.transmission)">
+              Please select a transmission type
+            </div>
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label for="doors" class="form-label">Number of Doors *</label>
+            <input type="number"
+                   class="form-control"
+                   [class.is-invalid]="!isFieldValid(car.doors)"
+                   id="doors"
+                   [(ngModel)]="car.doors"
+                   name="doors"
+                   required
+                   min="2"
+                   max="8">
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.doors)">
+              Please enter a valid number of doors (2-8)
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="fuelConsumption" class="form-label">Fuel Consumption (L/100km) *</label>
+            <input type="number"
+                   class="form-control"
+                   [class.is-invalid]="!isFieldValid(car.fuelConsumption)"
+                   id="fuelConsumption"
+                   [(ngModel)]="car.fuelConsumption"
+                   name="fuelConsumption"
+                   required
+                   step="0.1"
+                   min="0"
+                   max="30">
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.fuelConsumption)">
+              Please enter a valid fuel consumption value
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="mileage" class="form-label">Mileage (km) *</label>
+            <input type="number"
+                   class="form-control"
+                   [class.is-invalid]="!isFieldValid(car.mileage)"
+                   id="mileage"
+                   [(ngModel)]="car.mileage"
+                   name="mileage"
+                   required
+                   min="0"
+                   max="999999">
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.mileage)">
+              Please enter a valid mileage value
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="bodyType" class="form-label">Body Type *</label>
+            <select class="form-select"
+                    [class.is-invalid]="!isFieldValid(car.bodyType.id)"
+                    id="bodyType"
+                    [(ngModel)]="car.bodyType.id"
+                    name="bodyType"
+                    required>
+              <option [ngValue]="undefined">Select Body Type</option>
+              <option *ngFor="let type of bodyTypes" [ngValue]="type.id">
+                {{type.name}}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.bodyType?.id)">
+              Please select a body type
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Engine Capacity -->
-    <div class="form-group">
-      <label for="engineCapacity">Engine Capacity (L):</label>
-      <input
-        id="engineCapacity"
-        type="number"
-        [(ngModel)]="car.engineCapacity"
-        name="engineCapacity"
-        class="form-control"
-        placeholder="Enter engine capacity"
-        step="0.1"
-        required
-      />
+    <div class="card mb-4">
+      <div class="card-header">
+        Additional Information
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="color" class="form-label">Color *</label>
+            <input type="text"
+                   class="form-control"
+                   [class.is-invalid]="!isFieldValid(car.color)"
+                   id="color"
+                   [(ngModel)]="car.color"
+                   name="color"
+                   required
+                   maxlength="50">
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.color)">
+              Please enter a color
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="city" class="form-label">City *</label>
+            <select class="form-select"
+                    [class.is-invalid]="!isFieldValid(car.location.cityId)"
+                    id="city"
+                    [(ngModel)]="car.location.cityId"
+                    name="city"
+                    required>
+              <option [ngValue]="0">Select City</option>
+              <option *ngFor="let city of cities" [value]="city.id">
+                {{city.name}}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.location.cityId)">
+              Please select a city
+            </div>
+          </div>
+        </div>
+
+        <div class="form-check mb-3">
+          <input type="checkbox"
+                 class="form-check-input"
+                 id="hasServiceHistory"
+                 [(ngModel)]="car.hasServiceHistory"
+                 name="hasServiceHistory">
+          <label class="form-check-label" for="hasServiceHistory">
+            Has Service History
+          </label>
+        </div>
+      </div>
     </div>
 
-    <!-- Fuel Type -->
-    <div class="form-group">
-      <label for="fuelType">Fuel Type:</label>
-      <select
-        id="fuelType"
-        [(ngModel)]="car.fuelType"
-        name="fuelType"
-        class="form-control"
-        required
-      >
-        <option value="Petrol">Petrol</option>
-        <option value="Diesel">Diesel</option>
-        <option value="Electric">Electric</option>
-        <option value="Hybrid">Hybrid</option>
-      </select>
+    <div class="d-flex justify-content-between mt-4">
+      <button type="button"
+              class="btn btn-secondary"
+              routerLink="/admin/cars">
+        <i class="bi bi-arrow-left me-2"></i>Cancel
+      </button>
+      <button type="submit"
+              class="btn btn-primary"
+              [disabled]="!canSubmitForm()">
+        <i class="bi bi-check2 me-2"></i>
+        {{ carId !== 0 ? 'Update' : 'Create' }} Car
+      </button>
     </div>
-
-    <!-- Transmission -->
-    <div class="form-group">
-      <label for="transmission">Transmission:</label>
-      <select
-        id="transmission"
-        [(ngModel)]="car.transmission"
-        name="transmission"
-        class="form-control"
-        required
-      >
-        <option value="Manual">Manual</option>
-        <option value="Automatic">Automatic</option>
-      </select>
-    </div>
-
-    <!-- Doors -->
-    <div class="form-group">
-      <label for="doors">Doors:</label>
-      <input
-        id="doors"
-        type="number"
-        [(ngModel)]="car.doors"
-        name="doors"
-        class="form-control"
-        placeholder="Enter number of doors"
-        min="2"
-        max="6"
-        required
-      />
-    </div>
-
-    <!-- Fuel Consumption -->
-    <div class="form-group">
-      <label for="fuelConsumption">Fuel Consumption (L/100km):</label>
-      <input
-        id="fuelConsumption"
-        type="number"
-        [(ngModel)]="car.fuelConsumption"
-        name="fuelConsumption"
-        class="form-control"
-        placeholder="Enter fuel consumption"
-        step="0.1"
-        required
-      />
-    </div>
-
-    <!-- Body Type -->
-    <div class="form-group">
-      <label for="bodyID">Body Type:</label>
-      <input
-        id="bodyID"
-        type="number"
-        [(ngModel)]="car.bodyID"
-        name="bodyID"
-        class="form-control"
-        placeholder="Enter body type ID"
-        required
-      />
-    </div>
-
-    <!-- City -->
-    <div class="form-group">
-      <label for="cityID">City:</label>
-      <input
-        id="cityID"
-        type="number"
-        [(ngModel)]="car.cityID"
-        name="cityID"
-        class="form-control"
-        placeholder="Enter city ID"
-        required
-      />
-    </div>
-
-    <!-- Buttons -->
-    <button type="submit" class="btn btn-primary">
-      {{ carId ? 'Update Car' : 'Add Car' }}
-    </button>
-    <button type="button" class="btn btn-secondary" (click)="router.navigate(['/admin/cars'])">
-      Cancel
-    </button>
   </form>
+
+  <div *ngIf="isLoading" class="d-flex justify-content-center mt-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
 </div>
