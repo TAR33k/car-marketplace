@@ -17,6 +17,7 @@ import { LandingPageComponent } from './landing-page/landing-page.component';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {OverlayModule} from '@angular/cdk/overlay';
 import {MatSliderModule} from '@angular/material/slider';
+import {MatProgressBarModule} from "@angular/material/progress-bar";
 
 const routes: Routes = [
   {
@@ -29,22 +30,23 @@ const routes: Routes = [
   declarations: [
     LandingPageComponent
   ],
-  imports: [
-    CommonModule,
-    RouterModule.forChild(routes),
-    ReactiveFormsModule,
-    SharedModule,
-    MatButtonModule,
-    MatCardModule,
-    MatIconModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatButtonToggleModule,
-    MatProgressSpinnerModule,
-    OverlayModule,
-    MatSliderModule,
-    FormsModule
-  ]
+    imports: [
+        CommonModule,
+        RouterModule.forChild(routes),
+        ReactiveFormsModule,
+        SharedModule,
+        MatButtonModule,
+        MatCardModule,
+        MatIconModule,
+        MatInputModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        MatButtonToggleModule,
+        MatProgressSpinnerModule,
+        OverlayModule,
+        MatSliderModule,
+        FormsModule,
+        MatProgressBarModule
+    ]
 })
 export class PublicModule { }

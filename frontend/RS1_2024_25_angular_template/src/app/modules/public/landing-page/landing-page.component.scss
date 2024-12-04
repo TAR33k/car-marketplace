@@ -2,7 +2,50 @@
 $container-width: 1200px;
 $grid-gap: 1rem;
 $border-radius: 8px;
+$transition-default: all 0.3s ease;
 
+// Breakpoints
+$breakpoint-xs: 599px;
+$breakpoint-sm: 959px;
+$breakpoint-md: 1279px;
+$breakpoint-lg: 1919px;
+
+// Colors
+$color-primary: var(--primary-color, #2196f3);
+$color-white: #fff;
+$color-black-87: rgba(0, 0, 0, 0.87);
+$color-black-60: rgba(0, 0, 0, 0.6);
+$color-black-12: rgba(0, 0, 0, 0.12);
+$color-background: #f5f5f5;
+$color-hover: #e0e0e0;
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin card-shadow {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@mixin hover-transform {
+  transition: $transition-default;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+@mixin icon-base {
+  font-size: 32px;
+  height: 32px;
+  width: 32px;
+  margin-bottom: 12px;
+}
+
+// Base Styles
 :host {
   display: block;
   margin-top: 64px;
@@ -12,6 +55,13 @@ $border-radius: 8px;
   min-height: calc(100vh - 64px);
 }
 
+// Container
+.container {
+  max-width: $container-width;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
 // Hero Section
 .hero-section {
   height: 400px;
@@ -19,11 +69,9 @@ $border-radius: 8px;
   url('/assets/images/hero-background.jpg');
   background-size: cover;
   background-position: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   text-align: center;
-  color: white;
+  color: $color-white;
   padding: 0 1rem;
 
   .hero-content {
@@ -41,13 +89,18 @@ $border-radius: 8px;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
   }
-}
 
-// Container
-.container {
-  max-width: $container-width;
-  margin: 0 auto;
-  padding: 0 1rem;
+  @media (max-width: $breakpoint-sm) {
+    height: 300px;
+    .hero-content {
+      h1 { font-size: 2rem; }
+      p { font-size: 1rem; }
+    }
+  }
+
+  @media (max-width: $breakpoint-xs) {
+    height: 250px;
+  }
 }
 
 // Search Section
@@ -58,18 +111,15 @@ $border-radius: 8px;
   z-index: 1;
 }
 
-// Cards
-.filters-card,
-.categories-card,
-.featured-cars-card {
-  background: white;
+// Card Base Styles
+%card-base {
+  background: $color-white;
   border-radius: $border-radius;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  @include card-shadow;
   margin-bottom: 2rem;
 
   .mat-card-header {
     padding: 1rem 1rem 0;
-
     .mat-card-title {
       font-size: 1.25rem;
       font-weight: 500;
@@ -80,6 +130,12 @@ $border-radius: 8px;
   .mat-card-content {
     padding: 1rem;
   }
+}
+
+.filters-card,
+.categories-card,
+.featured-cars-card {
+  @extend %card-base;
 }
 
 // Filters Layout
@@ -102,223 +158,219 @@ $border-radius: 8px;
     grid-template-columns: repeat(2, 1fr);
     margin: -0.5rem 0;
   }
+
+  @media (max-width: $breakpoint-md) {
+    &.primary-filters,
+    &.secondary-filters {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    &.primary-filters,
+    &.secondary-filters,
+    &.range-filters {
+      grid-template-columns: 1fr;
+    }
+  }
 }
 
 // Range Sliders
 .range-container {
   background: #f8f8f8;
-  border-radius: 4px;
+  border-radius: 10px;
   padding: 0.75rem 1rem;
-  width: 97%;
+  width: 100%;
+  box-sizing: border-box;
 
   .range-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
-
-    label {
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: rgba(0, 0, 0, 0.6);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .range-values {
-      font-size: 0.875rem;
-      color: rgba(0, 0, 0, 0.87);
-
-      span {
-        &:not(:first-child) {
-          margin-left: 0.25rem;
-        }
-      }
-    }
+    padding: 0 10px; // Add padding to align with slider
   }
 }
 
-// Body Types Grid
-.body-types-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: $grid-gap;
+// Categories Carousel
+.categories-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 48px;
+  margin: 20px 0;
 
-  .body-type-card {
-    background: white;
-    border-radius: $border-radius;
-    padding: 1.5rem 1rem;
+  .nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.9);
+    @include card-shadow;
+
+    &.prev { left: 0; }
+    &.next { right: 0; }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .carousel-container {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .carousel-track {
+    display: flex;
+    transition: transform 0.3s ease-in-out;
+    width: 100%;
+    gap: 1rem;
+  }
+}
+
+// Body Type Card
+.body-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  border-radius: $border-radius;
+  background-color: $color-background;
+  @include hover-transform;
+  cursor: pointer;
+
+  &.selected {
+    background-color: #e3f2fd;
+    border: 2px solid $color-primary;
+    .mat-icon { color: $color-primary; }
+    .type-count { color: $color-black-60; }
+  }
+
+  mat-icon { @include icon-base; }
+
+  .type-name {
+    font-weight: 500;
+    margin-bottom: 8px;
     text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid rgba(0, 0, 0, 0.12);
+  }
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+  .type-count {
+    font-size: 14px;
+    color: $color-black-60;
+  }
 
-    &.selected {
-      background: var(--primary-color);
-      color: white;
-      border-color: var(--primary-color);
+  // Carousel-specific styles
+  .categories-carousel & {
+    flex: 0 0 24%;
+    padding: 20px 12px;
+    box-sizing: border-box;
 
-      .mat-icon {
-        color: white;
-      }
-
-      .type-count {
-        color: rgba(255, 255, 255, 0.8);
-      }
-    }
-
-    .mat-icon {
-      font-size: 2rem;
-      height: 2rem;
-      width: 2rem;
-      margin-bottom: 0.5rem;
-      color: var(--primary-color);
-    }
-
-    .type-name {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 0.25rem;
-    }
-
-    .type-count {
-      display: block;
-      font-size: 0.875rem;
-      color: rgba(0, 0, 0, 0.6);
-    }
+    @media (max-width: $breakpoint-md) { flex: 0 0 33.333%; }
+    @media (max-width: $breakpoint-sm) { flex: 0 0 50%; }
+    @media (max-width: $breakpoint-xs) { flex: 0 0 100%; }
   }
 }
 
-// Featured Cars Section
+// Cars Grid
 .cars-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 1.5rem;
   padding: 1rem 0;
 }
 
+// Car Card
 .car-card {
-  background: white;
-  border-radius: 8px;
+  @extend %card-base;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  }
+  @include hover-transform;
+  border: 1px solid $color-black-12;
 
   .car-image {
     position: relative;
     height: 200px;
     overflow: hidden;
-    background-color: #f5f5f5;
+    background-color: $color-background;
 
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       transition: transform 0.3s ease;
-    }
-
-    &:hover img {
-      transform: scale(1.05);
+      &:hover { transform: scale(1.05); }
     }
   }
 
-  .car-content {
-    padding: 1.25rem;
-  }
+  .car-content { padding: 1.25rem; }
 
   .car-title {
     font-size: 1.25rem;
     font-weight: 500;
     margin: 0 0 1rem;
-    color: rgba(0, 0, 0, 0.87);
+    color: $color-black-87;
     line-height: 1.4;
-  }
-
-  .car-features {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-
-    .feature {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: rgba(0, 0, 0, 0.6);
-      font-size: 0.875rem;
-
-      mat-icon {
-        color: var(--primary-color);
-        font-size: 1.25rem;
-        width: 1.25rem;
-        height: 1.25rem;
-      }
-
-      span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
-  }
-
-  .car-location,
-  .car-body-type {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: rgba(0, 0, 0, 0.6);
-    font-size: 0.875rem;
-    margin-top: 0.75rem;
-
-    mat-icon {
-      color: var(--primary-color);
-      font-size: 1.25rem;
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-
-    span {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
   }
 }
 
-// Loading and Error States
-.loading-state,
-.error-state {
+// Shared Feature Styles
+%feature-base {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
+  color: $color-black-60;
+  font-size: 0.875rem;
+
+  mat-icon {
+    color: $color-primary;
+    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.car-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  .feature { @extend %feature-base; }
+}
+
+.car-location,
+.car-body-type {
+  @extend %feature-base;
+  margin-top: 0.75rem;
+}
+
+// States
+%centered-state {
+  @include flex-center;
+  flex-direction: column;
   padding: 3rem;
   text-align: center;
 
   p {
     margin: 1rem 0;
-    color: rgba(0, 0, 0, 0.6);
+    color: $color-black-60;
     font-size: 1rem;
-  }
-
-  mat-spinner {
-    margin-bottom: 1rem;
   }
 }
 
+.loading-state {
+  @extend %centered-state;
+  mat-spinner { margin-bottom: 1rem; }
+}
+
 .error-state {
+  @extend %centered-state;
   mat-icon {
     font-size: 2.5rem;
     height: 2.5rem;
@@ -326,17 +378,94 @@ $border-radius: 8px;
     color: var(--warn-color);
     margin-bottom: 1rem;
   }
+  button { margin-top: 1rem; }
+}
 
-  button {
-    margin-top: 1rem;
+// Material Overrides
+::ng-deep {
+  .mat-mdc-slider {
+    width: 97% !important;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 8px;
+
+    .mdc-slider__thumb-knob {
+      background-color: $color-white !important;
+      border: 2px solid $color-primary !important;
+    }
+
+    .mdc-slider__track--active_fill {
+      border-color: $color-primary !important;
+    }
+
+    .mdc-slider__track--inactive {
+      background-color: $color-black-12 !important;
+    }
+
+    .mdc-slider__thumb,
+    .mdc-slider__thumb-container {
+      background: none !important;
+      &::before,
+      &::after {
+        display: none !important;
+        background: none !important;
+      }
+    }
+
+    .mdc-slider {
+      margin-left: 7px !important;
+      width: calc(100% - 14px) !important;
+
+      &__track-container {
+        width: 100%;
+      }
+    }
+
+    .mdc-slider__thumb--focused {
+      left: 0;
+    }
+
+    .mdc-slider__track--active {
+      left: 0;
+      right: 0;
+    }
+  }
+}
+
+.filter-row {
+  &.range-filters {
+    grid-template-columns: repeat(2, 1fr);
+    margin: 0;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+// Filter Actions (Reset & Search buttons)
+.filter-actions {
+  display: flex;
+  justify-content: flex-end; // Align to right
+  gap: 1rem;
+  padding-top: 1rem;
+  width: 100%;
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
   }
 }
 
 // Load More Button
 .load-more {
   display: flex;
-  justify-content: center;
+  justify-content: center; // Center align
   padding: 2rem 0 1rem;
+  width: 100%;
 
   button {
     min-width: 150px;
@@ -344,152 +473,86 @@ $border-radius: 8px;
   }
 }
 
-// Material Overrides
-::ng-deep {
-  .mat-mdc-slider {
-    width: 97% !important;
-    --mdc-slider-handle-height: 14px;
-    --mdc-slider-handle-width: 14px;
-    --mdc-slider-active-track-height: 2px;
-    --mdc-slider-inactive-track-height: 2px;
+// Carousel Dots/Pages
+.carousel-dots {
+  display: flex;
+  justify-content: center; // Center the dots container
+  align-items: center;
+  gap: 8px;
+  margin: 16px auto; // Center with auto margins
+  width: fit-content; // Contain width to content
 
-    .mdc-slider__thumb-knob {
-      background-color: white !important;
-      border: 2px solid var(--primary-color) !important;
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &.active {
+      background: var(--primary-color, #2196f3);
+      transform: scale(1.2); // Slightly enlarge active dot
     }
 
-    .mdc-slider__track--active_fill {
-      border-color: var(--primary-color) !important;
+    &:hover {
+      background: darken(#ccc, 10%);
     }
 
-    .mdc-slider__track--inactive {
-      background-color: rgba(0, 0, 0, 0.12) !important;
-    }
-
-    .mdc-slider__thumb,
-    .mdc-slider__thumb-container {
-      background: none !important;
-
-      &::before,
-      &::after {
-        display: none !important;
-        background: none !important;
-      }
+    // Optional: Add focus state for accessibility
+    &:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
     }
   }
 }
 
-// Action Buttons
-.filter-actions {
-  display: flex;
-  justify-content: flex-end;
+// If you need additional container alignment
+.mat-card-content {
+  .carousel-dots {
+    text-align: center; // Ensure center alignment within card
+  }
+}
+
+// Range Filters - Make them responsive
+.filter-row {
+  display: grid;
   gap: 1rem;
-  padding-top: 0.5rem;
-}
 
-// Loading Overlay
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
+  &.primary-filters,
+  &.secondary-filters {
+    grid-template-columns: repeat(3, 1fr);
 
-// Responsive Design
-@media (max-width: 1024px) {
-  .filter-row {
-    &.primary-filters,
-    &.secondary-filters {
+    @media (max-width: $breakpoint-md) {
       grid-template-columns: repeat(2, 1fr);
     }
-  }
 
-  .cars-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .hero-section {
-    height: 300px;
-
-    .hero-content {
-      h1 {
-        font-size: 2rem;
-      }
-
-      p {
-        font-size: 1rem;
-      }
-    }
-  }
-
-  .filter-row {
-    &.primary-filters,
-    &.secondary-filters,
-    &.range-filters {
+    @media (max-width: $breakpoint-sm) {
       grid-template-columns: 1fr;
     }
   }
 
-  .body-types-grid {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  }
+  &.range-filters {
+    grid-template-columns: repeat(2, 1fr);
 
-  .cars-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
-  }
-
-  .car-card {
-    .car-image {
-      height: 180px;
+    @media (max-width: $breakpoint-md) {
+      grid-template-columns: repeat(2, 1fr);
     }
 
-    .car-features {
-      gap: 0.75rem;
+    @media (max-width: $breakpoint-sm) {
+      grid-template-columns: 1fr; // Stack on mobile
     }
   }
 }
 
-@media (max-width: 480px) {
-  .hero-section {
-    height: 250px;
-  }
+// Range Container - Ensure proper width on all screens
+.range-container {
+  width: 100%;
+  box-sizing: border-box;
 
-  .body-types-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .filter-actions {
-    flex-direction: column;
-
-    button {
-      width: 100%;
-    }
-  }
-
-  .cars-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .car-card {
-    .car-image {
-      height: 200px;
-    }
-
-    .car-content {
-      padding: 1rem;
-    }
-
-    .car-features {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  @media (max-width: $breakpoint-sm) {
+    margin-bottom: 1rem;
   }
 }

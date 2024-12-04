@@ -8,6 +8,7 @@ import {MyAuthInterceptor} from './services/auth-services/my-auth-interceptor.se
 import {MyAuthService} from './services/auth-services/my-auth.service';
 import {SharedModule} from './modules/shared/shared.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {MatIconModule} from '@angular/material/icon';
 
 @NgModule({
   declarations: [
@@ -18,6 +19,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     AppRoutingModule,
     HttpClientModule,
     BrowserAnimationsModule,
+    MatIconModule,
+    HttpClientModule,
     SharedModule // Omogućava korištenje UnauthorizedComponent u AppRoutingModule
   ],
   providers: [

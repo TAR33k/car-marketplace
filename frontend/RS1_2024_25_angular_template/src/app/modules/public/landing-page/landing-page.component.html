@@ -11,7 +11,6 @@
   <section class="search-section">
     <div class="container">
       <!-- Advanced Filters -->
-      <!-- Update the filters section -->
       <mat-card class="filters-card">
         <mat-card-header>
           <mat-card-title>Search Filters</mat-card-title>
@@ -53,7 +52,6 @@
 
               <!-- Range Filters Row -->
               <div class="filter-row range-filters">
-                <!-- Replace your existing slider with this -->
                 <div class="range-container">
                   <div class="range-header">
                     <label>Price Range</label>
@@ -91,8 +89,8 @@
                   <mat-label>Fuel Type</mat-label>
                   <mat-select formControlName="fuelType" #fuelSelect>
                     <mat-option [value]="''">Any Fuel Type</mat-option>
-                    <mat-option *ngFor="let fuel of fuelTypes" [value]="fuel">
-                      {{fuel}}
+                    <mat-option *ngFor="let option of fuelTypeOptions" [value]="option.value">
+                      {{option.label}}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
@@ -101,8 +99,8 @@
                   <mat-label>Transmission</mat-label>
                   <mat-select formControlName="transmission" #transmissionSelect>
                     <mat-option [value]="''">Any Transmission</mat-option>
-                    <mat-option *ngFor="let trans of transmissions" [value]="trans">
-                      {{trans}}
+                    <mat-option *ngFor="let option of transmissionOptions" [value]="option.value">
+                      {{option.label}}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
@@ -129,25 +127,53 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Popular Categories -->
       <mat-card class="categories-card">
         <mat-card-header>
           <mat-card-title>Popular Categories</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="body-types-grid">
-            <div class="body-type-card" *ngFor="let type of bodyTypes"
-                 (click)="onBodyTypeSelect(type.id)"
-                 [class.selected]="filterForm.get('bodyType')?.value === type.id">
-              <mat-icon>{{type.icon}}</mat-icon>
-              <span class="type-name">{{type.name}}</span>
-              <span class="type-count">{{type.count}} vehicles</span>
+          <div class="categories-carousel">
+            <button mat-icon-button
+                    class="nav-button prev"
+                    (click)="previousSlide()"
+                    [disabled]="currentSlide === 0"
+                    aria-label="Previous slide">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+
+            <div class="carousel-container">
+              <div class="carousel-track"
+                   [style.transform]="'translateX(' + (-currentSlide * 100) + '%)'">
+                <div class="body-type-card"
+                     *ngFor="let type of bodyTypes"
+                     (click)="onBodyTypeSelect(type.id)"
+                     [class.selected]="filterForm.get('bodyType')?.value === type.id">
+                  <mat-icon>{{type.icon}}</mat-icon>
+                  <span class="type-name">{{type.name}}</span>
+                  <span class="type-count">{{type.count}} vehicles</span>
+                </div>
+              </div>
             </div>
+
+            <button mat-icon-button
+                    class="nav-button next"
+                    (click)="nextSlide()"
+                    [disabled]="isNextDisabled()">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+
+          <div class="carousel-dots">
+            <button class="dot"
+                    *ngFor="let _ of getDotArray(); let i = index"
+                    [class.active]="i === currentSlide"
+                    (click)="goToSlide(i)">
+            </button>
           </div>
         </mat-card-content>
       </mat-card>
 
-      <!-- Add after your categories card -->
+      <!-- Featured Cars -->
       <mat-card class="featured-cars-card">
         <mat-card-header>
           <mat-card-title>Featured Cars</mat-card-title>
@@ -155,10 +181,9 @@
 
         <mat-card-content>
           <!-- Loading State -->
-          <div class="loading-state" *ngIf="isLoading">
-            <mat-spinner diameter="40"></mat-spinner>
-            <p>Loading cars...</p>
-          </div>
+          <ng-container *ngIf="isLoading">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          </ng-container>
 
           <!-- Error State -->
           <div class="error-state" *ngIf="error">
@@ -170,36 +195,38 @@
           </div>
 
           <!-- Cars Grid -->
-          <div class="cars-grid" *ngIf="!isLoading && !error">
-            <div class="car-card" *ngFor="let car of visibleCars">
+          <div class="cars-grid" *ngIf="!isLoading && !error && featuredCars.length > 0">
+            <div class="car-card"
+                 *ngFor="let car of visibleCars"
+                 role="article"
+                 tabindex="0">
               <div class="car-image">
-                <!-- You might want to add a default image here -->
-                <img src="assets/images/car-placeholder.jpg" [alt]="car.name">
+                <img [src]="'assets/images/car-placeholder.jpg'" [alt]="car.name">
               </div>
               <div class="car-content">
                 <h3 class="car-title">{{car.name}}</h3>
                 <div class="car-features">
-                  <div class="feature">
+                  <div class="feature" *ngIf="car.year">
                     <mat-icon>calendar_today</mat-icon>
                     <span>{{car.year}}</span>
                   </div>
-                  <div class="feature">
+                  <div class="feature" *ngIf="car.fuelType !== undefined">
                     <mat-icon>local_gas_station</mat-icon>
-                    <span>{{car.fuelType}}</span>
+                    <span>{{getEnumLabel(FuelType, car.fuelType)}}</span>
                   </div>
-                  <div class="feature">
+                  <div class="feature" *ngIf="car.transmission !== undefined">
                     <mat-icon>settings</mat-icon>
-                    <span>{{car.transmission}}</span>
+                    <span>{{getEnumLabel(TransmissionType, car.transmission)}}</span>
                   </div>
-                  <div class="feature">
+                  <div class="feature" *ngIf="car.doors">
                     <mat-icon>door_front</mat-icon>
                     <span>{{car.doors}} doors</span>
                   </div>
-                  <div class="feature">
+                  <div class="feature" *ngIf="car.engineCapacity">
                     <mat-icon>speed</mat-icon>
                     <span>{{car.engineCapacity}} L</span>
                   </div>
-                  <div class="feature">
+                  <div class="feature" *ngIf="car.fuelConsumption">
                     <mat-icon>local_gas_station</mat-icon>
                     <span>{{car.fuelConsumption}} L/100km</span>
                   </div>
@@ -216,6 +243,12 @@
             </div>
           </div>
 
+          <!-- No Cars Found State -->
+          <div class="no-cars-state" *ngIf="!isLoading && !error && featuredCars.length === 0">
+            <mat-icon>directions_car_off</mat-icon>
+            <p>No cars found</p>
+          </div>
+
           <!-- Load More Button -->
           <div class="load-more" *ngIf="!isLoading && !error && displayedCars < featuredCars.length">
             <button mat-stroked-button color="primary" (click)="loadMore()">
@@ -226,9 +259,4 @@
       </mat-card>
     </div>
   </section>
-
-  <!-- Loading Indicator -->
-  <div class="loading-overlay" *ngIf="loading">
-    <mat-spinner diameter="40"></mat-spinner>
-  </div>
 </div>
