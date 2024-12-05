@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Location } from '@angular/common';
+import { finalize } from 'rxjs/operators';
 import {
   CarGetByIdEndpointService,
   CarGetByIdResponse
@@ -33,7 +36,7 @@ interface EnumOption {
 @Component({
   selector: 'app-car-form',
   templateUrl: './car-form.component.html',
-  styleUrls: ['./car-form.component.css']
+  styleUrls: ['./car-form.component.scss']
 })
 export class CarFormComponent implements OnInit {
   carId: number = 0;
@@ -51,34 +54,33 @@ export class CarFormComponent implements OnInit {
     name: '',
     year: new Date().getFullYear(),
     engineCapacity: 0,
-    fuelType: FuelType.Petrol,
-    transmission: TransmissionType.Manual,
-    doors: 4,
+    fuelType: FuelType.Petrol, // Default enum value
+    transmission: TransmissionType.Manual, // Default enum value
+    doors: 4, // Default reasonable value
     fuelConsumption: 0,
     mileage: 0,
     color: '',
     hasServiceHistory: false,
     bodyType: {
-      id: 1,
-      name: 'Sedan'
+      id: 0, // Use 0 instead of null
+      name: ''
     },
     location: {
-      cityId: 0,
+      cityId: 0, // Use 0 instead of null
       cityName: '',
       countryName: ''
     },
     model: {
-      id: 0,
+      id: 0, // Use 0 instead of null
       name: '',
       manufacturer: {
-        id: 0,
+        id: 0, // Use 0 instead of null
         name: '',
         country: ''
       }
     }
   };
 
-  // Enum options for dropdowns
   fuelTypeOptions: EnumOption[] = Object.entries(FuelType)
     .filter(([key, value]) => typeof value === 'number')
     .map(([key, value]) => ({
@@ -96,6 +98,8 @@ export class CarFormComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private location: Location,
+    private snackBar: MatSnackBar,
     private carGetByIdService: CarGetByIdEndpointService,
     private carUpdateService: CarUpdateOrInsertEndpointService,
     private cityService: CityGetAll1EndpointService,
@@ -108,7 +112,7 @@ export class CarFormComponent implements OnInit {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.carId = Number(idParam);
-      await this.loadInitialData(true); // Pass flag to indicate edit mode
+      await this.loadInitialData(true);
     } else {
       await this.loadInitialData(false);
     }
@@ -119,7 +123,6 @@ export class CarFormComponent implements OnInit {
       this.isLoading = true;
       this.errorMessage = '';
 
-      // First load all reference data
       await Promise.all([
         this.loadCities(),
         this.loadManufacturers(),
@@ -141,10 +144,6 @@ export class CarFormComponent implements OnInit {
       const data = await this.cityService.handleAsync().toPromise();
       if (data) {
         this.cities = data;
-        console.log('Loaded cities:', {
-          cities: this.cities,
-          count: this.cities.length
-        });
       }
     } catch (error) {
       this.handleError('Error loading cities', error);
@@ -176,10 +175,8 @@ export class CarFormComponent implements OnInit {
   async loadBodyTypes(): Promise<void> {
     try {
       this.bodyTypes = await this.bodyTypeService.handleAsync().toPromise();
-      console.log('Loaded body types:', this.bodyTypes);
     } catch (error) {
-      console.error('Error loading body types:', error);
-      this.errorMessage = 'Failed to load body types';
+      this.handleError('Error loading body types', error);
     }
   }
 
@@ -192,7 +189,6 @@ export class CarFormComponent implements OnInit {
 
     try {
       await this.loadModels(manufacturerId);
-      // Reset model selection when manufacturer changes
       this.car.model.id = 0;
     } catch (error) {
       this.handleError('Error loading models', error);
@@ -206,23 +202,13 @@ export class CarFormComponent implements OnInit {
         .toPromise();
 
       if (data) {
-        console.log('Loaded car data:', data);
-
-        // Find the city ID from the cities array based on the city name
         const foundCity = this.cities.find(c => c.name === data.location.cityName);
-        const cityId = foundCity?.id ?? 0; // Provide a default value of 0
+        const cityId = foundCity!.id ?? null;
 
-        console.log('Found city:', {
-          cityName: data.location.cityName,
-          foundCity,
-          cityId
-        });
-
-        // Create a new car object with the loaded data
         this.car = {
           ...data,
           location: {
-            cityId: cityId, // Now cityId is guaranteed to be a number
+            cityId: cityId,
             cityName: data.location.cityName,
             countryName: data.location.countryName
           },
@@ -241,12 +227,9 @@ export class CarFormComponent implements OnInit {
           }
         };
 
-        // Load models for the selected manufacturer
         if (this.car.model.manufacturer.id) {
           await this.loadModels(this.car.model.manufacturer.id);
         }
-
-        console.log('Processed car data:', this.car);
       }
     } catch (error) {
       this.handleError('Error loading car data', error);
@@ -255,27 +238,21 @@ export class CarFormComponent implements OnInit {
 
   private handleError(message: string, error: any): void {
     console.error(message, error);
-    setTimeout(() => {
-      this.errorMessage = `${message}${error?.error?.message ? ': ' + error.error.message :
-        error?.message ? ': ' + error.message :
-          ': An unexpected error occurred'}`;
-    });
+    this.errorMessage = `${message}${error?.error?.message ? ': ' + error.error.message :
+      error?.message ? ': ' + error.message :
+        ': An unexpected error occurred'}`;
+    this.showSnackBar(this.errorMessage);
   }
 
   async updateCar(): Promise<void> {
-    try {
-      if (!this.canSubmitForm()) {
-        return;
-      }
+    if (!this.canSubmitForm()) {
+      this.showSnackBar('Please fill in all required fields correctly');
+      return;
+    }
 
+    try {
       this.isLoading = true;
       this.errorMessage = '';
-
-      console.log('Preparing update with car state:', {
-        bodyType: this.car.bodyType,
-        location: this.car.location,
-        model: this.car.model
-      });
 
       const request: CarUpdateOrInsertRequest = {
         id: this.carId !== 0 ? this.carId : undefined,
@@ -294,33 +271,39 @@ export class CarFormComponent implements OnInit {
         modelID: Number(this.car.model.id)
       };
 
-      console.log('Submitting request:', request);
+      await this.carUpdateService.handleAsync(request)
+        .pipe(finalize(() => this.isLoading = false))
+        .toPromise();
 
-      await this.carUpdateService.handleAsync(request).toPromise();
+      this.showSnackBar(
+        this.carId !== 0 ? 'Car updated successfully' : 'Car created successfully'
+      );
       this.router.navigate(['/admin/cars']);
     } catch (error: any) {
       this.handleError('Error updating car', error);
-    } finally {
-      this.isLoading = false;
     }
   }
 
-  // Helper method to get enum display name
-  getEnumDisplayName(enumObj: any, value: number): string {
-    return Object.entries(enumObj)
-      .find(([key, val]) => val === value)?.[0] || '';
+  showSnackBar(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      horizontalPosition: 'right',
+      verticalPosition: 'bottom',
+      panelClass: ['snackbar-notification']
+    });
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 
   isFieldValid(value: any): boolean {
-    // Special handling for numeric fields where 0 is valid
     if (typeof value === 'number') {
       return value !== null && !isNaN(value);
     }
-    // Handle string values
     if (typeof value === 'string') {
       return value !== null && value.trim() !== '';
     }
-    // Handle boolean values
     if (typeof value === 'boolean') {
       return true;
     }
@@ -331,8 +314,6 @@ export class CarFormComponent implements OnInit {
     const bodyTypeId = Number(this.car.bodyType?.id);
     const cityId = Number(this.car.location?.cityId);
     const modelId = Number(this.car.model?.id);
-
-    console.log('Validating IDs:', { bodyTypeId, cityId, modelId });
 
     if (!bodyTypeId || bodyTypeId <= 0) {
       this.errorMessage = 'Please select a valid body type';
@@ -372,9 +353,6 @@ export class CarFormComponent implements OnInit {
       modelId: this.car.model?.id
     };
 
-    console.log('Validating form values:', formValues);
-
-    // Check each field individually and log if invalid
     const validations = {
       name: this.isFieldValid(formValues.name),
       year: this.isFieldValid(formValues.year),
@@ -390,20 +368,15 @@ export class CarFormComponent implements OnInit {
       modelId: this.isFieldValid(formValues.modelId)
     };
 
-    console.log('Field validations:', validations);
-
-    // Check if any validations failed
     const invalidFields = Object.entries(validations)
       .filter(([_, isValid]) => !isValid)
       .map(([field]) => field);
 
     if (invalidFields.length > 0) {
-      console.log('Invalid fields:', invalidFields);
       this.errorMessage = `Please fill in the following fields: ${invalidFields.join(', ')}`;
       return false;
     }
 
-    // Additional validation for numeric fields
     const numericValidations = {
       engineCapacity: formValues.engineCapacity >= 0 && formValues.engineCapacity <= 10,
       fuelConsumption: formValues.fuelConsumption >= 0 && formValues.fuelConsumption <= 30,
@@ -417,16 +390,10 @@ export class CarFormComponent implements OnInit {
       .map(([field]) => field);
 
     if (invalidNumericFields.length > 0) {
-      console.log('Invalid numeric fields:', invalidNumericFields);
       this.errorMessage = `Please enter valid values for: ${invalidNumericFields.join(', ')}`;
       return false;
     }
 
     return true;
   }
-
-  // Make enums available to template
-  protected readonly FuelType = FuelType;
-  protected readonly TransmissionType = TransmissionType;
-  protected readonly Date = Date;
 }

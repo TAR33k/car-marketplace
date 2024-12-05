@@ -1,30 +1,148 @@
-<h1>{{ user.id === 0 ? 'Create User' : 'Edit User' }}</h1>
+<div class="container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
+        {{ user.id === 0 ? 'Create User' : 'Edit User' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        Fields marked with * are required
+      </mat-card-subtitle>
+    </mat-card-header>
 
-<form (ngSubmit)="updateUser()">
-  <label for="username">Username:</label>
-  <input [(ngModel)]="user.username" name="username" id="username" required />
+    <form (ngSubmit)="updateUser()" #userForm="ngForm" class="user-form">
+      <mat-card-content>
+        <div class="form-grid">
+          <!-- Username -->
+          <mat-form-field appearance="outline">
+            <mat-label>Username *</mat-label>
+            <input matInput [(ngModel)]="user.username" name="username"
+                   #username="ngModel" required minlength="3" pattern="^[a-zA-Z0-9_-]*$">
+            <mat-icon matSuffix>person</mat-icon>
+            <mat-hint>Minimum 3 characters, only letters, numbers, underscore and dash</mat-hint>
+            <mat-error *ngIf="username.errors?.['required']">
+              Username is required
+            </mat-error>
+            <mat-error *ngIf="username.errors?.['minlength']">
+              Username must be at least 3 characters
+            </mat-error>
+            <mat-error *ngIf="username.errors?.['pattern']">
+              Username can only contain letters, numbers, underscore and dash
+            </mat-error>
+          </mat-form-field>
 
-  <label for="firstName">First Name:</label>
-  <input [(ngModel)]="user.firstName" name="firstName" id="firstName" required />
+          <!-- First Name -->
+          <mat-form-field appearance="outline">
+            <mat-label>First Name *</mat-label>
+            <input matInput [(ngModel)]="user.firstName" name="firstName"
+                   #firstName="ngModel" required pattern="^[a-zA-Z\s]*$">
+            <mat-error *ngIf="firstName.errors?.['required']">
+              First name is required
+            </mat-error>
+            <mat-error *ngIf="firstName.errors?.['pattern']">
+              First name can only contain letters and spaces
+            </mat-error>
+          </mat-form-field>
 
-  <label for="lastName">Last Name:</label>
-  <input [(ngModel)]="user.lastName" name="lastName" id="lastName" required />
+          <!-- Last Name -->
+          <mat-form-field appearance="outline">
+            <mat-label>Last Name *</mat-label>
+            <input matInput [(ngModel)]="user.lastName" name="lastName"
+                   #lastName="ngModel" required pattern="^[a-zA-Z\s]*$">
+            <mat-error *ngIf="lastName.errors?.['required']">
+              Last name is required
+            </mat-error>
+            <mat-error *ngIf="lastName.errors?.['pattern']">
+              Last name can only contain letters and spaces
+            </mat-error>
+          </mat-form-field>
 
-  <label for="email">Email:</label>
-  <input [(ngModel)]="user.email" name="email" id="email" type="email" required />
+          <!-- Email -->
+          <mat-form-field appearance="outline">
+            <mat-label>Email *</mat-label>
+            <input matInput [(ngModel)]="user.email" name="email"
+                   #email="ngModel" required email type="email">
+            <mat-icon matSuffix>email</mat-icon>
+            <mat-error *ngIf="email.errors?.['required']">
+              Email is required
+            </mat-error>
+            <mat-error *ngIf="email.errors?.['email']">
+              Please enter a valid email address
+            </mat-error>
+          </mat-form-field>
 
-  <label for="address">Address:</label>
-  <input [(ngModel)]="user.address" name="address" id="address" required />
+          <!-- Address -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Address *</mat-label>
+            <textarea matInput [(ngModel)]="user.address" name="address"
+                      #address="ngModel" required rows="2"></textarea>
+            <mat-icon matSuffix>home</mat-icon>
+            <mat-error *ngIf="address.errors?.['required']">
+              Address is required
+            </mat-error>
+          </mat-form-field>
 
-  <label for="phoneNumber">Phone Number:</label>
-  <input [(ngModel)]="user.phoneNumber" name="phoneNumber" id="phoneNumber" required />
+          <!-- Phone Number -->
+          <mat-form-field appearance="outline">
+            <mat-label>Phone Number *</mat-label>
+            <input matInput [(ngModel)]="user.phoneNumber" name="phoneNumber"
+                   #phone="ngModel" required pattern="^\+?[\d\s-]{10,}$">
+            <mat-icon matSuffix>phone</mat-icon>
+            <mat-hint>Format: +1234567890 or 123-456-7890</mat-hint>
+            <mat-error *ngIf="phone.errors?.['required']">
+              Phone number is required
+            </mat-error>
+            <mat-error *ngIf="phone.errors?.['pattern']">
+              Please enter a valid phone number
+            </mat-error>
+          </mat-form-field>
 
-  <label for="password">{{ user.id ? 'Password (Optional for updates):' : 'Password' }}</label>
-  <input [(ngModel)]="newPassword" name="password" id="password" type="password" />
+          <!-- Password -->
+          <mat-form-field appearance="outline">
+            <mat-label>
+              {{ user.id ? 'Password (Optional for updates)' : 'Password *' }}
+            </mat-label>
+            <input matInput
+                   [(ngModel)]="newPassword"
+                   name="password"
+                   #password="ngModel"
+                   [type]="hidePassword ? 'password' : 'text'"
+                   [required]="!user.id"
+                   pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$">
+            <button mat-icon-button
+                    matSuffix
+                    (click)="hidePassword = !hidePassword"
+                    [attr.aria-label]="'Hide password'"
+                    [attr.aria-pressed]="hidePassword"
+                    type="button">
+              <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+            </button>
+            <mat-hint>
+              Must contain at least 8 characters, one uppercase, one lowercase,
+              one number and one special character
+            </mat-hint>
+            <mat-error *ngIf="password.errors?.['required']">
+              Password is required
+            </mat-error>
+            <mat-error *ngIf="password.errors?.['pattern']">
+              Password doesn't meet the requirements
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
 
-  <div class="button-container">
-    <button type="submit">{{ user.id === 0 ? 'Create User' : 'Save Changes' }}</button>
-    <button type="button" (click)="router.navigate(['/admin/users'])">Cancel</button>
-  </div>
-
-</form>
+      <mat-card-actions align="end">
+        <button mat-button type="button"
+                (click)="router.navigate(['/admin/users'])"
+                [disabled]="loading">
+          Cancel
+        </button>
+        <button mat-raised-button color="primary"
+                type="submit"
+                [disabled]="!userForm.form.valid || loading">
+          <mat-icon>{{loading ? 'hourglass_empty' : 'save'}}</mat-icon>
+          {{ user.id === 0 ? 'Create User' : 'Save Changes' }}
+        </button>
+      </mat-card-actions>
+    </form>
+  </mat-card>
+</div>

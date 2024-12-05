@@ -1,0 +1,188 @@
+@import '../../../admin-styles.scss';
+
+.car-form-container {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 20px;
+  background-color: $light-bg;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
+
+  h2 {
+    text-align: center;
+    font-size: 24px;
+    color: $text-primary;
+    margin-bottom: 20px;
+  }
+
+  .alert {
+    border-radius: $border-radius;
+    padding: 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    &.alert-danger {
+      background-color: lighten($danger-color, 40%);
+      border: 1px solid $danger-color;
+      color: darken($danger-color, 20%);
+    }
+
+    .btn-close {
+      margin-left: auto;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
+  .card {
+    background: white;
+    border-radius: $border-radius;
+    box-shadow: $shadow;
+    margin-bottom: 24px;
+    border: none;
+
+    .card-header {
+      background: $light-bg;
+      border-bottom: 1px solid $border-color;
+      padding: 16px;
+      font-weight: 500;
+      color: $text-primary;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 24px;
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: $text-secondary;
+      font-weight: 500;
+      font-size: 14px;
+    }
+  }
+
+  .form-control, .form-select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    background-color: white;
+    color: $text-primary;
+    transition: all 0.2s;
+    margin-bottom: 16px; // Consistent spacing between inputs
+
+    &:focus {
+      border-color: $primary-color;
+      box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
+      outline: none;
+    }
+
+    &.is-invalid {
+      border-color: $danger-color;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23dc3545' viewBox='0 0 16 16'%3E%3Cpath d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1rem;
+    }
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 32px;
+
+    button {
+      min-width: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: $border-radius;
+      font-weight: 500;
+      transition: all 0.2s;
+
+      &.btn-primary {
+        background: $primary-color;
+        color: white;
+        border: none;
+
+        &:hover:not(:disabled) {
+          background: $primary-dark;
+        }
+
+        &:disabled {
+          background: $disabled-bg;
+          color: $disabled-text;
+          cursor: not-allowed;
+        }
+      }
+
+      &.btn-secondary {
+        background: transparent;
+        color: $text-secondary;
+        border: 1px solid $border-color;
+
+        &:hover {
+          background: $hover-bg;
+        }
+      }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+
+    mat-spinner {
+      color: $primary-color;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .car-form-container {
+    padding: 16px;
+
+    .card {
+      margin-bottom: 16px;
+
+      .card-header {
+        padding: 12px 16px;
+      }
+
+      .card-body {
+        padding: 16px;
+      }
+    }
+
+    .action-buttons {
+      flex-direction: column-reverse;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}

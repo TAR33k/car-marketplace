@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   AdvertisementGetByIdEndpointService,
-  AdvertGetByIdResponse
+  AdvertGetByIdResponse, AdvertImageResponse
 } from '../../../../endpoints/advertisement-endpoints/advertisement-get-by-id-endpoint.service';
 import {
   AdvertisementUpdateOrInsertEndpointService,
@@ -13,9 +13,7 @@ import {
   CarGetAllResponse
 } from '../../../../endpoints/car-endpoints/car-get-all-endpoint.service';
 import {
-  CarUpdateOrInsertEndpointService,
-  CarUpdateOrInsertRequest,
-  CarUpdateOrInsertResponse
+  CarUpdateOrInsertEndpointService
 } from '../../../../endpoints/car-endpoints/car-update-or-insert-endpoint.service';
 import {
   CarImageSetPrimaryEndpointService
@@ -29,14 +27,22 @@ import {
   CityGetAll1Response
 } from '../../../../endpoints/city-endpoints/city-get-all1-endpoint.service';
 import {
-  CarModelGetAllEndpointService,
-  CarModelGetAllResponse
-} from '../../../../endpoints/car-model-endpoints/car-model-get-all-endpoint.service';
-import {
   BodyTypeGetAllEndpointService,
   BodyTypeGetAllResponse
 } from '../../../../endpoints/body-type-endpoints/body-type-get-all-endpoint.service';
-import {MyPagedList, MyPagedRequest} from '../../../../helper/my-paged-request';
+import {
+  AdvertGetAllRequest, AdvertGetAllResponse,
+  AdvertisementGetAllEndpointService
+} from '../../../../endpoints/advertisement-endpoints/advertisement-get-all-endpoint.service';
+import {
+  ManufacturerGetAllEndpointService, ManufacturerGetAllResponse
+} from '../../../../endpoints/manufacturer-endpoints/manufacturer-get-all-endpoint.service';
+import {
+  CarModelGetByManufacturerEndpointService, CarModelGetByManufacturerResponse
+} from '../../../../endpoints/car-model-endpoints/car-model-get-by-manufacturer-endpoint.service';
+import {
+  CarGetByIdEndpointService
+} from '../../../../endpoints/car-endpoints/car-get-by-id-endpoint.service';
 
 interface LoadingStates {
   cars: boolean;
@@ -47,8 +53,82 @@ interface LoadingStates {
   saving: boolean;
 }
 
-interface CarPagedResponse extends MyPagedList<CarGetAllResponse> {
-  dataItems: CarGetAllResponse[];  // Override data with dataItems
+interface Advertisement {
+  id: number;
+  title: string;
+  description: string;
+  condition: string;
+  price: number;
+  listingDate: Date;
+  expirationDate?: Date;
+  viewCount: number;
+  status: string;
+  carId: number;  // lowercase for internal use
+  carName: string;
+  userId: number;  // lowercase for internal use
+  userName: string;
+  images: AdvertImageResponse[];
+}
+
+interface CarWithAdvertisement extends CarGetAllResponse {
+  isInUse?: boolean;
+}
+
+interface CarModel {
+  id: number;
+  name: string;
+  manufacturer?: CarManufacturer;
+}
+
+interface CarManufacturer {
+  id: number;
+  name: string;
+}
+
+interface CarGetByIdResponse {
+  id: number;
+  name: string;
+  year: number;
+  engineCapacity: number;
+  fuelType: FuelType;
+  transmission: TransmissionType;
+  doors: number;
+  fuelConsumption: number;
+  mileage: number;
+  color: string;
+  hasServiceHistory: boolean;
+  bodyID: number;
+  cityID: number;
+  location?: {
+    cityID: number;
+    cityName: string;
+    countryName: string;
+  };
+  model: {
+    id: number;
+    name: string;
+    manufacturer: {
+      id: number;
+      name: string;
+    };
+  };
+}
+
+interface CarUpdateOrInsertRequest {
+  id?: number;  // Add this line
+  name: string;
+  year: number;
+  engineCapacity: number;
+  fuelType: FuelType;
+  transmission: TransmissionType;
+  doors: number;
+  fuelConsumption: number;
+  mileage: number;
+  color: string;
+  hasServiceHistory: boolean;
+  bodyID: number;
+  cityID: number;
+  modelID: number;
 }
 
 @Component({
@@ -75,11 +155,15 @@ export class AdvertisementsEditComponent implements OnInit {
   }
 
   cities: CityGetAll1Response[] = [];
-  models: CarModelGetAllResponse[] = [];
+  selectedManufacturerId: number = 0;
+  manufacturers: ManufacturerGetAllResponse[] = [];
+  models: CarModelGetByManufacturerResponse[] = [];
   bodyTypes: BodyTypeGetAllResponse[] = [];
-  cars: CarGetAllResponse[] = [];
+  cars: CarWithAdvertisement[] = [];
+  currentCar: CarGetByIdResponse | null = null;
+  currentYear: number = new Date().getFullYear();
 
-  advertisement: AdvertGetByIdResponse = {
+  advertisement: Advertisement = {
     id: 0,
     title: '',
     description: '',
@@ -112,16 +196,9 @@ export class AdvertisementsEditComponent implements OnInit {
     modelID: 0
   };
 
-  readonly fuelTypes = Object.entries(FuelType)
-    .filter(([key, value]) => typeof value === 'number')
-    .map(([key, value]) => value as FuelType);
-
-  readonly transmissionTypes = Object.entries(TransmissionType)
-    .filter(([key, value]) => typeof value === 'number')
-    .map(([key, value]) => value as TransmissionType);
-
-  readonly conditions = Object.values(VehicleCondition)
-    .filter(value => typeof value === 'string');
+  readonly fuelTypes = Object.values(FuelType).filter(value => typeof value === 'number') as FuelType[];
+  readonly transmissionTypes = Object.values(TransmissionType).filter(value => typeof value === 'number') as TransmissionType[];
+  readonly conditions = Object.values(VehicleCondition).filter(value => typeof value === 'string');
 
   constructor(
     private route: ActivatedRoute,
@@ -130,31 +207,41 @@ export class AdvertisementsEditComponent implements OnInit {
     private advertisementUpdateService: AdvertisementUpdateOrInsertEndpointService,
     private carGetAllService: CarGetAllEndpointService,
     private carUpdateService: CarUpdateOrInsertEndpointService,
+    private carGetByIdService: CarGetByIdEndpointService,
     private carImageSetPrimaryService: CarImageSetPrimaryEndpointService,
     private carImageDeleteService: CarImageDeleteEndpointService,
     private cityService: CityGetAll1EndpointService,
-    private modelService: CarModelGetAllEndpointService,
-    private bodyTypeService: BodyTypeGetAllEndpointService
+    private bodyTypeService: BodyTypeGetAllEndpointService,
+    private advertisementGetAllService: AdvertisementGetAllEndpointService,
+    private manufacturerService: ManufacturerGetAllEndpointService,
+    private modelService: CarModelGetByManufacturerEndpointService
   ) { }
 
   ngOnInit(): void {
+    const idParam = this.route.snapshot.paramMap.get('id');
+    this.advertisementId = idParam ? Number(idParam) : 0;
+
+    if (this.advertisementId === 0) {
+      const defaultDate = new Date();
+      defaultDate.setMonth(defaultDate.getMonth() + 1);
+      defaultDate.setHours(0, 0, 0, 0);
+      this.advertisement.expirationDate = defaultDate;
+      this.advertisement.condition = VehicleCondition[VehicleCondition.Used] as string;
+    }
+
     this.loadInitialData();
   }
 
   private async loadInitialData(): Promise<void> {
     try {
-      // Load all reference data in parallel
       await Promise.all([
         this.loadCars(),
         this.loadCities(),
-        this.loadModels(),
-        this.loadBodyTypes()
+        this.loadBodyTypes(),
+        this.loadManufacturers()
       ]);
 
-      // Load advertisement data if editing
-      const idParam = this.route.snapshot.paramMap.get('id');
-      if (idParam) {
-        this.advertisementId = Number(idParam);
+      if (this.advertisementId) {
         await this.loadAdvertisementData();
       }
     } catch (error) {
@@ -165,12 +252,45 @@ export class AdvertisementsEditComponent implements OnInit {
   private async loadAdvertisementData(): Promise<void> {
     try {
       this.loading.advertisement = true;
+
+      if (this.cities.length === 0) {
+        await this.loadCities();
+      }
+
       const data = await this.advertisementGetByIdService
         .handleAsync(this.advertisementId)
         .toPromise();
+
       if (data) {
-        this.advertisement = data;
+        this.advertisement = {
+          ...this.advertisement,
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          condition: this.getConditionString(data.condition),
+          price: data.price,
+          listingDate: new Date(data.listingDate),
+          expirationDate: data.expirationDate ? new Date(data.expirationDate) : undefined,
+          viewCount: data.viewCount,
+          status: data.status,
+          carId: data.carID,
+          carName: data.carName,
+          userId: data.userID,
+          userName: data.userName,
+          images: data.images || []
+
+        };
+
+        if (data.carID) {
+          await this.loadCarDetails(data.carID);
+        }
+
         console.log('Loaded advertisement:', this.advertisement);
+        console.log('Formatted date:', this.formatDateForInput(this.advertisement.expirationDate));
+
+        if (this.advertisement.carId) {
+          await this.loadCarDetails(this.advertisement.carId);
+        }
       }
     } catch (error) {
       this.handleError('Error loading advertisement data', error);
@@ -179,30 +299,210 @@ export class AdvertisementsEditComponent implements OnInit {
     }
   }
 
+  private async loadCarDetails(carId: number): Promise<void> {
+    try {
+      const carData = await this.carGetByIdService.handleAsync(carId).toPromise();
+      console.log('Loaded car data:', carData);
+
+      if (carData && 'location' in carData) {  // Check if location exists
+        const defaultCar = this.initializeCurrentCar();
+
+        this.currentCar = {
+          id: carData.id,
+          name: carData.name,
+          year: carData.year,
+          engineCapacity: carData.engineCapacity,
+          fuelType: carData.fuelType,
+          transmission: carData.transmission,
+          doors: carData.doors,
+          fuelConsumption: carData.fuelConsumption,
+          mileage: carData.mileage,
+          color: carData.color,
+          hasServiceHistory: carData.hasServiceHistory,
+          bodyID: carData.bodyType?.id || defaultCar.bodyID,
+          cityID: (carData as any).location?.cityID || defaultCar.cityID,  // Cast to any to access location
+          model: {
+            id: carData.model?.id ?? defaultCar.model.id,
+            name: carData.model?.name ?? defaultCar.model.name,
+            manufacturer: {
+              id: carData.model?.manufacturer?.id ?? 0,
+              name: carData.model?.manufacturer?.name ?? ''
+            }
+          }
+        };
+
+        // Add debug logging
+        console.log('Location from car data:', (carData as any).location);
+        console.log('City ID from location:', (carData as any).location?.cityID);
+        console.log('Set currentCar:', this.currentCar);
+
+        this.advertisement.carName = this.currentCar.name;
+
+        if (this.currentCar.model.manufacturer?.id) {
+          this.selectedManufacturerId = this.currentCar.model.manufacturer.id;
+          await this.loadModels(this.selectedManufacturerId);
+        }
+      }
+    } catch (error) {
+      this.handleError('Error loading car details', error);
+      this.currentCar = this.initializeCurrentCar();
+    }
+  }
+
+  private initializeCurrentCar(): CarGetByIdResponse {
+    return {
+      id: 0,
+      name: '',
+      year: new Date().getFullYear(),
+      engineCapacity: 0,
+      fuelType: FuelType.Petrol,
+      transmission: TransmissionType.Manual,
+      doors: 4,
+      fuelConsumption: 0,
+      mileage: 0,
+      color: '',
+      hasServiceHistory: false,
+      bodyID: 0,
+      cityID: 0,
+      model: {
+        id: 0,
+        name: '',
+        manufacturer: {
+          id: 0,
+          name: ''
+        }
+      }
+    };
+  }
+
+  async updateCarDetails(): Promise<void> {
+    try {
+      if (!this.currentCar || !this.validateCarDetails()) {
+        return;
+      }
+
+      this.loading.saving = true;
+      this.errorMessage = '';
+
+      const carUpdateRequest: CarUpdateOrInsertRequest = {
+        id: this.currentCar.id, // Add ID for update
+        name: this.currentCar.name,
+        year: this.currentCar.year,
+        engineCapacity: this.currentCar.engineCapacity,
+        fuelType: this.currentCar.fuelType,
+        transmission: this.currentCar.transmission,
+        doors: this.currentCar.doors,
+        fuelConsumption: this.currentCar.fuelConsumption,
+        mileage: this.currentCar.mileage,
+        color: this.currentCar.color,
+        hasServiceHistory: this.currentCar.hasServiceHistory,
+        bodyID: this.currentCar.bodyID,
+        cityID: this.currentCar.cityID,
+        modelID: this.currentCar.model?.id || 0
+      };
+
+      const response = await this.carUpdateService.handleAsync(carUpdateRequest).toPromise();
+
+      if (response) {
+        // Reload car details to get updated data
+        await this.loadCarDetails(this.currentCar.id);
+        this.errorMessage = 'Car details updated successfully';
+      }
+    } catch (error) {
+      this.handleError('Error updating car details', error);
+    } finally {
+      this.loading.saving = false;
+    }
+  }
+
+  private validateCarDetails(): boolean {
+    if (!this.currentCar || this.advertisementId === 0) {
+      return true; // Skip validation if no car is being edited or it's a new advertisement
+    }
+
+    const validations = [
+      { condition: !this.currentCar.name?.trim(), message: 'Please enter a car name' },
+      { condition: !this.currentCar.year || this.currentCar.year < 1900 || this.currentCar.year > this.currentYear,
+        message: 'Please enter a valid year' },
+      { condition: !this.currentCar.engineCapacity || this.currentCar.engineCapacity <= 0,
+        message: 'Please enter a valid engine capacity' },
+      { condition: this.currentCar.fuelType === undefined,
+        message: 'Please select a fuel type' },
+      { condition: this.currentCar.transmission === undefined,
+        message: 'Please select a transmission type' },
+      { condition: !this.currentCar.model?.id,
+        message: 'Please select a model' },
+      { condition: !this.currentCar.bodyID,
+        message: 'Please select a body type' },
+      { condition: !this.currentCar.cityID,
+        message: 'Please select a city' }
+    ];
+
+    for (const validation of validations) {
+      if (validation.condition) {
+        this.errorMessage = validation.message;
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private async loadManufacturers(): Promise<void> {
+    try {
+      const data = await this.manufacturerService.handleAsync().toPromise();
+      if (data) {
+        this.manufacturers = data;
+      }
+    } catch (error) {
+      this.handleError('Error loading manufacturers', error);
+    }
+  }
+
   private async loadCars(): Promise<void> {
     try {
       this.loading.cars = true;
-      const request: MyPagedRequest = {
+
+      const carsRequest: CarGetAllRequest = {
         pageNumber: 1,
-        pageSize: 100
+        pageSize: 1000
       };
 
-      console.log('Requesting cars with:', request);
-      const response = await this.carGetAllService
-        .handleAsync(request)
-        .toPromise() as CarPagedResponse;
+      const advertsRequest: AdvertGetAllRequest = {
+        pageNumber: 1,
+        pageSize: 1000
+      };
 
-      console.log('Car service response:', response);
+      const [carsResponse, advertsResponse] = await Promise.all([
+        this.carGetAllService.handleAsync(carsRequest).toPromise(),
+        this.advertisementGetAllService.handleAsync(advertsRequest).toPromise()
+      ]);
 
-      if (response?.dataItems && Array.isArray(response.dataItems)) {
-        this.cars = response.dataItems;
-        console.log('Successfully loaded cars:', this.cars);
+      const carsData = (carsResponse as any)?.dataItems || [];
+
+      if (Array.isArray(carsData) && carsData.length > 0) {
+        const usedCarIds = new Set(
+          advertsResponse?.dataItems
+            ?.filter((ad: AdvertGetAllResponse) => ad.id !== this.advertisementId)
+            ?.map((ad: AdvertGetAllResponse) => {
+              const car = carsData.find((c: CarGetAllResponse) =>
+                c.name === ad.carName
+              );
+              return car?.id;
+            })
+            .filter((id: number | undefined): id is number => id !== undefined)
+        );
+
+        this.cars = carsData
+          .map((car: CarGetAllResponse): CarWithAdvertisement => ({
+            ...car,
+            isInUse: usedCarIds.has(car.id)
+          }))
+          .filter((car: CarWithAdvertisement): boolean => !car.isInUse || (this.advertisement?.carName === car.name));
       } else {
-        console.warn('Invalid cars response format:', response);
         this.cars = [];
       }
     } catch (error) {
-      console.error('Error in loadCars:', error);
       this.handleError('Error loading cars', error);
       this.cars = [];
     } finally {
@@ -216,7 +516,6 @@ export class AdvertisementsEditComponent implements OnInit {
       const data = await this.cityService.handleAsync().toPromise();
       if (data) {
         this.cities = data;
-        console.log('Loaded cities:', this.cities);
       }
     } catch (error) {
       this.handleError('Error loading cities', error);
@@ -225,13 +524,12 @@ export class AdvertisementsEditComponent implements OnInit {
     }
   }
 
-  private async loadModels(): Promise<void> {
+  private async loadModels(manufacturerId: number): Promise<void> {
     try {
       this.loading.models = true;
-      const data = await this.modelService.handleAsync().toPromise();
+      const data = await this.modelService.handleAsync(manufacturerId).toPromise();
       if (data) {
         this.models = data;
-        console.log('Loaded models:', this.models);
       }
     } catch (error) {
       this.handleError('Error loading models', error);
@@ -246,7 +544,6 @@ export class AdvertisementsEditComponent implements OnInit {
       const data = await this.bodyTypeService.handleAsync().toPromise();
       if (data) {
         this.bodyTypes = data;
-        console.log('Loaded body types:', this.bodyTypes);
       }
     } catch (error) {
       this.handleError('Error loading body types', error);
@@ -278,26 +575,64 @@ export class AdvertisementsEditComponent implements OnInit {
   private validateNewCar(): boolean {
     if (!this.isNewCar) return true;
 
-    const requiredFields = [
-      { field: this.newCar.name, name: 'Car Name' },
-      { field: this.newCar.year, name: 'Year' },
-      { field: this.newCar.engineCapacity, name: 'Engine Capacity' },
-      { field: this.newCar.fuelType, name: 'Fuel Type' },
-      { field: this.newCar.transmission, name: 'Transmission' },
-      { field: this.newCar.doors, name: 'Doors' },
-      { field: this.newCar.fuelConsumption, name: 'Fuel Consumption' },
-      { field: this.newCar.mileage, name: 'Mileage' },
-      { field: this.newCar.color, name: 'Color' },
-      { field: this.newCar.bodyID, name: 'Body Type' },
-      { field: this.newCar.cityID, name: 'City' },
-      { field: this.newCar.modelID, name: 'Model' }
-    ];
+    if (!this.newCar.name?.trim()) {
+      this.errorMessage = 'Please enter a car name';
+      return false;
+    }
 
-    for (const { field, name } of requiredFields) {
-      if (field === undefined || field === null || field === '' || field === 0) {
-        this.errorMessage = `Please fill in the ${name} field`;
-        return false;
-      }
+    if (!this.newCar.year || this.newCar.year < 1900 || this.newCar.year > new Date().getFullYear() + 1) {
+      this.errorMessage = 'Please enter a valid year';
+      return false;
+    }
+
+    if (!this.newCar.engineCapacity || this.newCar.engineCapacity <= 0 || this.newCar.engineCapacity > 10) {
+      this.errorMessage = 'Please enter a valid engine capacity (0-10L)';
+      return false;
+    }
+
+    if (this.newCar.fuelType === undefined) {
+      this.errorMessage = 'Please select a fuel type';
+      return false;
+    }
+
+    if (this.newCar.transmission === undefined) {
+      this.errorMessage = 'Please select a transmission type';
+      return false;
+    }
+
+    if (!this.newCar.doors || this.newCar.doors < 2 || this.newCar.doors > 8) {
+      this.errorMessage = 'Please enter a valid number of doors (2-8)';
+      return false;
+    }
+
+    if (!this.newCar.fuelConsumption || this.newCar.fuelConsumption <= 0 || this.newCar.fuelConsumption > 30) {
+      this.errorMessage = 'Please enter a valid fuel consumption (0-30 L/100km)';
+      return false;
+    }
+
+    if (!this.newCar.mileage || this.newCar.mileage < 0) {
+      this.errorMessage = 'Please enter a valid mileage';
+      return false;
+    }
+
+    if (!this.newCar.color?.trim()) {
+      this.errorMessage = 'Please enter a color';
+      return false;
+    }
+
+    if (!this.newCar.bodyID) {
+      this.errorMessage = 'Please select a body type';
+      return false;
+    }
+
+    if (!this.newCar.cityID) {
+      this.errorMessage = 'Please select a city';
+      return false;
+    }
+
+    if (!this.newCar.modelID) {
+      this.errorMessage = 'Please select a model';
+      return false;
     }
 
     return true;
@@ -305,7 +640,6 @@ export class AdvertisementsEditComponent implements OnInit {
 
   async updateAdvertisement(): Promise<void> {
     try {
-      // Validate both advertisement and car if necessary
       if (!this.validateAdvertisement() || !this.validateNewCar()) {
         return;
       }
@@ -315,38 +649,54 @@ export class AdvertisementsEditComponent implements OnInit {
 
       let carId = this.advertisement.carId;
 
+      // Update existing car details if editing an advertisement
+      if (this.advertisementId !== 0 && this.currentCar) {
+        const carUpdateRequest: CarUpdateOrInsertRequest = {
+          id: this.currentCar.id,
+          name: this.currentCar.name,
+          year: this.currentCar.year,
+          engineCapacity: this.currentCar.engineCapacity,
+          fuelType: this.currentCar.fuelType,
+          transmission: this.currentCar.transmission,
+          doors: this.currentCar.doors,
+          fuelConsumption: this.currentCar.fuelConsumption,
+          mileage: this.currentCar.mileage,
+          color: this.currentCar.color,
+          hasServiceHistory: this.currentCar.hasServiceHistory,
+          bodyID: this.currentCar.bodyID,
+          cityID: this.currentCar.cityID,
+          modelID: this.currentCar.model?.id ?? 0
+        };
+
+        const carResponse = await this.carUpdateService.handleAsync(carUpdateRequest).toPromise();
+        if (carResponse?.id) {
+          carId = carResponse.id;
+        } else {
+          throw new Error('Failed to update car details');
+        }
+      }
+
       // Create new car if needed
       if (this.isNewCar) {
-        console.log('Creating new car:', this.newCar);
-        const newCarResponse = await this.carUpdateService
-          .handleAsync(this.newCar)
-          .toPromise();
-
+        const newCarResponse = await this.carUpdateService.handleAsync(this.newCar).toPromise();
         if (newCarResponse?.id) {
           carId = newCarResponse.id;
-          console.log('New car created with ID:', carId);
         } else {
           throw new Error('Failed to create new car');
         }
       }
 
-      // Prepare and submit advertisement
       const advertRequest: AdvertUpdateOrInsertRequest = {
         ID: this.advertisementId || undefined,
         Title: this.advertisement.title.trim(),
-        Description: this.advertisement.description?.trim(),
+        Description: this.advertisement.description?.trim() ?? '',
         Condition: Number(VehicleCondition[this.advertisement.condition as keyof typeof VehicleCondition]),
         Price: this.advertisement.price,
         CarID: carId,
         ExpirationDate: this.advertisement.expirationDate
       };
 
-      console.log('Submitting advertisement:', advertRequest);
-
-      await this.advertisementUpdateService
-        .handleAsync(advertRequest)
-        .toPromise();
-
+      await this.advertisementUpdateService.handleAsync(advertRequest).toPromise();
       this.router.navigate(['/admin/advertisements']);
     } catch (error) {
       this.handleError('Error saving advertisement', error);
@@ -355,15 +705,41 @@ export class AdvertisementsEditComponent implements OnInit {
     }
   }
 
+  private handleError(message: string, error: any): void {
+    console.error(message, error);
+    this.errorMessage = `${message}: ${
+      error?.error?.message || error?.message || 'Unknown error occurred'
+    }`;
+  }
+
+  private getConditionString(condition: string | number): string {
+    const conditionNumber = Number(condition);
+    if (isNaN(conditionNumber) || !VehicleCondition[conditionNumber]) {
+      return VehicleCondition[VehicleCondition.Used];
+    }
+    return VehicleCondition[conditionNumber];
+  }
+
+  onExpirationDateChange(dateStr: string): void {
+    this.advertisement.expirationDate = dateStr ? new Date(dateStr) : undefined;
+  }
+
+  // Function to format date for input
+  formatDateForInput(date: Date | undefined): string {
+    if (!date) return '';
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Function to toggle between new and existing car modes
   toggleCarMode(): void {
     this.isNewCar = !this.isNewCar;
-    console.log('Car mode toggled:', this.isNewCar ? 'New Car' : 'Existing Car');
-
     if (!this.isNewCar) {
       this.advertisement.carId = 0;
-      console.log('Available cars:', this.cars);
     } else {
-      // Reset new car form
       this.newCar = {
         name: '',
         year: new Date().getFullYear(),
@@ -383,6 +759,23 @@ export class AdvertisementsEditComponent implements OnInit {
     this.errorMessage = '';
   }
 
+  // Function to handle manufacturer change
+  async onManufacturerChange(manufacturerId: number): Promise<void> {
+    if (!manufacturerId) {
+      this.models = [];
+      this.newCar.modelID = 0;
+      return;
+    }
+
+    try {
+      await this.loadModels(manufacturerId);
+      this.newCar.modelID = 0; // Reset model selection
+    } catch (error) {
+      this.handleError('Error loading models', error);
+    }
+  }
+
+  // Function to set primary image
   setPrimaryImage(imageId: number): void {
     if (this.loading.saving) return;
 
@@ -391,7 +784,6 @@ export class AdvertisementsEditComponent implements OnInit {
 
     this.carImageSetPrimaryService.handleAsync({ imageId }).subscribe({
       next: () => {
-        console.log(`Image ${imageId} set as primary`);
         this.loadAdvertisementData();
       },
       error: (error) => this.handleError('Error setting primary image', error),
@@ -401,6 +793,7 @@ export class AdvertisementsEditComponent implements OnInit {
     });
   }
 
+  // Function to delete an image
   deleteImage(imageId: number): void {
     if (this.loading.saving) return;
 
@@ -413,10 +806,8 @@ export class AdvertisementsEditComponent implements OnInit {
 
     this.carImageDeleteService.handleAsync(imageId).subscribe({
       next: () => {
-        console.log(`Image ${imageId} deleted`);
         if (this.advertisement.images) {
-          this.advertisement.images = this.advertisement.images
-            .filter(img => img.id !== imageId);
+          this.advertisement.images = this.advertisement.images.filter(img => img.id !== imageId);
         }
       },
       error: (error) => this.handleError('Error deleting image', error),
@@ -426,58 +817,18 @@ export class AdvertisementsEditComponent implements OnInit {
     });
   }
 
-  canSubmitForm(): boolean {
-    if (this.isLoading) {
-      return false;
-    }
-
-    const hasRequiredAdvertFields =
-      this.advertisement.title?.trim() &&
-      this.advertisement.price > 0 &&
-      this.advertisement.condition;
-
-    if (!hasRequiredAdvertFields) {
-      return false;
-    }
-
-    if (this.isNewCar) {
-      return this.validateNewCar();
-    } else {
-      return this.advertisement.carId > 0;
-    }
+  getFuelTypeName(fuelType: FuelType | undefined): string {
+    if (fuelType === undefined) return '';
+    return FuelType[fuelType] || 'Unknown';
   }
 
-  private handleError(message: string, error: any): void {
-    console.error(message, error);
-    this.errorMessage = `${message}: ${
-      error?.error?.message || // API error message
-      error?.message || // JavaScript error message
-      'Unknown error occurred'
-    }`;
+  getTransmissionTypeName(transmissionType: TransmissionType | undefined): string {
+    if (transmissionType === undefined) return '';
+    return TransmissionType[transmissionType] || 'Unknown';
   }
 
-  // Helper methods for the template
-  getCarName(carId: number): string {
-    return this.cars.find(car => car.id === carId)?.name || '';
-  }
-
-  getCityName(cityId: number): string {
-    return this.cities.find(city => city.id === cityId)?.name || '';
-  }
-
-  getModelName(modelId: number): string {
-    return this.models.find(model => model.id === modelId)?.name || '';
-  }
-
-  getBodyTypeName(bodyTypeId: number): string {
-    return this.bodyTypes.find(type => type.id === bodyTypeId)?.name || '';
-  }
-
-  getFuelTypeName(fuelType: FuelType): string {
-    return FuelType[fuelType] as string;
-  }
-
-  getTransmissionTypeName(transmission: TransmissionType): string {
-    return TransmissionType[transmission] as string;
+  getMileageDisplay(mileage: number | undefined): string {
+    if (mileage === undefined) return '';
+    return `${mileage} km`;
   }
 }

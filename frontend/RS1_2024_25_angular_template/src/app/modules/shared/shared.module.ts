@@ -14,12 +14,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { HeaderComponent } from './components/header/header.component';
 import { FooterComponent } from './components/footer/footer.component';
 import {UnauthorizedComponent} from './unauthorized/unauthorized.component';
+import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
+import {MatDialogActions, MatDialogContent, MatDialogTitle} from '@angular/material/dialog';
 
 @NgModule({
   declarations: [
     UnauthorizedComponent,
     HeaderComponent,
-    FooterComponent
+    FooterComponent,
+    ConfirmDialogComponent
   ],
   imports: [
     CommonModule,
@@ -30,7 +33,10 @@ import {UnauthorizedComponent} from './unauthorized/unauthorized.component';
     MatIconModule,
     MatMenuModule,
     MatInputModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    MatDialogContent,
+    MatDialogActions,
+    MatDialogTitle
   ],
   exports: [
     UnauthorizedComponent,

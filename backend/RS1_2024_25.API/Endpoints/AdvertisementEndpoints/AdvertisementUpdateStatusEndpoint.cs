@@ -7,7 +7,6 @@ using static RS1_2024_25.API.Endpoints.AdvertisementEndpoints.AdvertisementUpdat
 
 namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
 {
-    // Endpoints/AdvertisementEndpoints/AdvertisementUpdateStatusEndpoint.cs
     [MyAuthorization(isAdmin: true)]
     [Route("advertisements")]
     public class AdvertisementUpdateStatusEndpoint(

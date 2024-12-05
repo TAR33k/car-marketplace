@@ -1,0 +1,29 @@
+<div class="dialog-container">
+  <h2 mat-dialog-title>
+    <mat-icon class="warning-icon">warning</mat-icon>
+    Confirmation Required
+  </h2>
+
+  <mat-dialog-content>
+    <p class="dialog-message">{{ data.message }}</p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button
+            (click)="onCancel()"
+            class="cancel-button"
+            [ngClass]="{'button-hover': isHovered}"
+            (mouseenter)="isHovered = true"
+            (mouseleave)="isHovered = false">
+      <mat-icon>close</mat-icon>
+      Cancel
+    </button>
+    <button mat-raised-button
+            color="primary"
+            (click)="onConfirm()"
+            class="confirm-button">
+      <mat-icon>check</mat-icon>
+      Confirm
+    </button>
+  </mat-dialog-actions>
+</div>

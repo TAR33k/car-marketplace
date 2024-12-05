@@ -109,3 +109,49 @@ button[type="button"] {
   font-size: 0.9em;
   padding: 4px 8px;
 }
+
+.form-group small {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.text-muted {
+  color: #6c757d;
+}
+
+.text-info {
+  color: #17a2b8;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.image-item {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.form-actions {
+  border-top: 1px solid #ddd;
+  padding-top: 1rem;
+  margin-top: 2rem;
+}
+
+.section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.car-details {
+  background-color: #fff;
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}

@@ -17,6 +17,6 @@ export class AdvertisementUpdateStatusEndpointService implements MyBaseEndpointA
   constructor(private httpClient: HttpClient) { }
 
   handleAsync(request: AdvertStatusUpdateRequest) {
-    return this.httpClient.put<void>(`${this.apiUrl}/${request.advertisementId}/status`, { newStatusId: request.newStatusId });
+    return this.httpClient.put<void>(`${this.apiUrl}/${request.advertisementId}/status`, request);
   }
 }

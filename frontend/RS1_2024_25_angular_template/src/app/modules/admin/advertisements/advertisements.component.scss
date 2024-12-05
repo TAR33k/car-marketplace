@@ -1,0 +1,319 @@
+// Import and Variables
+@import '../admin-styles.scss';
+
+// Core Variables
+$warning-color: #ff9800;
+$text-muted: #888;
+$text-primary: #333;
+$transition-duration: 0.2s;
+$container-max-width: 1200px;
+$spacing-unit: 8px;
+$border-radius: 8px;
+
+// Status Colors Map
+$status-colors: (
+  'active': #4caf50,
+  'pending': #ff9800,
+  'sold': #2196f3,
+  'expired': #f44336,
+  'rejected': #9e9e9e
+);
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin card-shadow {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: $border-radius;
+}
+
+@mixin hover-transition {
+  transition: all $transition-duration ease-in-out;
+}
+
+@mixin grid-layout($columns: 2) {
+  display: grid;
+  grid-template-columns: repeat($columns, 1fr);
+  gap: $spacing-unit * 2;
+}
+
+// Layout Styles
+.container {
+  max-width: $container-max-width;
+  margin: 0 auto;
+  padding: $spacing-unit * 2.5;
+}
+
+// Header Styles
+.page-header {
+  @include flex-center;
+  justify-content: space-between;
+  margin-bottom: $spacing-unit * 2.5;
+
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    color: $text-primary;
+    font-weight: 500;
+  }
+
+  button {
+    @include flex-center;
+    gap: $spacing-unit;
+    @include hover-transition;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// Filter Section
+.filters-card {
+  @include card-shadow;
+  margin-bottom: $spacing-unit * 2.5;
+  background-color: white;
+
+  .filters-grid {
+    @include grid-layout(4);
+    padding: $spacing-unit * 2;
+
+    .search-field {
+      grid-column: 1 / -1;
+    }
+
+    .date-range,
+    .price-range,
+    .status-condition-container {
+      @include grid-layout;
+      grid-column: span 2;
+    }
+
+    .filter-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: $spacing-unit;
+    }
+  }
+}
+
+// Table Styles
+.table-card {
+  @include card-shadow;
+  margin-top: $spacing-unit * 2.5;
+  background-color: white;
+  overflow: hidden;
+}
+
+.table-container {
+  position: relative;
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+
+    // Header Styles
+    th.mat-header-cell {
+      font-weight: 600;
+      color: $text-secondary;
+      white-space: nowrap;
+      padding: $spacing-unit * 2;
+      background-color: #f8f9fa;
+      border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    // Cell Styles
+    td.mat-cell {
+      padding: $spacing-unit * 2;
+      vertical-align: middle;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      transition: background-color 0.2s ease;
+    }
+
+    // Row Hover Effect
+    .mat-row {
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    // Title Column
+    .ad-title {
+      @include flex-center;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: calc($spacing-unit / 2);
+
+      .primary-text {
+        font-weight: 600;
+        color: $text-primary;
+        font-size: 15px;
+      }
+
+      .secondary-text {
+        color: $text-muted;
+        font-size: 12px;
+        background: rgba(0, 0, 0, 0.05);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+    }
+
+    // Car Info Column
+    .car-info {
+      @include flex-center;
+      gap: $spacing-unit;
+
+      .car-thumbnail {
+        width: 48px;
+        height: 48px;
+        border-radius: $border-radius;
+        object-fit: cover;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      span {
+        font-weight: 500;
+        color: $text-primary;
+      }
+    }
+
+    // Price Column
+    .price-tag {
+      font-weight: 600;
+      color: #2c3e50;
+      background: rgba(44, 62, 80, 0.05);
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 14px;
+    }
+
+    // Status Column
+    .status-container {
+      min-width: 140px;
+
+      .status-chip {
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        @each $status, $color in $status-colors {
+          &.status-#{$status} {
+            background-color: $color;
+
+            &:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+            }
+          }
+        }
+      }
+    }
+
+    // Views Column
+    .views-count {
+      @include flex-center;
+      gap: $spacing-unit;
+      color: $text-muted;
+
+      mat-icon {
+        font-size: 18px;
+        color: inherit;
+      }
+
+      span {
+        font-weight: 500;
+      }
+    }
+
+    // Actions Column
+    .action-buttons {
+      @include flex-center;
+      gap: $spacing-unit;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+
+      button {
+        mat-icon {
+          font-size: 18px;
+        }
+
+        &:hover {
+          transform: translateY(-1px);
+        }
+      }
+    }
+
+    tr:hover {
+      .action-buttons {
+        opacity: 1;
+      }
+    }
+  }
+
+  // No Data State
+  .no-data {
+    padding: $spacing-unit * 4;
+    text-align: center;
+
+    .no-data-content {
+      @include flex-center;
+      flex-direction: column;
+      gap: $spacing-unit * 2;
+
+      mat-icon {
+        font-size: 48px;
+        color: $text-muted;
+        opacity: 0.5;
+      }
+
+      h3 {
+        margin: 0;
+        color: $text-primary;
+        font-weight: 500;
+      }
+
+      p {
+        color: $text-muted;
+        margin: 0;
+      }
+
+      button {
+        margin-top: $spacing-unit * 2;
+      }
+    }
+  }
+}
+
+// Paginator Styles
+.mat-paginator {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: #fafafa;
+}
+
+// Loading State
+.mat-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}

@@ -1,0 +1,70 @@
+@import "../../admin-styles.scss";
+
+.container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+mat-card {
+  margin-bottom: 2rem;
+}
+
+mat-card-header {
+  margin-bottom: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+mat-card-actions {
+  padding: 1rem;
+  margin: 0;
+  gap: 1rem;
+}
+
+button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .container {
+    margin: 1rem auto;
+  }
+
+  mat-card-actions {
+    flex-direction: column-reverse;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
+// Form validation styles
+.ng-touched.ng-invalid {
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+// High contrast mode support
+@media (forced-colors: active) {
+  mat-form-field {
+    forced-color-adjust: none;
+  }
+}

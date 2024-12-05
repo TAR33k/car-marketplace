@@ -156,3 +156,44 @@ body {
     }
   }
 }
+
+.snackbar-notification {
+  &.mat-snack-bar-container {
+    margin-bottom: 20px !important;
+  }
+}
+
+.custom-select-overlay {
+  position: relative !important;
+
+  .mat-mdc-select-panel {
+    position: relative !important;
+    min-width: 100% !important;
+    transform-origin: center !important;
+    margin: 0 !important;
+  }
+
+  &.mat-mdc-select-panel-above {
+    transform-origin: bottom center !important;
+  }
+
+  &.mat-mdc-select-panel-below {
+    transform-origin: top center !important;
+  }
+}
+
+// Ensure proper z-indexing
+.cdk-overlay-container {
+  z-index: 1000;
+}
+
+.cdk-overlay-connected-position-bounding-box {
+  z-index: 1000;
+}
+
+// Prevent body scrolling when overlay is open
+.cdk-global-scrollblock {
+  position: fixed;
+  width: 100%;
+  overflow-y: scroll;
+}

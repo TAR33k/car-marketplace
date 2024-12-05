@@ -4,15 +4,25 @@ using RS1_2024_25.API.Helper.Api;
 using RS1_2024_25.API.Helper;
 using Microsoft.EntityFrameworkCore;
 using RS1_2024_25.API.Data.Enums;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Linq;
 using static RS1_2024_25.API.Endpoints.AdvertisementEndpoints.AdvertisementGetAllEndpoint;
 
 namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
 {
     [Route("advertisements")]
-    public class AdvertisementGetAllEndpoint(ApplicationDbContext db) : MyEndpointBaseAsync
-    .WithRequest<AdvertGetAllRequest>
-    .WithResult<MyPagedList<AdvertGetAllResponse>>
+    public class AdvertisementGetAllEndpoint : MyEndpointBaseAsync
+        .WithRequest<AdvertGetAllRequest>
+        .WithResult<MyPagedList<AdvertGetAllResponse>>
     {
+        private readonly ApplicationDbContext _db;
+
+        public AdvertisementGetAllEndpoint(ApplicationDbContext db)
+        {
+            _db = db;
+        }
+
         [HttpGet]
         public override async Task<MyPagedList<AdvertGetAllResponse>> HandleAsync(
             [FromQuery] AdvertGetAllRequest request,
@@ -28,18 +38,19 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                 };
             }
 
-            var query = db.Advertisements
+            var query = _db.Advertisements
                 .Include(a => a.Car)
                 .Include(a => a.Status)
                 .Include(a => a.User)
                 .AsQueryable();
 
-            // Only apply filters if they have values
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 query = query.Where(a =>
                     a.Title.Contains(request.SearchTerm) ||
-                    a.Description.Contains(request.SearchTerm));
+                    a.Car.Name.Contains(request.SearchTerm) ||
+                    a.Description.Contains(request.SearchTerm) ||
+                    (a.User.FirstName + " " + a.User.LastName).Contains(request.SearchTerm));
             }
 
             if (request.Condition.HasValue)
@@ -62,6 +73,16 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                 query = query.Where(a => a.StatusID == request.StatusID.Value);
             }
 
+            if (request.DateFrom.HasValue)
+            {
+                query = query.Where(a => a.ListingDate >= request.DateFrom.Value);
+            }
+
+            if (request.DateTo.HasValue)
+            {
+                query = query.Where(a => a.ListingDate <= request.DateTo.Value);
+            }
+
             var projectedQuery = query.Select(a => new AdvertGetAllResponse
             {
                 ID = a.ID,
@@ -72,6 +93,7 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                 ExpirationDate = a.ExpirationDate,
                 ViewCount = a.ViewCount,
                 Status = a.Status.Name,
+                StatusID = a.StatusID,
                 CarName = a.Car.Name,
                 UserName = $"{a.User.FirstName} {a.User.LastName}",
                 PrimaryImageUrl = a.Images
@@ -91,6 +113,8 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
             public decimal? MinPrice { get; set; }
             public decimal? MaxPrice { get; set; }
             public int? StatusID { get; set; }
+            public DateTime? DateFrom { get; set; }
+            public DateTime? DateTo { get; set; }
         }
 
         public class AdvertGetAllResponse
@@ -103,6 +127,7 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
             public DateTime? ExpirationDate { get; set; }
             public int ViewCount { get; set; }
             public string Status { get; set; }
+            public int StatusID { get; set; }
             public string CarName { get; set; }
             public string UserName { get; set; }
             public string? PrimaryImageUrl { get; set; }

@@ -1,107 +1,171 @@
-import { Component, OnInit } from '@angular/core';
-import {
-  CarDeleteEndpointService
-} from '../../../../../endpoints/car-endpoints/car-delete-endpoint.service';
-import {
-  CarGetAllEndpointService,
-  CarGetAllResponse,
-  CarGetAllRequest
-} from '../../../../../endpoints/car-endpoints/car-get-all-endpoint.service';
-import { FuelType, TransmissionType } from '../../../../../services/car-services/car-enums';
-import Swal from 'sweetalert2';
-import {MyPagedList} from '../../../../../helper/my-paged-request';
+import {Component, OnInit, ViewChild, AfterViewInit, ElementRef} from '@angular/core';
 import { Router } from '@angular/router';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
+import { MatDialog } from '@angular/material/dialog';
+import { FormGroup, FormBuilder } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { CarDeleteEndpointService } from '../../../../../endpoints/car-endpoints/car-delete-endpoint.service';
+import { CarGetAllEndpointService, CarGetAllResponse, CarGetAllRequest } from '../../../../../endpoints/car-endpoints/car-get-all-endpoint.service';
+import { FuelType, TransmissionType } from '../../../../../services/car-services/car-enums';
+import { ConfirmDialogComponent } from '../../../../shared/confirm-dialog/confirm-dialog.component';
+import { NotificationService } from '../../../../../services/notification.service';
+import { MyPagedList } from '../../../../../helper/my-paged-request';
+import {ViewportScroller} from '@angular/common';
 
 @Component({
   selector: 'app-car-list',
   templateUrl: './car-list.component.html',
-  styleUrls: ['./car-list.component.css']
+  styleUrls: ['./car-list.component.scss']
 })
+export class CarListComponent implements OnInit, AfterViewInit {
+  displayedColumns: string[] = ['name', 'year', 'engine', 'fuelType', 'transmission', 'mileage', 'color', 'location', 'actions'];
+  dataSource = new MatTableDataSource<CarGetAllResponse>();
+  filterForm: FormGroup;
+  isLoading = false;
+  totalItems = 0;
+  pageSize = 10;
+  currentPage = 1;
 
-export class CarListComponent implements OnInit {
-  cars: CarGetAllResponse[] = [];
-  isLoading: boolean = false;
-  errorMessage: string = '';
-
-  // Pagination
-  currentPage: number = 1;
-  pageSize: number = 10;
-  totalItems: number = 0;
-  totalPages: number = 0;
-
-  // Enums for template
   readonly FuelType = FuelType;
   readonly TransmissionType = TransmissionType;
 
-  // Create enum options arrays with proper initialization
-  fuelTypeOptions: { value: number; label: string }[] = Object.entries(FuelType)
+  fuelTypeOptions = Object.entries(FuelType)
     .filter(([key, value]) => typeof value === 'number')
     .map(([key, value]) => ({
       value: value as number,
       label: key
     }));
 
-  transmissionTypeOptions: { value: number; label: string }[] = Object.entries(TransmissionType)
+  transmissionTypeOptions = Object.entries(TransmissionType)
     .filter(([key, value]) => typeof value === 'number')
     .map(([key, value]) => ({
       value: value as number,
       label: key
     }));
 
-  // Filters
-  filters: CarGetAllRequest = {
-    pageNumber: 1,
-    pageSize: 10,
-    searchTerm: '',
-    manufacturerId: undefined,
-    modelId: undefined,
-    minYear: undefined,
-    maxYear: undefined,
-    fuelType: undefined,
-    transmission: undefined,
-    minMileage: undefined,
-    maxMileage: undefined
-  };
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatPaginator, { read: ElementRef }) paginatorElement!: ElementRef;
+  @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
     private carService: CarGetAllEndpointService,
     private carDeleteService: CarDeleteEndpointService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private dialog: MatDialog,
+    private fb: FormBuilder,
+    private notificationService: NotificationService,
+    private viewportScroller: ViewportScroller
+  ) {
+    this.filterForm = this.initializeFilterForm();
+  }
 
   ngOnInit(): void {
+    this.setupFilterSubscription();
     this.loadCars();
   }
 
-  loadCars(): void {
+  ngAfterViewInit() {
+    if (this.paginator) {
+      this.paginator._intl.getRangeLabel = (page: number, pageSize: number, length: number) => {
+        if (length === 0 || pageSize === 0) {
+          return `0 of ${length}`;
+        }
+        length = Math.max(length, 0);
+        const startIndex = page * pageSize;
+        const endIndex = startIndex < length ?
+          Math.min(startIndex + pageSize, length) :
+          startIndex + pageSize;
+        return `${startIndex + 1} - ${endIndex} of ${length}`;
+      };
+    }
+  }
+
+  private initializeFilterForm(): FormGroup {
+    return this.fb.group({
+      searchTerm: [''],
+      minYear: [null],
+      maxYear: [null],
+      fuelType: [null],
+      transmission: [null],
+      minMileage: [null],
+      maxMileage: [null]
+    });
+  }
+
+  private setupFilterSubscription(): void {
+    if (this.filterForm) {
+      this.filterForm.valueChanges
+        .pipe(
+          debounceTime(300),
+          distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
+        )
+        .subscribe(() => {
+          if (this.paginator) {
+            this.paginator.firstPage();
+          }
+          this.loadCars();
+        });
+    }
+  }
+
+  loadCars(event?: PageEvent): void {
     this.isLoading = true;
-    this.errorMessage = '';
 
-    this.carService.handleAsync(this.filters).subscribe({
-      next: (response: MyPagedList<CarGetAllResponse>) => {
-        console.log('API Response:', response);
+    const fuelTypeValue = this.filterForm.get('fuelType')?.value;
+    const transmissionValue = this.filterForm.get('transmission')?.value;
+
+    const pageIndex = event?.pageIndex ?? (this.currentPage - 1);
+    const pageSize = event?.pageSize ?? this.pageSize;
+
+    const filters: CarGetAllRequest = {
+      pageNumber: event?.pageIndex !== undefined ? event.pageIndex + 1 : this.currentPage,
+      pageSize: event?.pageSize || this.pageSize,
+      searchTerm: this.filterForm.get('searchTerm')?.value || '',
+      manufacturerId: undefined,
+      modelId: undefined,
+      minYear: this.filterForm.get('minYear')?.value || null,
+      maxYear: this.filterForm.get('maxYear')?.value || null,
+      // Handle enum values specifically
+      fuelType: fuelTypeValue === null || fuelTypeValue === undefined ? null : fuelTypeValue,
+      transmission: transmissionValue === null || transmissionValue === undefined ? null : transmissionValue,
+      minMileage: this.filterForm.get('minMileage')?.value || null,
+      maxMileage: this.filterForm.get('maxMileage')?.value || null
+    };
+
+    // Modified cleanup to properly handle zero values
+    Object.keys(filters).forEach(key => {
+      const typedKey = key as keyof CarGetAllRequest;
+      const value = filters[typedKey];
+      // Only delete if the value is null or undefined, NOT if it's zero
+      if (value === undefined || value === null) {
+        delete filters[typedKey];
+      }
+    });
+
+    console.log('Final filters:', filters);
+
+    this.carService.handleAsync(filters).subscribe({
+      next: (response: any) => {
         if (response) {
-          // Use type assertion to handle the property name difference
-          const apiResponse = response as unknown as { dataItems: CarGetAllResponse[] };
-          this.cars = apiResponse.dataItems || [];
+          this.dataSource.data = response.dataItems || [];
           this.totalItems = response.totalCount;
-          this.totalPages = response.totalPages;
           this.currentPage = response.currentPage;
+          this.pageSize = pageSize;
 
-          console.log('Processed cars:', {
-            cars: this.cars,
-            totalItems: this.totalItems,
-            totalPages: this.totalPages,
-            currentPage: this.currentPage
-          });
+          if (this.paginator) {
+            this.paginator.length = this.totalItems;
+            this.paginator.pageIndex = this.currentPage - 1;
+            this.paginator.pageSize = this.pageSize;
+          }
         }
       },
       error: (error) => {
         console.error('Error loading cars:', error);
-        this.errorMessage = 'Failed to load cars. Please try again later.';
-        this.cars = [];
+        this.notificationService.notifyUserAction('Error loading cars');
+        this.dataSource.data = [];
         this.totalItems = 0;
-        this.totalPages = 0;
       },
       complete: () => {
         this.isLoading = false;
@@ -109,93 +173,65 @@ export class CarListComponent implements OnInit {
     });
   }
 
-  // Update the onPageChange method to use the correct page number
-  onPageChange(page: number): void {
-    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
-      this.currentPage = page;
-      this.filters.pageNumber = page;
-      this.loadCars();
-    }
-  }
-
-  // Update the clearFilters method to reset pagination
   clearFilters(): void {
-    this.filters = {
-      pageNumber: 1,
-      pageSize: this.pageSize,
-      searchTerm: '',
-      manufacturerId: undefined,
-      modelId: undefined,
-      minYear: undefined,
-      maxYear: undefined,
-      fuelType: undefined,
-      transmission: undefined,
-      minMileage: undefined,
-      maxMileage: undefined
-    };
-    this.currentPage = 1;
+    this.filterForm.reset();
+    if (this.paginator) {
+      this.paginator.firstPage();
+    }
     this.loadCars();
   }
 
-  onSearch(): void {
-    this.filters.pageNumber = 1; // Reset to first page when searching
-    this.loadCars();
+  editCar(id: number): void {
+    this.router.navigate(['/admin/cars/edit', id]);
   }
 
-  async deleteCar(id: number): Promise<void> {
-    // Using SweetAlert2 for better confirmation dialog (optional)
-    const result = await Swal.fire({
-      title: 'Delete Car',
-      text: 'Are you sure you want to delete this car?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc3545',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Yes, delete it!'
+  deleteCar(id: number): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: { message: 'Are you sure you want to delete this car?' }
     });
 
-    if (result.isConfirmed) {
-      this.isLoading = true;
-      this.carDeleteService.handleAsync(id).subscribe({
-        next: () => {
-          Swal.fire('Deleted!', 'The car has been deleted.', 'success');
-          this.loadCars();
-        },
-        error: (error) => {
-          console.error('Error deleting car:', error);
-          this.errorMessage = 'Failed to delete car. Please try again later.';
-          this.isLoading = false;
-        }
-      });
-    }
-  }
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.carDeleteService.handleAsync(id).subscribe({
+          next: () => {
+            this.notificationService.notifyUserAction('Car deleted successfully');
 
-  // Helper method for pagination range
-  getPaginationRange(): number[] {
-    const range = 2; // Show 2 pages before and after current page
-    let start = Math.max(1, this.currentPage - range);
-    let end = Math.min(this.totalPages, this.currentPage + range);
+            const itemsOnCurrentPage = this.dataSource.data.length;
+            if (itemsOnCurrentPage === 1 && this.currentPage > 1) {
+              this.currentPage--;
+            }
 
-    // Adjust range to always show 5 pages if possible
-    if (end - start + 1 < 5) {
-      if (start === 1) {
-        end = Math.min(5, this.totalPages);
-      } else if (end === this.totalPages) {
-        start = Math.max(1, this.totalPages - 4);
+            this.loadCars();
+          },
+          error: (error) => {
+            console.error('Error deleting car:', error);
+            if (error.error && error.error.includes('association between entity types')) {
+              this.notificationService.notifyUserAction(
+                'Cannot delete this car because it is linked to an advertisement'
+              );
+            } else {
+              this.notificationService.notifyUserAction('Error deleting car');
+            }
+          }
+        });
       }
-    }
-
-    return Array.from({length: end - start + 1}, (_, i) => start + i);
+    });
   }
 
   getFuelTypeBadgeClass(fuelType: FuelType): string {
     switch (fuelType) {
       case FuelType.Electric:
-        return 'bg-success';
+        return 'fuel-type-electric';
       case FuelType.Hybrid:
-        return 'bg-primary';
+        return 'fuel-type-hybrid';
+      case FuelType.Petrol:
+        return 'fuel-type-petrol';
+      case FuelType.Diesel:
+        return 'fuel-type-diesel';
+      case FuelType.LPG:
+        return 'fuel-type-lpg';
       default:
-        return 'bg-secondary';
+        return 'fuel-type-other';
     }
   }
 
@@ -204,20 +240,22 @@ export class CarListComponent implements OnInit {
       .find(([key, val]) => val === value)?.[0] || '';
   }
 
-  // Helper method for debounced search
-  private searchTimeout: any;
-  onSearchInput(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-    this.searchTimeout = setTimeout(() => {
-      this.onSearch();
-    }, 500);
-  }
+  onPageChange(event: PageEvent): void {
+    this.currentPage = event.pageIndex + 1;
+    this.pageSize = event.pageSize;
+    this.loadCars(event);
 
-  protected readonly Math = Math;
-
-  editCar(id: number) {
-    this.router.navigate(['/admin/cars/edit', id]);
+    // Check if paginator is near bottom of viewport
+    setTimeout(() => {
+      if (this.paginatorElement) {
+        const rect = this.paginatorElement.nativeElement.getBoundingClientRect();
+        if (rect.bottom > window.innerHeight) {
+          this.viewportScroller.scrollToPosition([
+            0,
+            window.pageYOffset + rect.bottom - window.innerHeight + 20
+          ]);
+        }
+      }
+    });
   }
 }

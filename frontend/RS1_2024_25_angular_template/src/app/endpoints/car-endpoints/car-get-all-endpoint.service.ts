@@ -48,17 +48,40 @@ export class CarGetAllEndpointService implements MyBaseEndpointAsync<CarGetAllRe
   handleAsync(request: CarGetAllRequest): Observable<MyPagedList<CarGetAllResponse>> {
     let params = new HttpParams();
 
-    if (request.pageNumber) params = params.set('pageNumber', request.pageNumber.toString());
-    if (request.pageSize) params = params.set('pageSize', request.pageSize.toString());
-    if (request.searchTerm) params = params.set('searchTerm', request.searchTerm);
-    if (request.manufacturerId) params = params.set('manufacturerId', request.manufacturerId.toString());
-    if (request.modelId) params = params.set('modelId', request.modelId.toString());
-    if (request.minYear) params = params.set('minYear', request.minYear.toString());
-    if (request.maxYear) params = params.set('maxYear', request.maxYear.toString());
-    if (request.fuelType !== undefined) params = params.set('fuelType', request.fuelType.toString());
-    if (request.transmission !== undefined) params = params.set('transmission', request.transmission.toString());
-    if (request.minMileage) params = params.set('minMileage', request.minMileage.toString());
-    if (request.maxMileage) params = params.set('maxMileage', request.maxMileage.toString());
+    // Only add parameters if they have valid values
+    if (request.pageNumber) {
+      params = params.set('pageNumber', request.pageNumber.toString());
+    }
+    if (request.pageSize) {
+      params = params.set('pageSize', request.pageSize.toString());
+    }
+    if (request.searchTerm) {
+      params = params.set('searchTerm', request.searchTerm);
+    }
+    if (request.manufacturerId) {
+      params = params.set('manufacturerId', request.manufacturerId.toString());
+    }
+    if (request.modelId) {
+      params = params.set('modelId', request.modelId.toString());
+    }
+    if (request.minYear !== null && request.minYear !== undefined) {
+      params = params.set('minYear', request.minYear.toString());
+    }
+    if (request.maxYear !== null && request.maxYear !== undefined) {
+      params = params.set('maxYear', request.maxYear.toString());
+    }
+    if (request.fuelType !== null && request.fuelType !== undefined) {
+      params = params.set('fuelType', request.fuelType.toString());
+    }
+    if (request.transmission !== null && request.transmission !== undefined) {
+      params = params.set('transmission', request.transmission.toString());
+    }
+    if (request.minMileage !== null && request.minMileage !== undefined) {
+      params = params.set('minMileage', request.minMileage.toString());
+    }
+    if (request.maxMileage !== null && request.maxMileage !== undefined) {
+      params = params.set('maxMileage', request.maxMileage.toString());
+    }
 
     return this.http.get<MyPagedList<CarGetAllResponse>>(this.endpoint, { params });
   }

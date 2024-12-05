@@ -98,23 +98,17 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
         public class AdvertUpdateOrInsertRequest
         {
             public int? ID { get; set; }
-
             [Required]
             [MaxLength(100)]
             public string Title { get; set; }
-
             [MaxLength(1000)]
             public string Description { get; set; }
-
             [Required]
             public VehicleCondition Condition { get; set; }
-
             [Required]
             [Range(0, double.MaxValue)]
             public decimal Price { get; set; }
-
             public DateTime? ExpirationDate { get; set; }
-
             [Required]
             public int CarID { get; set; }
         }

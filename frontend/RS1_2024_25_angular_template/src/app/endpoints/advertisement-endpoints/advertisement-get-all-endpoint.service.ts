@@ -13,6 +13,8 @@ export interface AdvertGetAllRequest {
   minPrice?: number;
   maxPrice?: number;
   statusId?: number;
+  dateFrom?: Date;
+  dateTo?: Date;
 }
 
 export interface AdvertGetAllResponse {
@@ -24,8 +26,10 @@ export interface AdvertGetAllResponse {
   expirationDate?: Date;
   viewCount: number;
   status: string;
+  statusId: number;
   carName: string;
   userName: string;
+  isStatusUpdating?: boolean;
   primaryImageUrl?: string;
 }
 
@@ -72,6 +76,18 @@ export class AdvertisementGetAllEndpointService implements MyBaseEndpointAsync<A
       params = params.set('statusId', request.statusId.toString());
     }
 
+    if (request.dateFrom instanceof Date) {
+      params = params.set('dateFrom', request.dateFrom.toISOString());
+    }
+
+    if (request.dateTo instanceof Date) {
+      params = params.set('dateTo', request.dateTo.toISOString());
+    }
+
     return this.httpClient.get<PagedAdvertResponse>(this.apiUrl, { params });
+  }
+
+  private formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
   }
 }

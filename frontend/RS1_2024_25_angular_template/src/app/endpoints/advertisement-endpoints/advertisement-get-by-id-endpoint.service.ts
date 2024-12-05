@@ -15,13 +15,13 @@ export interface AdvertGetByIdResponse {
   description: string;
   condition: string;
   price: number;
-  listingDate: Date;
-  expirationDate?: Date;
+  listingDate: string;  // Date as string
+  expirationDate?: string;  // Date as string, optional
   viewCount: number;
   status: string;
-  carId: number;
+  carID: number;
   carName: string;
-  userId: number;
+  userID: number;
   userName: string;
   images: AdvertImageResponse[];
 }
