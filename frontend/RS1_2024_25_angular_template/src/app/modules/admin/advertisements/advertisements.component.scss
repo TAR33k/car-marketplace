@@ -2,84 +2,122 @@
 @import '../admin-styles.scss';
 
 // Core Variables
-$warning-color: #ff9800;
-$text-muted: #888;
-$text-primary: #333;
-$transition-duration: 0.2s;
-$container-max-width: 1200px;
-$spacing-unit: 8px;
-$border-radius: 8px;
+$colors: (
+  primary: #2c3e50,
+  secondary: #7f8c8d,
+  muted: #888,
+  warning: #ff9800,
+  background: #f8f9fa,
+  border: rgba(0, 0, 0, 0.05)
+);
 
-// Status Colors Map
 $status-colors: (
-  'active': #4caf50,
-  'pending': #ff9800,
-  'sold': #2196f3,
-  'expired': #f44336,
-  'rejected': #9e9e9e
+  active: (base: #4caf50, dark: #45a049),
+  pending: (base: #ff9800, dark: #f57c00),
+  sold: (base: #2196f3, dark: #1976d2),
+  expired: (base: #f44336, dark: #e53935),
+  rejected: (base: #9e9e9e, dark: #757575)
+);
+
+$spacing: (
+  xs: 4px,
+  sm: 8px,
+  md: 16px,
+  lg: 24px,
+  xl: 32px
+);
+
+$transitions: (
+  default: all 0.2s ease-in-out,
+  fast: all 0.15s ease-in-out
+);
+
+$shadows: (
+  sm: 0 1px 3px rgba(0, 0, 0, 0.1),
+  md: 0 2px 4px rgba(0, 0, 0, 0.1),
+  lg: 0 4px 6px rgba(0, 0, 0, 0.15)
+);
+
+// Layout Configuration
+$container-max-width: 1200px;
+$border-radius: (
+  sm: 4px,
+  md: 8px,
+  lg: 16px,
+  xl: 20px
 );
 
 // Mixins
-@mixin flex-center {
+@mixin flex($align: center, $justify: flex-start, $direction: row) {
   display: flex;
-  align-items: center;
+  align-items: $align;
+  justify-content: $justify;
+  flex-direction: $direction;
 }
 
-@mixin card-shadow {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-radius: $border-radius;
-}
-
-@mixin hover-transition {
-  transition: all $transition-duration ease-in-out;
-}
-
-@mixin grid-layout($columns: 2) {
+@mixin grid($columns: 2, $gap: map-get($spacing, md)) {
   display: grid;
   grid-template-columns: repeat($columns, 1fr);
-  gap: $spacing-unit * 2;
+  gap: $gap;
 }
 
-// Layout Styles
+@mixin transition($property: all) {
+  transition: map-get($transitions, default);
+}
+
+@mixin hover-effect {
+  @include transition;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: map-get($shadows, md);
+  }
+}
+
+@mixin status-gradient($status) {
+  $colors: map-get($status-colors, $status);
+  background: linear-gradient(135deg, map-get($colors, base), map-get($colors, dark));
+
+  &:hover {
+    background: linear-gradient(135deg, map-get($colors, dark), darken(map-get($colors, dark), 5%));
+  }
+}
+
+// Container and Layout
 .container {
   max-width: $container-max-width;
   margin: 0 auto;
-  padding: $spacing-unit * 2.5;
+  padding: map-get($spacing, lg);
 }
 
 // Header Styles
 .page-header {
-  @include flex-center;
-  justify-content: space-between;
-  margin-bottom: $spacing-unit * 2.5;
+  @include flex(center, space-between);
+  margin-bottom: map-get($spacing, lg);
 
   h2 {
     margin: 0;
     font-size: 24px;
-    color: $text-primary;
+    color: map-get($colors, primary);
     font-weight: 500;
   }
 
   button {
-    @include flex-center;
-    gap: $spacing-unit;
-    @include hover-transition;
-
-    &:hover {
-      transform: translateY(-1px);
-    }
+    @include flex(center);
+    gap: map-get($spacing, sm);
+    @include hover-effect;
   }
 }
 
-// Filter Section
+// Filters Section
 .filters-card {
-  @include card-shadow;
-  margin-bottom: $spacing-unit * 2.5;
+  box-shadow: map-get($shadows, md);
+  border-radius: map-get($border-radius, md);
+  margin-bottom: map-get($spacing, lg);
   background-color: white;
 
   .filters-grid {
-    @include grid-layout(4);
-    padding: $spacing-unit * 2;
+    @include grid(4);
+    padding: map-get($spacing, md);
 
     .search-field {
       grid-column: 1 / -1;
@@ -88,23 +126,22 @@ $status-colors: (
     .date-range,
     .price-range,
     .status-condition-container {
-      @include grid-layout;
+      @include grid;
       grid-column: span 2;
     }
 
     .filter-actions {
       grid-column: 1 / -1;
-      display: flex;
-      justify-content: flex-end;
-      margin-top: $spacing-unit;
+      @include flex(center, flex-end);
+      margin-top: map-get($spacing, sm);
     }
   }
 }
 
 // Table Styles
 .table-card {
-  @include card-shadow;
-  margin-top: $spacing-unit * 2.5;
+  box-shadow: map-get($shadows, md);
+  border-radius: map-get($border-radius, md);
   background-color: white;
   overflow: hidden;
 }
@@ -117,203 +154,303 @@ $status-colors: (
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    background: white;
 
-    // Header Styles
+    // Header Cells
     th.mat-header-cell {
+      padding: map-get($spacing, md);
       font-weight: 600;
-      color: $text-secondary;
+      color: map-get($colors, primary);
       white-space: nowrap;
-      padding: $spacing-unit * 2;
-      background-color: #f8f9fa;
-      border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+      background-color: map-get($colors, background);
+      border-bottom: 2px solid map-get($colors, border);
       font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+
+      &:first-child { padding-left: map-get($spacing, lg); }
+      &:last-child { padding-right: map-get($spacing, lg); }
     }
 
-    // Cell Styles
+    // Data Cells
     td.mat-cell {
-      padding: $spacing-unit * 2;
+      padding: map-get($spacing, md);
       vertical-align: middle;
       font-size: 14px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      transition: background-color 0.2s ease;
+      border-bottom: 1px solid map-get($colors, border);
+      @include transition;
+
+      &:first-child { padding-left: map-get($spacing, lg); }
+      &:last-child { padding-right: map-get($spacing, lg); }
     }
 
-    // Row Hover Effect
+    // Row Styles
     .mat-row {
-      transition: all 0.2s ease;
+      @include transition;
 
       &:hover {
         background-color: rgba(0, 0, 0, 0.02);
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-      }
-    }
-
-    // Title Column
-    .ad-title {
-      @include flex-center;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: calc($spacing-unit / 2);
-
-      .primary-text {
-        font-weight: 600;
-        color: $text-primary;
-        font-size: 15px;
-      }
-
-      .secondary-text {
-        color: $text-muted;
-        font-size: 12px;
-        background: rgba(0, 0, 0, 0.05);
-        padding: 2px 6px;
-        border-radius: 4px;
-      }
-    }
-
-    // Car Info Column
-    .car-info {
-      @include flex-center;
-      gap: $spacing-unit;
-
-      .car-thumbnail {
-        width: 48px;
-        height: 48px;
-        border-radius: $border-radius;
-        object-fit: cover;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      span {
-        font-weight: 500;
-        color: $text-primary;
-      }
-    }
-
-    // Price Column
-    .price-tag {
-      font-weight: 600;
-      color: #2c3e50;
-      background: rgba(44, 62, 80, 0.05);
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 14px;
-    }
-
-    // Status Column
-    .status-container {
-      min-width: 140px;
-
-      .status-chip {
-        padding: 6px 12px;
-        border-radius: 16px;
-        font-size: 12px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-        @each $status, $color in $status-colors {
-          &.status-#{$status} {
-            background-color: $color;
-
-            &:hover {
-              transform: translateY(-1px);
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-            }
-          }
-        }
-      }
-    }
-
-    // Views Column
-    .views-count {
-      @include flex-center;
-      gap: $spacing-unit;
-      color: $text-muted;
-
-      mat-icon {
-        font-size: 18px;
-        color: inherit;
-      }
-
-      span {
-        font-weight: 500;
-      }
-    }
-
-    // Actions Column
-    .action-buttons {
-      @include flex-center;
-      gap: $spacing-unit;
-      opacity: 0.7;
-      transition: opacity 0.2s ease;
-
-      button {
-        mat-icon {
-          font-size: 18px;
-        }
-
-        &:hover {
-          transform: translateY(-1px);
-        }
-      }
-    }
-
-    tr:hover {
-      .action-buttons {
-        opacity: 1;
-      }
-    }
-  }
-
-  // No Data State
-  .no-data {
-    padding: $spacing-unit * 4;
-    text-align: center;
-
-    .no-data-content {
-      @include flex-center;
-      flex-direction: column;
-      gap: $spacing-unit * 2;
-
-      mat-icon {
-        font-size: 48px;
-        color: $text-muted;
-        opacity: 0.5;
-      }
-
-      h3 {
-        margin: 0;
-        color: $text-primary;
-        font-weight: 500;
-      }
-
-      p {
-        color: $text-muted;
-        margin: 0;
-      }
-
-      button {
-        margin-top: $spacing-unit * 2;
+        box-shadow: map-get($shadows, sm);
       }
     }
   }
 }
 
-// Paginator Styles
-.mat-paginator {
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  background-color: #fafafa;
+// Column-specific Styles
+.ad-title {
+  @include flex(flex-start, flex-start, column);
+  gap: map-get($spacing, xs);
+
+  .primary-text {
+    font-weight: 600;
+    color: map-get($colors, primary);
+    font-size: 15px;
+  }
+
+  .secondary-text {
+    color: map-get($colors, muted);
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    padding: map-get($spacing, xs) map-get($spacing, sm);
+    border-radius: map-get($border-radius, sm);
+  }
 }
 
-// Loading State
+.price-tag {
+  @include flex(center);
+  font-weight: 600;
+  color: map-get($colors, primary);
+  background: rgba(map-get($colors, primary), 0.05);
+  padding: map-get($spacing, sm) map-get($spacing, md);
+  border-radius: map-get($border-radius, xl);
+  font-size: 15px;
+  box-shadow: map-get($shadows, sm);
+  @include hover-effect;
+}
+
+.views-count {
+  @include flex(center);
+  gap: map-get($spacing, sm);
+  color: map-get($colors, secondary);
+  padding: map-get($spacing, xs) map-get($spacing, md);
+  border-radius: map-get($border-radius, lg);
+  background: map-get($colors, background);
+  @include transition;
+
+  mat-icon {
+    font-size: 18px;
+    color: inherit;
+  }
+
+  &:hover {
+    background: darken(map-get($colors, background), 2%);
+    color: map-get($colors, primary);
+  }
+}
+
+// Status Styles
+.status-container {
+  position: relative;
+  min-width: 160px;
+  max-width: 220px;
+
+  &.updating {
+    opacity: 0.7;
+    pointer-events: none;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: map-get($border-radius, sm);
+    }
+  }
+
+  mat-form-field {
+    width: 100%;
+
+    ::ng-deep {
+      .mat-form-field-wrapper { padding-bottom: 0; }
+      .mat-form-field-infix {
+        padding: map-get($spacing, xs) 0;
+        border-top: 0;
+      }
+      .mat-form-field-outline { display: none; }
+    }
+  }
+
+  ::ng-deep {
+    // Adjust the select value container
+    .mat-select-value {
+      padding-right: 24px !important; // Make room for the arrow
+    }
+
+    // Position the arrow properly
+    .mat-select-arrow-wrapper {
+      transform: translateY(0) !important;
+      position: absolute;
+      right: 0;
+      top: 50%;
+      margin-top: -6px;
+    }
+
+    // Remove default form field spacing
+    .mat-form-field-wrapper {
+      padding-bottom: 0;
+    }
+
+    .mat-form-field-infix {
+      padding: map-get($spacing, xs) 0;
+      border-top: 0;
+      width: auto; // Allow content to determine width
+    }
+
+    .mat-form-field-outline {
+      display: none;
+    }
+  }
+}
+
+.status-chip {
+  @include flex(center);
+  gap: map-get($spacing, sm);
+  padding: map-get($spacing, sm) map-get($spacing, md);
+  border-radius: map-get($border-radius, xl);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: white;
+  width: calc(100% - 35px); // Subtract space for arrow
+  box-shadow: map-get($shadows, sm);
+  @include transition;
+
+  .status-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  @each $status, $colors in $status-colors {
+    &.status-#{$status} {
+      @include status-gradient($status);
+    }
+  }
+}
+
+// Action Buttons
+.action-buttons {
+  @include flex(center);
+  gap: map-get($spacing, sm);
+  opacity: 0.7;
+  @include transition;
+
+  button {
+    mat-icon { font-size: 18px; }
+    @include hover-effect;
+  }
+}
+
+// Material Select Overrides
+::ng-deep {
+  .status-select-panel {
+    .mat-option {
+      height: auto !important;
+      line-height: normal !important;
+      padding: map-get($spacing, sm) !important;
+
+      &:hover:not(.mat-option-disabled) {
+        background: rgba(0, 0, 0, 0.04);
+      }
+
+      &.mat-selected:not(.mat-option-multiple):not(.mat-option-disabled) {
+        background: rgba(0, 0, 0, 0.08);
+      }
+    }
+  }
+
+  .status-select {
+    .mat-select-trigger { height: auto !important; }
+    .mat-select-value {
+      max-width: 100% !important;
+      padding: 0 !important;
+    }
+    .mat-select-arrow-wrapper { transform: translateY(0) !important; }
+  }
+}
+
+// Loading and No Data States
 .mat-progress-bar {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto 0;
+}
+
+.no-data {
+  padding: map-get($spacing, xl);
+  text-align: center;
+
+  .no-data-content {
+    @include flex(center, center, column);
+    gap: map-get($spacing, md);
+
+    mat-icon {
+      font-size: 48px;
+      color: map-get($colors, muted);
+      opacity: 0.5;
+    }
+
+    h3 {
+      margin: 0;
+      color: map-get($colors, primary);
+      font-weight: 500;
+    }
+
+    p {
+      color: map-get($colors, muted);
+      margin: 0;
+    }
+
+    button {
+      margin-top: map-get($spacing, md);
+    }
+  }
+}
+
+// Paginator
+.mat-paginator {
+  border-top: 1px solid map-get($colors, border);
+  background-color: map-get($colors, background);
+}
+
+.table-container {
+  position: relative;
+  min-height: 200px;
+
+  .loading-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    height: 3px;
+  }
+
+  .mat-progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+  }
+}
+
+// Add this for error messages
+.error-snackbar {
+  background: #f44336;
+  color: white;
+
+  .mat-simple-snackbar-action {
+    color: white;
+  }
 }

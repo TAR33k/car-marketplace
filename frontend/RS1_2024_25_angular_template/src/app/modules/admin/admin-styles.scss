@@ -14,6 +14,7 @@ $text-secondary: #6c757d;
 $hover-bg: rgba(0, 0, 0, 0.04);
 $disabled-bg: #e0e0e0;
 $disabled-text: #9e9e9e;
+$spacing-unit: 8px;
 
 // Common Card Styling
 .card {
@@ -168,6 +169,46 @@ $disabled-text: #9e9e9e;
       opacity: 1;
     }
   }
+}
+
+@mixin card-shadow {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: $border-radius;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin hover-transition {
+  transition: all 0.2s ease-in-out;
+}
+
+// Add these mixins
+@mixin section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@mixin form-spacing {
+  .form-group {
+    margin-bottom: 24px;
+  }
+
+  .form-section {
+    margin-bottom: 32px;
+  }
+
+  .form-actions {
+    margin-top: 32px;
+  }
+}
+
+@mixin card-spacing {
+  padding: 24px;
+  margin-bottom: 24px;
 }
 
 // Responsive adjustments

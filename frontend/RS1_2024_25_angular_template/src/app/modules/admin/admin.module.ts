@@ -33,6 +33,9 @@ import {MatDatepickerModule} from '@angular/material/datepicker';
 import {BrowserModule} from '@angular/platform-browser';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {MatNativeDateModule} from '@angular/material/core';
+import {MatButtonToggleModule} from '@angular/material/button-toggle';
+import {MatCheckboxModule} from '@angular/material/checkbox';
+import { CarEditDialogComponent } from './advertisements/advertisements-edit/car-edit-dialog/car-edit-dialog.component';
 
 @NgModule({
   declarations: [
@@ -44,7 +47,8 @@ import {MatNativeDateModule} from '@angular/material/core';
     UsersComponent,
     UsersEditComponent,
     AdvertisementsComponent,
-    AdvertisementsEditComponent
+    AdvertisementsEditComponent,
+    CarEditDialogComponent
   ],
   imports: [
     CommonModule,
@@ -68,6 +72,8 @@ import {MatNativeDateModule} from '@angular/material/core';
     MatDialogModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatButtonToggleModule,
+    MatCheckboxModule,
   ],
   providers: [
     BodyTypeGetAllEndpointService,

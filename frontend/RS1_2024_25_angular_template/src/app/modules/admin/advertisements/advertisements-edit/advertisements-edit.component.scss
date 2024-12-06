@@ -1,0 +1,406 @@
+@import '../../admin-styles.scss';
+
+// Variables
+$card-spacing: 24px;
+$grid-gap: 20px;
+$border-radius: 8px;
+$transition-duration: 0.2s;
+$section-padding: 16px;
+
+// Colors
+$border-color: rgba(0, 0, 0, 0.12);
+$hover-bg: rgba(0, 0, 0, 0.04);
+$label-color: rgba(0, 0, 0, 0.6);
+$divider-color: rgba(0, 0, 0, 0.08);
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+
+  @media (max-width: 600px) {
+    padding: 16px;
+  }
+}
+
+// Car Details Card Styles
+.details-card {
+  margin-bottom: 32px;
+
+  mat-card-header {
+    margin-bottom: 24px;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+
+  mat-card-content {
+    padding: 0 16px 16px;
+  }
+}
+
+// Mode Toggle Styles
+.mode-toggle {
+  width: 100%;
+  margin-bottom: $section-padding;
+
+  .mat-button-toggle {
+    width: 50%;
+
+    mat-icon {
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+  }
+}
+
+// Existing Car Selection Styles
+.existing-car-section {
+  .car-details-hint {
+    color: $label-color;
+    font-size: 0.85em;
+    display: block;
+    margin-top: 4px;
+  }
+
+  .mat-optgroup-label {
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+  }
+}
+
+// Selected Car Preview Styles
+.selected-car-preview {
+  margin-top: $section-padding;
+  border-radius: $border-radius;
+  border: 1px solid $border-color;
+  overflow: hidden;
+
+  .preview-header {
+    background-color: rgba(0, 0, 0, 0.02);
+    padding: $section-padding;
+    border-bottom: 1px solid $border-color;
+
+    h3 {
+      margin: 0;
+      font-size: 1.1em;
+      font-weight: 500;
+    }
+  }
+
+  .preview-content {
+    padding: $section-padding;
+  }
+
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $grid-gap;
+  }
+
+  .preview-item {
+    display: flex;
+    flex-direction: column;
+
+    .label {
+      color: $label-color;
+      font-size: 0.9em;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-weight: 500;
+    }
+  }
+}
+
+// Car Details View Styles
+.car-details-view {
+  .car-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: $grid-gap;
+    margin-bottom: $section-padding;
+  }
+
+  .info-section {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: $border-radius;
+    padding: $section-padding;
+    border: 1px solid $border-color;
+
+    h3 {
+      margin: 0 0 $section-padding 0;
+      font-size: 1.1em;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.87);
+      padding-bottom: 8px;
+      border-bottom: 1px solid $divider-color;
+    }
+
+    .info-content {
+      display: grid;
+      gap: 12px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .label {
+        color: $label-color;
+        font-size: 0.9em;
+      }
+
+      .value {
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+
+        mat-icon {
+          margin-right: 4px;
+          font-size: 18px;
+          height: 18px;
+          width: 18px;
+
+          &.available {
+            color: #4caf50;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Car Actions Styles
+.car-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: $section-padding;
+
+  button {
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// New Car Form Styles
+.new-car-form {
+  margin-top: 32px;
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    row-gap: 32px;
+    column-gap: 24px;
+    margin: 24px 0;
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+// Responsive Adjustments
+@media (max-width: 600px) {
+  .car-info-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .preview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .car-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .mode-toggle {
+    .mat-button-toggle-label-content {
+      line-height: 36px;
+    }
+  }
+}
+
+// Animation
+.car-details-view, .selected-car-preview {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Utility Classes
+.full-width {
+  width: 100%;
+}
+
+.mat-form-field {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.selected-car-preview {
+  margin: 32px 0; // Increased vertical margins
+
+  .preview-grid {
+    gap: 24px; // Increased from 20px
+    padding: 24px; // Add padding around the grid
+  }
+}
+
+// Update car details view spacing
+.car-details-view {
+  .car-info-grid {
+    gap: 32px; // Increased from 20px
+    margin: 24px 0; // Add vertical margin
+  }
+
+  .info-section {
+    padding: 24px; // Increased from 16px
+
+    .info-content {
+      gap: 16px; // Increased from 12px
+      margin-top: 16px; // Add top margin
+    }
+  }
+}
+
+// Update form actions spacing
+.form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+  padding: 0 16px;
+  justify-content: flex-end;
+}
+
+// Update image section spacing
+.images-card {
+  margin-top: 32px;
+
+  .image-grid {
+    gap: 24px;
+    padding: 24px 16px;
+  }
+}
+
+// Add consistent section spacing
+.section-spacing {
+  margin-bottom: 32px;
+}
+
+.error-snackbar {
+  background: #f44336;
+  color: white;
+
+  .mat-simple-snackbar-action {
+    color: white;
+  }
+}
+
+.existing-car-section {
+  .mat-form-field {
+    &.ng-invalid.ng-touched {
+      .mat-form-field-outline {
+        color: #f44336;
+      }
+    }
+  }
+
+  .car-details-hint {
+    color: $label-color;
+    font-size: 0.85em;
+    display: block;
+    margin-top: 4px;
+  }
+}
+
+// Add these new styles
+.advertisement-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; // Increased spacing between form sections
+  padding: 8px;
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); // Three columns for condition, price, and date
+    gap: 24px; // Increased spacing between fields
+
+    @media (max-width: 960px) {
+      grid-template-columns: repeat(2, 1fr); // Two columns on medium screens
+    }
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr; // One column on small screens
+    }
+  }
+
+  .full-width {
+    width: 100%;
+  }
+}
+
+// Update existing card styles
+.details-card {
+  margin-bottom: 32px;
+
+  mat-card-header {
+    margin-bottom: 24px;
+    padding: 0 16px;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+
+  mat-card-content {
+    padding: 0 16px 24px; // Added bottom padding
+  }
+}
+
+// Update form field styles
+.mat-form-field {
+  width: 100%;
+}
+
+// Add responsive adjustments if needed
+@media (max-width: 600px) {
+  .advertisement-form-grid {
+    gap: 16px; // Slightly reduced spacing on mobile
+  }
+}
+
+// Add responsive adjustments
+@media (max-width: 1200px) {
+  .page-container {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .car-info-grid {
+    grid-template-columns: 1fr;
+  }
+}

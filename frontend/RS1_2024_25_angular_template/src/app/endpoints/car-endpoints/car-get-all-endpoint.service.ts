@@ -16,6 +16,8 @@ export interface CarGetAllRequest extends MyPagedRequest {
   transmission?: TransmissionType;
   minMileage?: number;
   maxMileage?: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export interface CarGetAllResponse {

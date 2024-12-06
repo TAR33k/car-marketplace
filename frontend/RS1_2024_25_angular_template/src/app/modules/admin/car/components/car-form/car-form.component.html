@@ -240,9 +240,9 @@
           <div class="col-md-6 mb-3">
             <label for="city" class="form-label">City *</label>
             <select class="form-select"
-                    [class.is-invalid]="!isFieldValid(car.location.cityId)"
+                    [class.is-invalid]="!isFieldValid(car.location.cityID)"
                     id="city"
-                    [(ngModel)]="car.location.cityId"
+                    [(ngModel)]="car.location.cityID"
                     name="city"
                     required>
               <option [ngValue]="null">Select City</option> <!-- Use null for default -->
@@ -250,7 +250,7 @@
                 {{city.name}}
               </option>
             </select>
-            <div class="invalid-feedback" *ngIf="!isFieldValid(car.location.cityId)">
+            <div class="invalid-feedback" *ngIf="!isFieldValid(car.location.cityID)">
               Please select a city
             </div>
           </div>

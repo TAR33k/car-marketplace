@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import {Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ChangeDetectorRef} from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
-import { Subject } from 'rxjs';
-import {debounceTime, distinctUntilChanged, finalize, takeUntil} from 'rxjs/operators';
+import {merge, Observable, Subject} from 'rxjs';
+import {debounceTime, distinctUntilChanged, finalize, takeUntil, tap} from 'rxjs/operators';
 import { VehicleCondition } from '../../../services/car-services/car-enums';
 import {
   AdvertGetAllRequest,
@@ -26,14 +26,15 @@ import {
 } from '../../../endpoints/advertisement-endpoints/advertisement-update-status-endpoint.service';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import {MatSort, Sort} from '@angular/material/sort';
 
 @Component({
   selector: 'app-advertisements',
   templateUrl: './advertisements.component.html',
   styleUrls: ['./advertisements.component.scss']
 })
-export class AdvertisementsComponent implements OnInit, OnDestroy {
-  readonly displayedColumns: string[] = ['title', 'price', 'condition', 'status', 'car', 'user', 'views', 'actions'];
+export class AdvertisementsComponent implements OnInit, OnDestroy, AfterViewInit {
+  readonly displayedColumns: string[] = ['title', 'price', 'condition', 'status', 'car', 'user', 'viewCount', 'actions'];
   readonly VehicleCondition = VehicleCondition; // Make enum available in template
 
   dataSource = new MatTableDataSource<AdvertGetAllResponse>();
@@ -54,7 +55,10 @@ export class AdvertisementsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
 
+  sortActive = 'id';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   constructor(
     private advertisementGetService: AdvertisementGetAllEndpointService,
@@ -64,14 +68,45 @@ export class AdvertisementsComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private router: Router,
     private snackBar: MatSnackBar,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
   ) {
     this.filterForm = this.initializeFilterForm();
   }
 
   ngOnInit(): void {
-    this.loadStatusTypes();
-    this.setupFilterSubscription();
+    // First load status types
+    this.loadStatusTypes().pipe(
+      takeUntil(this.destroy$),
+      tap(() => {
+        // After status types are loaded, setup filter and fetch data
+        this.setupFilterSubscription();
+        this.fetchAdvertisements();
+      })
+    ).subscribe();
+  }
+
+  ngAfterViewInit() {
+    // Initialize dataSource sort
+    this.dataSource.sort = this.sort;
+
+    // Merge sort and page events
+    merge(
+      this.sort.sortChange,
+      this.paginator.page,
+      this.filterForm.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+    )
+      .pipe(
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.fetchAdvertisements();
+      });
+
+    // Initial load
     this.fetchAdvertisements();
   }
 
@@ -80,23 +115,14 @@ export class AdvertisementsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadStatusTypes(): void {
-    this.statusTypeService.handleAsync()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (statuses) => {
+  private loadStatusTypes(): Observable<StatusTypeGetAllResponse[]> {
+    return this.statusTypeService.handleAsync()
+      .pipe(
+        tap((statuses) => {
+          console.log('Loaded Status Types:', statuses);
           this.statusOptions = statuses;
-          // After loading statuses, fetch advertisements
-          this.fetchAdvertisements();
-        },
-        error: (error) => {
-          console.error('Error loading status types:', error);
-          this.snackBar.open('Error loading status types', 'Close', {
-            duration: 3000,
-            panelClass: ['error-snackbar']
-          });
-        }
-      });
+        })
+      );
   }
 
   private initializeFilterForm(): FormGroup {
@@ -127,50 +153,60 @@ export class AdvertisementsComponent implements OnInit, OnDestroy {
       });
   }
 
-  fetchAdvertisements(event?: PageEvent): void {
+  fetchAdvertisements(): void {
     this.isLoading = true;
+    this.cdr.detectChanges();
+
     const filters: AdvertGetAllRequest = {
-      pageNumber: event?.pageIndex !== undefined ? event.pageIndex + 1 : this.currentPage,
-      pageSize: event?.pageSize || this.pageSize,
+      pageNumber: this.paginator ? this.paginator.pageIndex + 1 : 1,
+      pageSize: this.paginator ? this.paginator.pageSize : this.pageSize,
       searchTerm: this.filterForm.get('searchTerm')?.value,
       minPrice: this.filterForm.get('minPrice')?.value,
       maxPrice: this.filterForm.get('maxPrice')?.value,
       statusId: this.filterForm.get('status')?.value,
       condition: this.filterForm.get('condition')?.value,
       dateFrom: this.filterForm.get('dateFrom')?.value,
-      dateTo: this.filterForm.get('dateTo')?.value
+      dateTo: this.filterForm.get('dateTo')?.value,
+      sortBy: this.sort?.active,
+      sortDirection: this.sort?.direction || 'asc'
     };
 
-    // Remove null/undefined/empty string values
+    // Clean up undefined values
     Object.keys(filters).forEach(key => {
-      const typedKey = key as keyof AdvertGetAllRequest;
-      const value = filters[typedKey];
+      const value = filters[key as keyof typeof filters];
       if (value === undefined || value === null || value === '') {
-        delete filters[typedKey];
+        delete filters[key as keyof typeof filters];
       }
     });
 
     this.advertisementGetService.handleAsync(filters)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        takeUntil(this.destroy$)
+      )
       .subscribe({
-        next: (response: PagedAdvertResponse) => {
+        next: (response) => {
           this.dataSource.data = response.dataItems.map(item => ({
             ...item,
-            statusId: item.statusId,
-            status: this.statusOptions.find(s => s.id === item.statusId)?.name || ''
+            statusId: item.statusID,
+            status: this.statusOptions.find(s => s.id === item.statusID)?.name || ''
           }));
           this.totalItems = response.totalCount;
           this.currentPage = response.pageNumber;
           this.pageSize = response.pageSize;
-
-          if (this.paginator) {
-            this.paginator.length = this.totalItems;
-            this.paginator.pageIndex = this.currentPage - 1;
-            this.paginator.pageSize = this.pageSize;
-          }
         },
-        error: (err) => console.error('Error fetching advertisements:', err),
-        complete: () => this.isLoading = false
+        error: (error) => {
+          console.error('Error fetching advertisements:', error);
+          this.snackBar.open('Error fetching advertisements', 'Close', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          this.dataSource.data = [];
+          this.totalItems = 0;
+        },
+        complete: () => {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }
       });
   }
 
@@ -192,21 +228,15 @@ export class AdvertisementsComponent implements OnInit, OnDestroy {
     const updatingAd = this.dataSource.data.find(ad => ad.id === advertisementId);
     if (!updatingAd) return;
 
-    const oldStatusId = updatingAd.statusId;
+    const oldStatusId = updatingAd.statusID;
     const oldStatus = updatingAd.status;
 
-    // Optimistically update the UI
     updatingAd.isStatusUpdating = true;
-    updatingAd.statusId = newStatusId;
+    updatingAd.statusID = newStatusId;
     updatingAd.status = this.statusOptions.find(s => s.id === newStatusId)?.name || '';
     this.dataSource._updateChangeSubscription();
 
-    const request: AdvertStatusUpdateRequest = {
-      advertisementId,
-      newStatusId
-    };
-
-    this.advertisementUpdateStatusService.handleAsync(request)
+    this.advertisementUpdateStatusService.handleAsync({ advertisementId, newStatusId })
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
@@ -218,61 +248,67 @@ export class AdvertisementsComponent implements OnInit, OnDestroy {
         next: () => {
           this.snackBar.open('Status updated successfully', 'Close', {
             duration: 3000,
-            horizontalPosition: 'right',
-            verticalPosition: 'bottom',
             panelClass: ['success-snackbar']
           });
         },
-        error: (error) => {
-          console.error('Error updating status:', error);
-
-          // Revert changes on error
-          updatingAd.statusId = oldStatusId;
+        error: () => {
+          updatingAd.statusID = oldStatusId;
           updatingAd.status = oldStatus;
           this.dataSource._updateChangeSubscription();
 
           this.snackBar.open('Failed to update status', 'Close', {
             duration: 3000,
-            horizontalPosition: 'right',
-            verticalPosition: 'bottom',
             panelClass: ['error-snackbar']
           });
         }
       });
   }
 
-  deleteAdvertisement(id: number): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: 'Delete Advertisement',
-        message: 'Are you sure you want to delete this advertisement?',
-        confirmText: 'Delete',
-        cancelText: 'Cancel'
-      }
-    });
-
-    dialogRef.afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(result => {
-        if (result) {
-          this.isLoading = true;
-          this.advertisementDeleteService.handleAsync(id).subscribe({
-            next: () => {
-              this.fetchAdvertisements();
-            },
-            error: (err) => {
-              console.error('Error deleting advertisement:', err);
-              this.isLoading = false;
-            }
-          });
+  async deleteAdvertisement(id: number): Promise<void> {
+    try {
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        data: {
+          title: 'Delete Advertisement',
+          message: 'Are you sure you want to delete this advertisement?',
+          confirmText: 'Delete',
+          cancelText: 'Cancel'
         }
       });
-  }
 
-  onPageChange(event: PageEvent): void {
-    this.currentPage = event.pageIndex + 1;
-    this.pageSize = event.pageSize;
-    this.fetchAdvertisements(event);
+      const result = await dialogRef.afterClosed().toPromise();
+
+      if (result) {
+        await this.advertisementDeleteService.handleAsync(id).toPromise();
+
+        // Remove the deleted item from the data source
+        const index = this.dataSource.data.findIndex(ad => ad.id === id);
+        if (index > -1) {
+          const updatedData = [...this.dataSource.data];
+          updatedData.splice(index, 1);
+          this.dataSource.data = updatedData;
+        }
+
+        // Update the total count
+        this.totalItems--;
+
+        // If we deleted the last item on the current page, go to the previous page
+        if (this.dataSource.data.length === 0 && this.paginator.pageIndex > 0) {
+          this.paginator.pageIndex--;
+          await this.fetchAdvertisements();
+        }
+
+        // Show success message
+        this.snackBar.open('Advertisement deleted successfully', 'Close', {
+          duration: 3000
+        });
+      }
+    } catch (error) {
+        console.error('Error deleting advertisement:', error);
+        this.snackBar.open('Error deleting advertisement', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+    }
   }
 
   getStatusClass(status: string): string {
@@ -281,5 +317,17 @@ export class AdvertisementsComponent implements OnInit, OnDestroy {
 
   getConditionLabel(condition: VehicleCondition): string {
     return VehicleCondition[condition];
+  }
+
+  getStatusIcon(status: string): string {
+    const iconMap: { [key: string]: string } = {
+      'active': 'check_circle',
+      'pending': 'pending',
+      'sold': 'shopping_cart',
+      'expired': 'schedule',
+      'rejected': 'cancel'
+    };
+
+    return iconMap[status.toLowerCase()] || 'help_outline';
   }
 }

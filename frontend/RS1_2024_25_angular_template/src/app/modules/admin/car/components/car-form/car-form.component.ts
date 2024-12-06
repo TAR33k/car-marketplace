@@ -66,7 +66,7 @@ export class CarFormComponent implements OnInit {
       name: ''
     },
     location: {
-      cityId: 0, // Use 0 instead of null
+      cityID: 0, // Use 0 instead of null
       cityName: '',
       countryName: ''
     },
@@ -208,7 +208,7 @@ export class CarFormComponent implements OnInit {
         this.car = {
           ...data,
           location: {
-            cityId: cityId,
+            cityID: cityId,
             cityName: data.location.cityName,
             countryName: data.location.countryName
           },
@@ -267,7 +267,7 @@ export class CarFormComponent implements OnInit {
         color: this.car.color.trim(),
         hasServiceHistory: Boolean(this.car.hasServiceHistory),
         bodyID: Number(this.car.bodyType.id),
-        cityID: Number(this.car.location.cityId),
+        cityID: Number(this.car.location.cityID),
         modelID: Number(this.car.model.id)
       };
 
@@ -312,7 +312,7 @@ export class CarFormComponent implements OnInit {
 
   private validateIds(): boolean {
     const bodyTypeId = Number(this.car.bodyType?.id);
-    const cityId = Number(this.car.location?.cityId);
+    const cityId = Number(this.car.location?.cityID);
     const modelId = Number(this.car.model?.id);
 
     if (!bodyTypeId || bodyTypeId <= 0) {
@@ -349,7 +349,7 @@ export class CarFormComponent implements OnInit {
       mileage: this.car.mileage,
       color: this.car.color?.trim(),
       bodyTypeId: this.car.bodyType?.id,
-      cityId: this.car.location?.cityId,
+      cityId: this.car.location?.cityID,
       modelId: this.car.model?.id
     };
 

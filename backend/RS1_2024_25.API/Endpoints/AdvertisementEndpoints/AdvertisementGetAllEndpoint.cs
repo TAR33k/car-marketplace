@@ -115,6 +115,8 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
             public int? StatusID { get; set; }
             public DateTime? DateFrom { get; set; }
             public DateTime? DateTo { get; set; }
+            public string? SortBy { get; set; }
+            public string? SortDirection { get; set; }
         }
 
         public class AdvertGetAllResponse

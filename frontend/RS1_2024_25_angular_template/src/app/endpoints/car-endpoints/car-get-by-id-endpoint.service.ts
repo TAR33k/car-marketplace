@@ -22,7 +22,7 @@ export interface CarGetByIdResponse {
     name: string;
   };
   location: {
-    cityId: number;
+    cityID: number;
     cityName: string;
     countryName: string;
   };

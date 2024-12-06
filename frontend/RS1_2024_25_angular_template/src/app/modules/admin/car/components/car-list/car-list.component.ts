@@ -2,7 +2,7 @@ import {Component, OnInit, ViewChild, AfterViewInit, ElementRef} from '@angular/
 import { Router } from '@angular/router';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import {MatSort, Sort} from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -11,7 +11,6 @@ import { CarGetAllEndpointService, CarGetAllResponse, CarGetAllRequest } from '.
 import { FuelType, TransmissionType } from '../../../../../services/car-services/car-enums';
 import { ConfirmDialogComponent } from '../../../../shared/confirm-dialog/confirm-dialog.component';
 import { NotificationService } from '../../../../../services/notification.service';
-import { MyPagedList } from '../../../../../helper/my-paged-request';
 import {ViewportScroller} from '@angular/common';
 
 @Component({
@@ -27,6 +26,9 @@ export class CarListComponent implements OnInit, AfterViewInit {
   totalItems = 0;
   pageSize = 10;
   currentPage = 1;
+
+  sortActive = 'name'; // default sort column
+  sortDirection: 'asc' | 'desc' = 'asc'; // default sort direction
 
   readonly FuelType = FuelType;
   readonly TransmissionType = TransmissionType;
@@ -67,6 +69,9 @@ export class CarListComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
+    // Initialize sort
+    this.dataSource.sort = this.sort;
+
     if (this.paginator) {
       this.paginator._intl.getRangeLabel = (page: number, pageSize: number, length: number) => {
         if (length === 0 || pageSize === 0) {
@@ -131,7 +136,9 @@ export class CarListComponent implements OnInit, AfterViewInit {
       fuelType: fuelTypeValue === null || fuelTypeValue === undefined ? null : fuelTypeValue,
       transmission: transmissionValue === null || transmissionValue === undefined ? null : transmissionValue,
       minMileage: this.filterForm.get('minMileage')?.value || null,
-      maxMileage: this.filterForm.get('maxMileage')?.value || null
+      maxMileage: this.filterForm.get('maxMileage')?.value || null,
+      sortBy: this.sortActive,
+      sortDirection: this.sortDirection
     };
 
     // Modified cleanup to properly handle zero values
@@ -171,6 +178,24 @@ export class CarListComponent implements OnInit, AfterViewInit {
         this.isLoading = false;
       }
     });
+  }
+
+  onSort(sort: Sort) {
+    // Reset sort if direction is empty (user clicked to remove sort)
+    if (!sort.direction) {
+      this.sortActive = '';
+      this.sortDirection = 'asc'; // default direction
+    } else {
+      this.sortActive = sort.active;
+      this.sortDirection = sort.direction as 'asc' | 'desc';
+    }
+
+    // Reset to first page when sorting changes
+    if (this.paginator) {
+      this.paginator.firstPage();
+    }
+
+    this.loadCars();
   }
 
   clearFilters(): void {

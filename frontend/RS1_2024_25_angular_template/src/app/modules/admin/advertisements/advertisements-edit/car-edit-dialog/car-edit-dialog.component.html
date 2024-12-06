@@ -1,0 +1,144 @@
+<div class="dialog-container">
+  <h2 mat-dialog-title>Edit Car Details</h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="carForm" class="car-edit-form">
+      <div class="form-grid">
+        <!-- Basic Information -->
+        <mat-form-field appearance="outline">
+          <mat-label>Car Name</mat-label>
+          <input matInput formControlName="name" required>
+          <mat-error *ngIf="carForm.get('name')?.errors?.['required']">
+            Name is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Manufacturer</mat-label>
+          <mat-select formControlName="manufacturerId"
+                      (selectionChange)="onManufacturerChange($event.value)" required>
+            <mat-option [value]="null">Select manufacturer</mat-option>
+            <mat-option *ngFor="let manufacturer of manufacturers"
+                        [value]="manufacturer.id">
+              {{manufacturer.name}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="carForm.get('manufacturerId')?.errors?.['required']">
+            Manufacturer is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Model</mat-label>
+          <mat-select formControlName="modelId" required>
+            <mat-option [value]="null">Select model</mat-option>
+            <mat-option *ngFor="let model of models" [value]="model.id">
+              {{model.name}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="carForm.get('modelId')?.errors?.['required']">
+            Model is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Technical Details -->
+        <mat-form-field appearance="outline">
+          <mat-label>Year</mat-label>
+          <input matInput type="number" formControlName="year" required>
+          <mat-error *ngIf="carForm.get('year')?.errors?.['required']">
+            Year is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Engine Capacity (L)</mat-label>
+          <input matInput type="number" formControlName="engineCapacity"
+                 required step="0.1">
+          <mat-error *ngIf="carForm.get('engineCapacity')?.errors?.['required']">
+            Engine capacity is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Replace the pipe usage with method calls -->
+        <mat-form-field appearance="outline">
+          <mat-label>Fuel Type</mat-label>
+          <mat-select formControlName="fuelType" required>
+            <mat-option *ngFor="let type of fuelTypes" [value]="type">
+              {{getFuelTypeName(type)}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Transmission</mat-label>
+          <mat-select formControlName="transmission" required>
+            <mat-option *ngFor="let type of transmissionTypes" [value]="type">
+              {{getTransmissionTypeName(type)}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Number of Doors</mat-label>
+          <input matInput type="number" formControlName="doors" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fuel Consumption (L/100km)</mat-label>
+          <input matInput type="number" formControlName="fuelConsumption"
+                 required step="0.1">
+        </mat-form-field>
+
+        <!-- Additional Details -->
+        <mat-form-field appearance="outline">
+          <mat-label>Mileage (km)</mat-label>
+          <input matInput type="number" formControlName="mileage" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Color</mat-label>
+          <input matInput formControlName="color" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Body Type</mat-label>
+          <mat-select formControlName="bodyId" required>
+            <mat-option [value]="null">Select body type</mat-option>
+            <mat-option *ngFor="let type of bodyTypes" [value]="type.id">
+              {{type.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>City</mat-label>
+          <mat-select formControlName="cityId" required>
+            <mat-option [value]="null">Select city</mat-option>
+            <mat-option *ngFor="let city of cities" [value]="city.id">
+              {{city.name}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="carForm.get('cityId')?.errors?.['required']">
+            City is required
+          </mat-error>
+        </mat-form-field>
+
+        <div class="checkbox-field">
+          <mat-checkbox formControlName="hasServiceHistory">
+            Has Service History
+          </mat-checkbox>
+        </div>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button [mat-dialog-close]="null">Cancel</button>
+    <button mat-raised-button color="primary"
+            (click)="save()"
+            [disabled]="carForm.invalid || loading">
+      <mat-icon>save</mat-icon>
+      {{loading ? 'Saving...' : 'Save Changes'}}
+    </button>
+  </mat-dialog-actions>
+</div>

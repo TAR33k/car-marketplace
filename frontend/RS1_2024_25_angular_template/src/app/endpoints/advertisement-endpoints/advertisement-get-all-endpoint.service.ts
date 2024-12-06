@@ -15,6 +15,8 @@ export interface AdvertGetAllRequest {
   statusId?: number;
   dateFrom?: Date;
   dateTo?: Date;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export interface AdvertGetAllResponse {
@@ -25,8 +27,8 @@ export interface AdvertGetAllResponse {
   listingDate: Date;
   expirationDate?: Date;
   viewCount: number;
-  status: string;
-  statusId: number;
+  status?: string;
+  statusID: number;
   carName: string;
   userName: string;
   isStatusUpdating?: boolean;

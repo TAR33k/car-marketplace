@@ -95,7 +95,12 @@
       <div class="table-container">
         <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
 
-        <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z0">
+        <table mat-table [dataSource]="dataSource"
+               matSort
+               (matSortChange)="onSort($event)"
+               [matSortActive]="sortActive"
+               [matSortDirection]="sortDirection"
+               class="mat-elevation-z0">
           <!-- Name Column -->
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Name </th>

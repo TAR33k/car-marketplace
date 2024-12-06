@@ -364,3 +364,29 @@ table {
     margin-bottom: -1.25em;
   }
 }
+
+// Add to your component's SCSS file
+table {
+  th.mat-header-cell {
+    &.mat-sort-header {
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+    }
+
+    .mat-sort-header-container {
+      justify-content: flex-start;
+    }
+  }
+}
+
+// Override Material sort arrow colors
+:host ::ng-deep {
+  .mat-sort-header-arrow {
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  .mat-sort-header-sorted .mat-sort-header-arrow {
+    color: $primary-color;
+  }
+}

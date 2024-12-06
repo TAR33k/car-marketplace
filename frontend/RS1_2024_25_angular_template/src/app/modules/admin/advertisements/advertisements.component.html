@@ -100,9 +100,13 @@
   <mat-card class="table-card">
     <mat-card-content>
       <div class="table-container">
-        <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+        <mat-progress-bar
+          *ngIf="isLoading"
+          mode="indeterminate"
+          class="loading-bar">
+        </mat-progress-bar>
 
-        <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z0">
+        <table mat-table [dataSource]="dataSource" matSort [matSortActive]="sortActive" [matSortDirection]="sortDirection" class="mat-elevation-z0">
           <!-- Primary Image Column -->
           <ng-container matColumnDef="primaryImage">
             <th mat-header-cell *matHeaderCellDef> Image </th>
@@ -143,22 +147,24 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
             <td mat-cell *matCellDef="let ad">
               <div class="status-container" [class.updating]="ad.isStatusUpdating">
-                <mat-form-field appearance="outline" class="status-select">
-                  <mat-select [value]="ad.statusId"
-                              (selectionChange)="updateAdvertisementStatus(ad.id, $event.value)"
-                              [disabled]="ad.isStatusUpdating">
-                    <mat-select-trigger>
-                      <span class="status-chip" [ngClass]="getStatusClass(ad.status)">
-                        {{ad.status}}
-                      </span>
-                    </mat-select-trigger>
-                    <mat-option *ngFor="let status of statusOptions" [value]="status.id">
-                      <span class="status-chip" [ngClass]="getStatusClass(status.name)">
-                        {{status.name}}
-                      </span>
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
+                <mat-select [(ngModel)]="ad.statusId"
+                            (selectionChange)="updateAdvertisementStatus(ad.id, $event.value)"
+                            [disabled]="ad.isStatusUpdating"
+                            class="status-select"
+                            panelClass="status-select-panel">
+                  <mat-select-trigger>
+                    <div class="status-chip" [ngClass]="getStatusClass(ad.status)">
+                      <mat-icon class="status-icon">{{getStatusIcon(ad.status)}}</mat-icon>
+                      {{ad.status}}
+                    </div>
+                  </mat-select-trigger>
+                  <mat-option *ngFor="let status of statusOptions" [value]="status.id">
+                    <div class="status-chip" [ngClass]="getStatusClass(status.name)">
+                      <mat-icon class="status-icon">{{getStatusIcon(status.name)}}</mat-icon>
+                      {{status.name}}
+                    </div>
+                  </mat-option>
+                </mat-select>
               </div>
             </td>
           </ng-container>
@@ -180,7 +186,7 @@
           </ng-container>
 
           <!-- Views Column -->
-          <ng-container matColumnDef="views">
+          <ng-container matColumnDef="viewCount">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Views </th>
             <td mat-cell *matCellDef="let ad">
               <div class="views-count">
@@ -230,13 +236,12 @@
           </tr>
         </table>
 
-        <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]"
-                       [length]="totalItems"
-                       [pageSize]="pageSize"
-                       [pageIndex]="currentPage - 1"
-                       showFirstLastButtons
-                       (page)="onPageChange($event)"
-                       aria-label="Select page">
+        <mat-paginator
+          [length]="totalItems"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          [pageIndex]="currentPage - 1"
+          showFirstLastButtons>
         </mat-paginator>
       </div>
     </mat-card-content>
