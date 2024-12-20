@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MyConfig } from '../../my-config';
 import { MyBaseEndpointAsync } from '../../helper/my-base-endpoint-async.interface';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 export interface AdvertImageResponse {
   id: number;
@@ -34,7 +36,12 @@ export class AdvertisementGetByIdEndpointService implements MyBaseEndpointAsync<
 
   constructor(private httpClient: HttpClient) { }
 
-  handleAsync(id: number) {
-    return this.httpClient.get<AdvertGetByIdResponse>(`${this.apiUrl}/${id}`);
+  handleAsync(id: number): Observable<AdvertGetByIdResponse> {
+    return this.httpClient.get<AdvertGetByIdResponse>(`${this.apiUrl}/${id}`).pipe(
+      catchError(error => {
+        console.error('Error fetching advertisement:', error);
+        return throwError(() => new Error('Failed to fetch advertisement data'));
+      })
+    );
   }
 }

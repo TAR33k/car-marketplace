@@ -14,7 +14,7 @@ namespace RS1_2024_25.API.Endpoints.CarEndpoints
     {
         [HttpGet("{id}")]
         public override async Task<ActionResult<CarGetByIdResponse>> HandleAsync(
-            int id, 
+            int id,
             CancellationToken cancellationToken = default)
         {
             var car = await db.Cars

@@ -1,0 +1,92 @@
+{
+  "landing": {
+    "hero": {
+      "title": "Find Your Perfect Car",
+      "subtitle": "The largest vehicle marketplace in Bosnia and Herzegovina"
+    },
+    "search": {
+      "title": "Search Filters",
+      "make": {
+        "label": "Make",
+        "placeholder": "Any Make"
+      },
+      "model": {
+        "label": "Model",
+        "placeholder": "Any Model"
+      },
+      "condition": {
+        "label": "Vehicle Condition",
+        "all": "All Vehicles",
+        "new": "New",
+        "used": "Used",
+        "forParts": "For parts",
+        "damaged": "Damaged"
+      },
+      "price": {
+        "label": "Price Range"
+      },
+      "year": {
+        "label": "Year Range"
+      },
+      "fuelType": {
+        "label": "Fuel Type",
+        "placeholder": "Any Fuel Type"
+      },
+      "transmission": {
+        "label": "Transmission",
+        "placeholder": "Any Transmission"
+      },
+      "mileage": {
+        "label": "Maximum Mileage",
+        "suffix": "km"
+      },
+      "buttons": {
+        "reset": "Reset Filters",
+        "search": "Search"
+      }
+    },
+    "categories": {
+      "title": "Popular Categories",
+      "vehicles": "vehicles"
+    },
+    "featured": {
+      "title": "Newest Listings",
+      "loading": "Loading newest listings...",
+      "error": "Failed to load listings",
+      "noAds": "No advertisements found",
+      "loadMore": "Load More",
+      "viewDetails": "View Details",
+      "tryAgain": "Try Again",
+      "refresh": "Refresh"
+    }
+  },
+
+  "registration": "Registration",
+  "namePlaceholder": "First Name",
+  "nameRequired": "Name is required.",
+  "surnamePlaceholder": "Last Name",
+  "surnameRequired": "Surname is required.",
+  "addressPlaceholder": "Address",
+  "addressRequired": "Address is required.",
+  "phoneNumberPlaceholder": "Phone Number",
+  "phoneNumberRequired": "Phone number is required.",
+  "phoneNumberInvalid": "Please enter a valid phone number in the format: +3876XXXXXXXX.",
+  "usernamePlaceholder": "Username",
+  "usernameRequired": "Username is required.",
+  "usernameTaken": "Username is already taken.",
+  "emailPlaceholder": "Email",
+  "emailRequired": "Email is required.",
+  "emailInvalid": "Please enter a valid email address (e.g., user@example.com).",
+  "passwordPlaceholder": "Password",
+  "confirmPasswordPlaceholder": "Retype Password",
+  "passwordsDoNotMatch": "Passwords do not match.",
+  "previous": "Previous",
+  "next": "Next",
+  "submit": "Submit",
+  "passwordWeak": "Weak password",
+  "passwordMedium": "Medium strength password",
+  "passwordStrong": "Strong password",
+  "pleaseFillFields": "Please fill in all required fields.",
+  "registrationSuccess": "Registration successful!",
+  "generalError": "There was an issue with your submission. Please check the form and try again."
+}

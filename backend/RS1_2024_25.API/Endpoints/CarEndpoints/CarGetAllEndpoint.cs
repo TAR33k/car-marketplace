@@ -97,7 +97,7 @@ namespace RS1_2024_25.API.Endpoints.CarEndpoints
 
             return await MyPagedList<CarGetAllResponse>.CreateAsync(
                 projectedQuery,
-                request,  
+                request,
                 cancellationToken);
         }
 

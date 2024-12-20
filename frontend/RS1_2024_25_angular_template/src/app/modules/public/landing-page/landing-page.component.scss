@@ -1,7 +1,13 @@
-// Variables
+@use '@angular/material' as mat;
+
+// ==========================================================================
+// Variables & Configuration
+// ==========================================================================
+// Layout
 $container-width: 1200px;
 $grid-gap: 1rem;
 $border-radius: 8px;
+$card-padding: 1.25rem;
 $transition-default: all 0.3s ease;
 
 // Breakpoints
@@ -11,41 +17,79 @@ $breakpoint-md: 1279px;
 $breakpoint-lg: 1919px;
 
 // Colors
-$color-primary: var(--primary-color, #2196f3);
+$color-primary: var(--primary-color);
+$color-accent: var(--accent-color);
+$color-warn: var(--warn-color);
 $color-white: #fff;
 $color-black-87: rgba(0, 0, 0, 0.87);
 $color-black-60: rgba(0, 0, 0, 0.6);
 $color-black-12: rgba(0, 0, 0, 0.12);
 $color-background: #f5f5f5;
-$color-hover: #e0e0e0;
 
+// Status Colors
+$status-colors: (
+  'new': #4caf50,
+  'used': #ff9800
+);
+
+// Z-index
+$z-layers: (
+  'modal': 1000,
+  'dropdown': 900,
+  'header': 800,
+  'search': 100,
+  'base': 1
+);
+
+// ==========================================================================
 // Mixins
+// ==========================================================================
 @mixin flex-center {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-@mixin card-shadow {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+@mixin card-shadow($level: 1) {
+  @if $level == 1 {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  } @else if $level == 2 {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  } @else if $level == 3 {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
 }
 
 @mixin hover-transform {
   transition: $transition-default;
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    @include card-shadow(2);
   }
 }
 
-@mixin icon-base {
-  font-size: 32px;
-  height: 32px;
-  width: 32px;
+@mixin icon-base($size: 32px) {
+  font-size: $size;
+  height: $size;
+  width: $size;
   margin-bottom: 12px;
 }
 
-// Base Styles
+@mixin truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin responsive($breakpoint) {
+  @media (max-width: $breakpoint) {
+    @content;
+  }
+}
+
+// ==========================================================================
+// Base Styles & Layout
+// ==========================================================================
 :host {
   display: block;
   margin-top: 64px;
@@ -53,32 +97,38 @@ $color-hover: #e0e0e0;
 
 .landing-page {
   min-height: calc(100vh - 64px);
+  background-color: $color-background;
 }
 
-// Container
 .container {
   max-width: $container-width;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 $grid-gap;
+
+  @include responsive($breakpoint-sm) {
+    padding: 0 ($grid-gap * 0.5);
+  }
 }
 
+// ==========================================================================
 // Hero Section
+// ==========================================================================
 .hero-section {
   height: 400px;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)),
-  url('/assets/images/hero-background.jpg');
   background-size: cover;
   background-position: center;
   @include flex-center;
   text-align: center;
   color: $color-white;
-  padding: 0 1rem;
+  padding: 0 $grid-gap;
 
   .hero-content {
+    max-width: 800px;
+
     h1 {
       font-size: 3rem;
       font-weight: 700;
-      margin-bottom: 1rem;
+      margin-bottom: $grid-gap;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     }
 
@@ -90,25 +140,28 @@ $color-hover: #e0e0e0;
     }
   }
 
-  @media (max-width: $breakpoint-sm) {
+  @include responsive($breakpoint-sm) {
     height: 300px;
+
     .hero-content {
       h1 { font-size: 2rem; }
       p { font-size: 1rem; }
     }
   }
 
-  @media (max-width: $breakpoint-xs) {
+  @include responsive($breakpoint-xs) {
     height: 250px;
   }
 }
 
-// Search Section
+// ==========================================================================
+// Search & Filters Section
+// ==========================================================================
 .search-section {
   margin-top: -60px;
   padding-bottom: 3rem;
   position: relative;
-  z-index: 1;
+  z-index: map-get($z-layers, 'search');
 }
 
 // Card Base Styles
@@ -117,18 +170,21 @@ $color-hover: #e0e0e0;
   border-radius: $border-radius;
   @include card-shadow;
   margin-bottom: 2rem;
+  overflow: hidden;
 
   .mat-card-header {
-    padding: 1rem 1rem 0;
+    padding: $grid-gap $grid-gap 0;
+
     .mat-card-title {
       font-size: 1.25rem;
       font-weight: 500;
-      margin-bottom: 0.5rem;
+      margin-bottom: $grid-gap * 0.5;
+      @include truncate;
     }
   }
 
   .mat-card-content {
-    padding: 1rem;
+    padding: $grid-gap;
   }
 }
 
@@ -142,44 +198,42 @@ $color-hover: #e0e0e0;
 .filters-grid {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: $grid-gap * 1.5;
 }
 
 .filter-row {
   display: grid;
-  gap: 1rem;
+  gap: $grid-gap;
 
   &.primary-filters,
   &.secondary-filters {
     grid-template-columns: repeat(3, 1fr);
+
+    @include responsive($breakpoint-md) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include responsive($breakpoint-sm) {
+      grid-template-columns: 1fr;
+    }
   }
 
   &.range-filters {
     grid-template-columns: repeat(2, 1fr);
-    margin: -0.5rem 0;
-  }
+    width: 100%;
+    box-sizing: border-box;
 
-  @media (max-width: $breakpoint-md) {
-    &.primary-filters,
-    &.secondary-filters {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    &.primary-filters,
-    &.secondary-filters,
-    &.range-filters {
+    @include responsive($breakpoint-sm) {
       grid-template-columns: 1fr;
     }
   }
 }
 
-// Range Sliders
+// Range Container
 .range-container {
-  background: #f8f8f8;
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
+  background: lighten($color-background, 2%);
+  border-radius: $border-radius;
+  padding: $grid-gap * 0.75 $grid-gap;
   width: 100%;
   box-sizing: border-box;
 
@@ -187,29 +241,53 @@ $color-hover: #e0e0e0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
-    padding: 0 10px; // Add padding to align with slider
+    margin-bottom: $grid-gap * 0.5;
+    padding: 0 10px;
+  }
+
+  @include responsive($breakpoint-sm) {
+    margin-bottom: $grid-gap;
   }
 }
 
-// Categories Carousel
+// Filter Actions
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $grid-gap;
+  padding-top: $grid-gap;
+  width: 100%;
+
+  @include responsive($breakpoint-sm) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// ==========================================================================
+// Categories & Carousel
+// ==========================================================================
 .categories-carousel {
   position: relative;
   display: flex;
   align-items: center;
   padding: 0 48px;
-  margin: 20px 0;
+  margin: $grid-gap 0;
 
   .nav-button {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    z-index: 2;
-    background: rgba(255, 255, 255, 0.9);
-    @include card-shadow;
+    z-index: map-get($z-layers, 'base');
+    background: rgba($color-white, 0.9);
+    @include card-shadow(1);
 
     &.prev { left: 0; }
     &.next { right: 0; }
+
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -225,71 +303,133 @@ $color-hover: #e0e0e0;
     display: flex;
     transition: transform 0.3s ease-in-out;
     width: 100%;
-    gap: 1rem;
+    gap: $grid-gap;
   }
 }
 
-// Body Type Card
+// Body Type Cards
 .body-type-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  padding: $grid-gap;
   border-radius: $border-radius;
   background-color: $color-background;
   @include hover-transform;
   cursor: pointer;
 
   &.selected {
-    background-color: #e3f2fd;
+    background-color: var(--primary-lighter, #e3f2fd);
     border: 2px solid $color-primary;
-    .mat-icon { color: $color-primary; }
-    .type-count { color: $color-black-60; }
+
+    .mat-icon {
+      color: $color-primary;
+    }
   }
 
-  mat-icon { @include icon-base; }
+  mat-icon {
+    @include icon-base(32px);
+  }
 
   .type-name {
     font-weight: 500;
-    margin-bottom: 8px;
+    margin-bottom: $grid-gap * 0.5;
     text-align: center;
+    @include truncate;
   }
 
   .type-count {
-    font-size: 14px;
+    font-size: 0.875rem;
     color: $color-black-60;
   }
 
   // Carousel-specific styles
   .categories-carousel & {
     flex: 0 0 24%;
-    padding: 20px 12px;
+    padding: $grid-gap $grid-gap * 0.75;
     box-sizing: border-box;
 
-    @media (max-width: $breakpoint-md) { flex: 0 0 33.333%; }
-    @media (max-width: $breakpoint-sm) { flex: 0 0 50%; }
-    @media (max-width: $breakpoint-xs) { flex: 0 0 100%; }
+    @include responsive($breakpoint-md) {
+      flex: 0 0 33.333%;
+    }
+    @include responsive($breakpoint-sm) {
+      flex: 0 0 50%;
+    }
+    @include responsive($breakpoint-xs) {
+      flex: 0 0 100%;
+    }
   }
 }
 
-// Cars Grid
-.cars-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  gap: 1.5rem;
-  padding: 1rem 0;
+// Carousel Navigation
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: $grid-gap auto;
+  width: fit-content;
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: $color-black-12;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: $transition-default;
+
+    &.active {
+      background: $color-primary;
+      transform: scale(1.2);
+    }
+
+    &:hover {
+      background: rgba($color-primary, 0.5);
+    }
+
+    &:focus {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
+    }
+  }
 }
 
-// Car Card
-.car-card {
+// ==========================================================================
+// Cards & Grid Layouts
+// ==========================================================================
+.cars-grid,
+.ads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: $grid-gap * 1.5;
+  padding: $grid-gap 0;
+
+  @include responsive($breakpoint-sm) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Car Card Base
+%card-interactive {
   @extend %card-base;
-  overflow: hidden;
   @include hover-transform;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+// Car Card Styles
+.car-card {
+  @extend %card-interactive;
   border: 1px solid $color-black-12;
 
   .car-image {
-    position: relative;
+    @extend .ad-image;
     height: 200px;
+    border-radius: 0;
+    position: relative;
     overflow: hidden;
     background-color: $color-background;
 
@@ -298,26 +438,39 @@ $color-hover: #e0e0e0;
       height: 100%;
       object-fit: cover;
       transition: transform 0.3s ease;
-      &:hover { transform: scale(1.05); }
+
+      @supports (aspect-ratio: 16/9) {
+        aspect-ratio: 16/9;
+      }
+
+      &:hover {
+        transform: scale(1.05);
+      }
     }
   }
 
-  .car-content { padding: 1.25rem; }
+  .car-content {
+    padding: $card-padding;
+    flex: 1;
+  }
 
   .car-title {
     font-size: 1.25rem;
     font-weight: 500;
-    margin: 0 0 1rem;
+    margin: 0 0 $grid-gap;
     color: $color-black-87;
     line-height: 1.4;
+    @include truncate;
   }
 }
 
-// Shared Feature Styles
+// ==========================================================================
+// Features & Card Details
+// ==========================================================================
 %feature-base {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: $grid-gap * 0.5;
   color: $color-black-60;
   font-size: 0.875rem;
 
@@ -329,130 +482,191 @@ $color-hover: #e0e0e0;
   }
 
   span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    @include truncate;
   }
 }
 
 .car-features {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: $grid-gap;
+  margin-bottom: $card-padding;
 
-  .feature { @extend %feature-base; }
+  .feature {
+    @extend %feature-base;
+  }
 }
 
 .car-location,
 .car-body-type {
   @extend %feature-base;
-  margin-top: 0.75rem;
+  margin-top: $grid-gap * 0.75;
 }
 
-// States
-%centered-state {
-  @include flex-center;
-  flex-direction: column;
-  padding: 3rem;
-  text-align: center;
+// ==========================================================================
+// Ad Cards
+// ==========================================================================
+.ad-card {
+  @extend %card-interactive;
 
-  p {
-    margin: 1rem 0;
-    color: $color-black-60;
-    font-size: 1rem;
-  }
-}
+  .ad-image {
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-radius: $border-radius $border-radius 0 0;
+    background-color: #eee;
 
-.loading-state {
-  @extend %centered-state;
-  mat-spinner { margin-bottom: 1rem; }
-}
-
-.error-state {
-  @extend %centered-state;
-  mat-icon {
-    font-size: 2.5rem;
-    height: 2.5rem;
-    width: 2.5rem;
-    color: var(--warn-color);
-    margin-bottom: 1rem;
-  }
-  button { margin-top: 1rem; }
-}
-
-// Material Overrides
-::ng-deep {
-  .mat-mdc-slider {
-    width: 97% !important;
-    min-width: 0;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0 8px;
-
-    .mdc-slider__thumb-knob {
-      background-color: $color-white !important;
-      border: 2px solid $color-primary !important;
+    &::before {
+      content: 'No Image Available';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: $color-black-60;
+      font-size: 0.9rem;
+      text-align: center;
+      z-index: 1;
     }
 
-    .mdc-slider__track--active_fill {
-      border-color: $color-primary !important;
+    &::after {
+      content: 'photo';
+      font-family: 'Material Icons';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -80%);
+      color: $color-black-60;
+      font-size: 2rem;
+      z-index: 1;
     }
 
-    .mdc-slider__track--inactive {
-      background-color: $color-black-12 !important;
-    }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+      position: relative;
+      z-index: 2;
 
-    .mdc-slider__thumb,
-    .mdc-slider__thumb-container {
-      background: none !important;
-      &::before,
-      &::after {
-        display: none !important;
-        background: none !important;
+      &:hover {
+        transform: scale(1.05);
+      }
+
+      // Hide placeholder when image loads successfully
+      &:not([src=""]):not([src="null"]) {
+        & + .ad-image::before,
+        & + .ad-image::after {
+          display: none;
+        }
       }
     }
 
-    .mdc-slider {
-      margin-left: 7px !important;
-      width: calc(100% - 14px) !important;
+    .ad-badges {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      gap: 8px;
 
-      &__track-container {
-        width: 100%;
+      .condition-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        color: $color-white;
+
+        @each $status, $color in $status-colors {
+          &.#{$status} {
+            background-color: $color;
+          }
+        }
       }
     }
-
-    .mdc-slider__thumb--focused {
-      left: 0;
-    }
-
-    .mdc-slider__track--active {
-      left: 0;
-      right: 0;
-    }
   }
-}
 
-.filter-row {
-  &.range-filters {
-    grid-template-columns: repeat(2, 1fr);
-    margin: 0;
-    gap: 1rem;
-    width: 100%;
-    box-sizing: border-box;
-  }
-}
-
-// Filter Actions (Reset & Search buttons)
-.filter-actions {
-  display: flex;
-  justify-content: flex-end; // Align to right
-  gap: 1rem;
-  padding-top: 1rem;
-  width: 100%;
-
-  @media (max-width: $breakpoint-sm) {
+  .ad-content {
+    padding: $card-padding;
+    flex: 1;
+    display: flex;
     flex-direction: column;
+  }
+
+  .ad-header {
+    margin-bottom: $grid-gap;
+
+    .ad-title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--text-primary, $color-black-87);
+      @include truncate;
+    }
+
+    .car-name {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary, $color-black-60);
+    }
+  }
+
+  .ad-details {
+    display: flex;
+    flex-direction: column;
+    gap: $grid-gap;
+
+    .price-views {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .price {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: $color-primary;
+      }
+
+      .views {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--text-secondary, $color-black-60);
+        font-size: 0.9rem;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+    }
+
+    .listing-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--text-secondary, $color-black-60);
+
+      span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+
+  mat-card-actions {
+    margin-top: auto;
+    padding: $grid-gap;
+    text-align: center;
 
     button {
       width: 100%;
@@ -460,11 +674,129 @@ $color-hover: #e0e0e0;
   }
 }
 
+// ==========================================================================
+// States & Loading
+// ==========================================================================
+%centered-state {
+  @include flex-center;
+  flex-direction: column;
+  padding: 3rem;
+  text-align: center;
+
+  p {
+    margin: $grid-gap 0;
+    color: $color-black-60;
+    font-size: 1rem;
+  }
+}
+
+.loading-state {
+  @extend %centered-state;
+
+  mat-spinner {
+    margin-bottom: $grid-gap;
+  }
+}
+
+.error-state {
+  @extend %centered-state;
+
+  mat-icon {
+    font-size: 2.5rem;
+    height: 2.5rem;
+    width: 2.5rem;
+    color: $color-warn;
+    margin-bottom: $grid-gap;
+  }
+
+  button {
+    margin-top: $grid-gap;
+  }
+}
+
+// ==========================================================================
+// Material Overrides
+// ==========================================================================
+::ng-deep {
+  // Slider Overrides
+  .mat-mdc-slider {
+    width: 97% !important;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 8px;
+
+    .mdc-slider {
+      margin-left: 7px !important;
+      width: calc(100% - 14px) !important;
+
+      &__thumb-knob {
+        background-color: $color-white !important;
+        border: 2px solid $color-primary !important;
+      }
+
+      &__track--active_fill {
+        border-color: $color-primary !important;
+      }
+
+      &__track--inactive {
+        background-color: $color-black-12 !important;
+      }
+
+      &__thumb,
+      &__thumb-container {
+        background: none !important;
+
+        &::before,
+        &::after {
+          display: none !important;
+          background: none !important;
+        }
+      }
+
+      &__track-container {
+        width: 100%;
+      }
+
+      &__thumb--focused {
+        left: 0;
+      }
+
+      &__track--active {
+        left: 0;
+        right: 0;
+      }
+    }
+  }
+
+  // Card Overrides
+  .mat-mdc-card {
+    --mdc-elevated-card-container-color: #{$color-white};
+
+    .mat-mdc-card-header {
+      padding: $grid-gap $grid-gap 0;
+    }
+
+    .mat-mdc-card-content {
+      padding: $grid-gap;
+      margin: 0;
+    }
+
+    .mat-mdc-card-actions {
+      padding: $grid-gap;
+      margin: 0;
+    }
+  }
+}
+
+// ==========================================================================
+// Utility Classes & Helpers
+// ==========================================================================
 // Load More Button
 .load-more {
   display: flex;
-  justify-content: center; // Center align
-  padding: 2rem 0 1rem;
+  justify-content: center;
+  padding: $grid-gap * 2 0 $grid-gap;
   width: 100%;
 
   button {
@@ -473,86 +805,347 @@ $color-hover: #e0e0e0;
   }
 }
 
-// Carousel Dots/Pages
-.carousel-dots {
-  display: flex;
-  justify-content: center; // Center the dots container
-  align-items: center;
-  gap: 8px;
-  margin: 16px auto; // Center with auto margins
-  width: fit-content; // Contain width to content
+// Featured Section Header
+.featured-ads-card {
+  .mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: $grid-gap * 0.5;
 
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #ccc;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    transition: background-color 0.3s;
-
-    &.active {
-      background: var(--primary-color, #2196f3);
-      transform: scale(1.2); // Slightly enlarge active dot
-    }
-
-    &:hover {
-      background: darken(#ccc, 10%);
-    }
-
-    // Optional: Add focus state for accessibility
-    &:focus {
-      outline: 2px solid var(--primary-color);
-      outline-offset: 2px;
+    mat-icon {
+      color: $color-primary;
     }
   }
 }
 
-// If you need additional container alignment
-.mat-card-content {
-  .carousel-dots {
-    text-align: center; // Ensure center alignment within card
+// Image Utilities
+.img-responsive {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+// Accessibility
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+// Print Styles
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .ad-card,
+  .car-card {
+    break-inside: avoid;
   }
 }
 
-// Range Filters - Make them responsive
-.filter-row {
-  display: grid;
-  gap: 1rem;
+// Language Switcher Styles
+.language-switcher {
+  position: absolute;
+  top: 75px;
+  right: 1rem;
+  z-index: 2;
 
-  &.primary-filters,
-  &.secondary-filters {
-    grid-template-columns: repeat(3, 1fr);
+  button {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    min-width: 100px; // Add fixed width
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 16px;
 
-    @media (max-width: $breakpoint-md) {
-      grid-template-columns: repeat(2, 1fr);
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Override Material Menu Styles
+::ng-deep {
+  .mat-mdc-menu-panel.language-menu {
+    min-width: 100px !important; // Match button width
+    margin-top: 8px !important;
+
+    .mat-mdc-menu-content {
+      padding: 0;
     }
 
-    @media (max-width: $breakpoint-sm) {
+    .mat-mdc-menu-item {
+      height: 40px;
+      line-height: 40px;
+    }
+  }
+
+  // Fix menu positioning
+  .cdk-overlay-connected-position-bounding-box {
+    right: 7rem !important;
+  }
+}
+
+// ==========================================================================
+// Responsive Utilities
+// ==========================================================================
+@media (max-width: $breakpoint-lg) {
+  .container {
+    max-width: 95%;
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .hero-section {
+    .hero-content {
+      max-width: 90%;
+    }
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .card-base {
+    margin-bottom: $grid-gap;
+  }
+
+  .filter-row {
+    &.range-filters {
       grid-template-columns: 1fr;
     }
   }
+}
 
-  &.range-filters {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: $breakpoint-xs) {
+  .hero-section {
+    padding: 0 $grid-gap * 0.5;
+  }
 
-    @media (max-width: $breakpoint-md) {
-      grid-template-columns: repeat(2, 1fr);
+  .card-base {
+    border-radius: 0;
+  }
+}
+
+// ==========================================================================
+// Animation Keyframes
+// ==========================================================================
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.ad-image {
+  position: relative;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-radius: $border-radius $border-radius 0 0;
+  background-color: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .ad-badges {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3; // Ensure badges are above the image
+    display: flex;
+    gap: 8px;
+
+    .condition-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      color: $color-white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+      &.new {
+        background-color: map-get($status-colors, 'new');
+      }
+
+      &.used {
+        background-color: map-get($status-colors, 'used');
+      }
     }
 
-    @media (max-width: $breakpoint-sm) {
-      grid-template-columns: 1fr; // Stack on mobile
+    // Show placeholder when no image
+    &:not(:has(img:not([hidden]))) {
+      &::before {
+        content: 'No Image Available';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        color: $color-black-60;
+        font-size: 0.9rem;
+        text-align: center;
+        padding-top: 30px;
+      }
+
+      &::after {
+        content: 'photo';
+        font-family: 'Material Icons';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: $color-black-60;
+        font-size: 2rem;
+      }
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+      }
     }
   }
 }
 
-// Range Container - Ensure proper width on all screens
-.range-container {
+.ad-image-container {
+  position: relative;
   width: 100%;
-  box-sizing: border-box;
 
-  @media (max-width: $breakpoint-sm) {
-    margin-bottom: 1rem;
+  .ad-image {
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-radius: $border-radius $border-radius 0 0;
+    background-color: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:not(:has(img:not([hidden]))) {
+      &::before {
+        content: 'No Image Available';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        color: $color-black-60;
+        font-size: 0.9rem;
+        text-align: center;
+      }
+
+      &::after {
+        content: 'photo';
+        font-family: 'Material Icons', sans-serif;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: $color-black-60;
+        font-size: 2rem;
+      }
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+  }
+
+  .condition-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: $color-white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    &.new {
+      background-color: map-get($status-colors, 'new');
+    }
+
+    &.used {
+      background-color: map-get($status-colors, 'used');
+    }
+  }
+}
+
+// Update the body type card styles
+.body-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $grid-gap;
+  border-radius: $border-radius;
+  background-color: $color-white;
+  @include hover-transform;
+  cursor: pointer;
+  min-width: 120px;
+
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      width: 100%;
+      height: 100%;
+      font-size: 48px;
+      color: $color-black-87;
+      transition: color 0.3s ease;
+    }
+  }
+
+  &.selected {
+    background-color: var(--primary-lighter, #e3f2fd);
+    border: 2px solid $color-primary;
+
+    .icon-wrapper mat-icon {
+      color: $color-primary;
+    }
+  }
+
+  .type-name {
+    font-weight: 500;
+    margin-bottom: 4px;
+    text-align: center;
+    @include truncate;
+    color: $color-black-87;
+  }
+
+  .type-count {
+    font-size: 0.875rem;
+    color: $color-black-60;
   }
 }

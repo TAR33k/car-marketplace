@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { UnauthorizedComponent } from './modules/shared/unauthorized/unauthorized.component';
 import { AuthGuard } from './auth-guards/auth-guard.service';
+import { ChatComponent } from './modules/shared/chat/components/chat.component';
 
 const routes: Routes = [
   { path: 'unauthorized', component: UnauthorizedComponent },
@@ -26,6 +27,11 @@ const routes: Routes = [
   {
     path: 'cars',
     loadChildren: () => import('./modules/admin/car/car.module').then(m => m.CarsModule)
+  },
+  {
+    path: 'chat',
+    component: ChatComponent,
+    canActivate: [AuthGuard]
   },
   { path: '', redirectTo: 'public', pathMatch: 'full' },
   { path: '**', redirectTo: 'public', pathMatch: 'full' }

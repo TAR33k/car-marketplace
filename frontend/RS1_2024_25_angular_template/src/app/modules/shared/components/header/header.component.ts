@@ -1,31 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit, OnDestroy, ViewChild} from '@angular/core';
 import { Router } from '@angular/router';
-import { ThemeService } from '../../../../services/theme.service';
 import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { MyAuthService } from '../../../../services/auth-services/my-auth.service';
+import { Subscription } from 'rxjs';
+import {MatMenuTrigger} from '@angular/material/menu';
 
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss']
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
+  @ViewChild('userMenuTrigger') userMenuTrigger!: MatMenuTrigger;
   isDarkMode = false;
   searchControl = new FormControl('');
-  isLoggedIn = false; // This should be managed by your auth service
+  isLoggedIn = false;
+  isAdmin = false;
+  username: string | null = null;
+  private authSubscription: Subscription = new Subscription();
 
   constructor(
     private router: Router,
-    private themeService: ThemeService
+    private myAuthService: MyAuthService
   ) {}
 
   ngOnInit() {
-    // Subscribe to theme changes
-    this.themeService.isDarkMode$.subscribe(
-      isDark => this.isDarkMode = isDark
-    );
-
-    // Handle search input with debounce
     this.searchControl.valueChanges.pipe(
       debounceTime(300),
       distinctUntilChanged()
@@ -34,10 +34,19 @@ export class HeaderComponent implements OnInit {
         this.handleSearch(value);
       }
     });
+
+    this.authSubscription = this.myAuthService.authStateObservable().subscribe(authState => {
+      this.isLoggedIn = !!authState;
+      this.username = authState?.myAuthInfo?.username ?? null;
+      this.isAdmin = authState?.myAuthInfo?.isAdmin ?? false;
+    });
+
+    // Initialize user state
+    this.updateUserState();
   }
 
-  toggleTheme() {
-    this.themeService.toggleTheme();
+  ngOnDestroy() {
+    this.authSubscription.unsubscribe();
   }
 
   handleSearch(searchTerm: string) {
@@ -55,20 +64,47 @@ export class HeaderComponent implements OnInit {
   navigateToLogin() {
     this.router.navigate(['/auth/login']);
   }
+
   navigateToRegister() {
     this.router.navigate(['/auth/register']);
   }
+
   navigateToHome() {
     this.router.navigate(['/']);
   }
+
   navigateToProfile() {
     this.router.navigate(['/client/profile']);
   }
+
   navigateToSettings() {
     this.router.navigate(['/client/settings']);
   }
+
   onLogout() {
-// Implement logout logic
-    this.router.navigate(['/auth/logout']);
+    this.myAuthService.setLoggedInUser(null);
+    localStorage.clear();
+    this.router.navigate(['/auth/login']);
+    this.isLoggedIn = false;
+    this.isAdmin = false;
+    this.username = null;
+  }
+
+  switchModule() {
+    if (this.isOnAdminPage()) {
+      this.router.navigate(['/']);
+    } else {
+      this.router.navigate(['/admin']);
+    }
+  }
+
+  isOnAdminPage(): boolean {
+    return this.router.url.startsWith('/admin');
+  }
+
+  private updateUserState() {
+    this.isLoggedIn = this.myAuthService.isLoggedIn();
+    this.username = this.myAuthService.getUsername();
+    this.isAdmin = this.myAuthService.isAdmin();
   }
 }

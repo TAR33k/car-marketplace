@@ -3,6 +3,7 @@ using RS1_2024_25.API.Data.Models;
 using RS1_2024_25.API.Data.Models.Ad.Advertisement;
 using RS1_2024_25.API.Data.Models.Auth;
 using RS1_2024_25.API.Data.Models.Vehicle;
+using RS1_2024_25.API.Models;
 
 namespace RS1_2024_25.API.Data
 {
@@ -20,6 +21,7 @@ namespace RS1_2024_25.API.Data
         public DbSet<StatusType> StatusTypes { get; set; }
         public DbSet<Manufacturer> Manufacturers { get; set; }
         public DbSet<CarModel> CarModels { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MyConfig } from '../../my-config';
 import { MyBaseEndpointAsync } from '../../helper/my-base-endpoint-async.interface';
+import {VehicleCondition} from '../../services/car-services/car-enums';
 
 export enum FeaturedType {
-  MostViewed = 'MostViewed',
-  Newest = 'Newest',
-  PriceHighToLow = 'PriceHighToLow',
-  PriceLowToHigh = 'PriceLowToHigh'
+  MostViewed = 0,
+  Newest = 1,
+  PriceHighToLow = 2,
+  PriceLowToHigh = 3
 }
 
 export interface AdvertGetFeaturedRequest {
@@ -19,9 +20,9 @@ export interface AdvertGetFeaturedResponse {
   id: number;
   title: string;
   price: number;
-  listingDate: Date;
+  listingDate: string;
   viewCount: number;
-  condition: string;
+  condition: VehicleCondition;
   carName: string;
   userName: string;
   primaryImageUrl?: string;
@@ -38,7 +39,7 @@ export class AdvertisementGetFeaturedEndpointService implements MyBaseEndpointAs
   handleAsync(request: AdvertGetFeaturedRequest) {
     return this.httpClient.get<AdvertGetFeaturedResponse[]>(`${this.apiUrl}`, {
       params: {
-        featuredType: request.featuredType,
+        featuredType: FeaturedType[request.featuredType], // Convert enum to string
         count: request.count.toString()
       }
     });

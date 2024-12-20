@@ -1,5 +1,4 @@
-﻿// Endpoints/BodyTypeEndpoints/BodyTypeGetAllEndpoint.cs
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RS1_2024_25.API.Data;
 using RS1_2024_25.API.Helper.Api;

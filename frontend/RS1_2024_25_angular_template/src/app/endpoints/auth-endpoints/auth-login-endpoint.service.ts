@@ -1,10 +1,11 @@
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {tap} from 'rxjs/operators';
-import {MyConfig} from '../../my-config';
-import {MyAuthService} from '../../services/auth-services/my-auth.service';
-import {LoginTokenDto} from '../../services/auth-services/dto/login-token-dto';
-import {MyBaseEndpointAsync} from '../../helper/my-base-endpoint-async.interface';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { tap } from 'rxjs/operators';
+import { MyConfig } from '../../my-config';
+import { MyAuthService } from '../../services/auth-services/my-auth.service';
+import { LoginTokenDto } from '../../services/auth-services/dto/login-token-dto';
+import { Router } from '@angular/router';
+import { MyBaseEndpointAsync } from '../../helper/my-base-endpoint-async.interface';
 
 export interface LoginRequest {
   username: string;
@@ -17,17 +18,36 @@ export interface LoginRequest {
 export class AuthLoginEndpointService implements MyBaseEndpointAsync<LoginRequest, LoginTokenDto> {
   private apiUrl = `${MyConfig.api_address}/auth/login`;
 
-  constructor(private httpClient: HttpClient, private myAuthService: MyAuthService) {
-  }
+  constructor(
+    private httpClient: HttpClient,
+    private myAuthService: MyAuthService,
+    private router: Router // Inject the router
+  ) {}
 
   handleAsync(request: LoginRequest) {
     return this.httpClient.post<LoginTokenDto>(`${this.apiUrl}`, request).pipe(
       tap((response) => {
-        // Use MyAuthService to store login token and auth info
+        const userInfo = response.myAuthInfo;
+        if(userInfo) {
+          localStorage.setItem('authToken', response.token);
+          localStorage.setItem('username', userInfo.username);
+
+          localStorage.setItem('isAdmin', JSON.stringify(userInfo.isAdmin));
+        }
         this.myAuthService.setLoggedInUser({
           token: response.token,
           myAuthInfo: response.myAuthInfo
         });
+
+        const isAdmin = response.myAuthInfo?.isAdmin;
+        this.myAuthService.isAdmin();
+
+        // Redirect based on isAdmin status
+        if (isAdmin) {
+          this.router.navigate(['/admin-dashboard']);
+        } else {
+          this.router.navigate(['/landing-page']);
+        }
       })
     );
   }

@@ -7,7 +7,8 @@
 }
 
 .container {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -17,43 +18,295 @@
   justify-content: space-between;
   align-items: center;
   height: 64px;
+  gap: 2rem;
 }
 
-.brand {
-  text-decoration: none;
-  color: white;
-  display: flex;
-  align-items: center;
-
-  .brand-name {
-    font-size: 1.5rem;
-    font-weight: 500;
-  }
-}
-
-.nav-links {
-  display: flex;
-  gap: 1rem;
-  margin: 0 2rem;
-
-  a {
-    color: rgba(255, 255, 255, 0.87);
+// Left Section
+.left-section {
+  .brand {
     text-decoration: none;
+    color: white;
+    display: flex;
+    align-items: center;
 
-    &.active {
-      color: white;
+    .brand-name {
+      font-size: 1.5rem;
       font-weight: 500;
+      letter-spacing: 0.5px;
     }
   }
 }
 
-.auth-buttons {
+// Center Section
+.nav-links {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.87);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+
+    mat-icon {
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+    }
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    &.active {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+  }
 }
 
-@media (max-width: 768px) {
-  .nav-links {
+// Right Section
+.right-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .chat-button {
+    &.active {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .user-menu {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .user-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1rem;
+
+      .username {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .auth-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+}
+
+// Logout menu item styling
+.logout-menu-item {
+  color: #f44336;
+}
+
+// Responsive Design
+@media (max-width: 960px) {
+  .nav-links span {
     display: none;
+  }
+
+  .nav-links a {
+    padding: 0.5rem;
+  }
+
+  .right-section .user-menu .username {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+
+  .toolbar-content {
+    gap: 1rem;
+  }
+
+  .nav-links {
+    gap: 0.5rem;
+  }
+
+  .right-section {
+    gap: 0.5rem;
+  }
+
+  .auth-buttons button span {
+    display: none;
+  }
+}
+
+::ng-deep {
+  .mat-mdc-menu-panel {
+    min-width: 200px !important;
+  }
+}
+
+::ng-deep {
+  .mat-mdc-menu-panel {
+    min-width: 200px !important;
+  }
+
+  // Fix menu positioning
+  .mat-mdc-menu-content {
+    padding: 0 !important;
+  }
+
+  .mat-mdc-menu-panel.user-menu-panel {
+    margin-top: 8px !important; // Add space between button and menu
+  }
+
+  // Style menu items
+  .mat-mdc-menu-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    height: 48px !important;
+    padding: 0 16px !important;
+
+    .mat-icon {
+      margin: 0 !important;
+    }
+  }
+
+  // Update user menu styles
+  user-menu {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .user-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1rem;
+      height: 48px; // Match toolbar height
+      .username {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      &.mat-mdc-button {
+        line-height: 48px;
+      }
+    }
+  }
+}
+
+::ng-deep {
+  .mat-mdc-menu-panel {
+    min-width: 200px !important; // Ensure the menu has a minimum width
+    margin-top: 8px !important; // Add space between button and menu
+  }
+
+  .mat-mdc-menu-content {
+    padding: 0 !important; // Remove padding if necessary
+  }
+
+  .mat-mdc-menu-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    height: 48px !important;
+    padding: 0 16px !important;
+
+    .mat-icon {
+      margin: 0 !important;
+    }
+  }
+}
+
+// Right Section
+.right-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .chat-button {
+    &.active {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .user-menu {
+    position: relative;  // Ensures the menu is positioned relative to this container
+    display: flex;
+    align-items: center;
+
+    .user-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1rem;
+
+      .username {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .auth-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+}
+
+::ng-deep {
+  // Ensure the mat-menu is aligned correctly under the user button
+  .mat-mdc-menu-panel {
+    min-width: 200px !important;
+    margin-top: 8px !important; // Add space between button and menu
+    position: absolute !important; // Position the menu absolutely within its container
+    top: 100% !important; // Position directly below the button
+    left: 0 !important; // Align with the left edge of the button
+    z-index: 2000 !important; // Ensure it appears above other content
+  }
+
+  .mat-mdc-menu-content {
+    padding: 0 !important; // Remove padding if necessary
+  }
+
+  .mat-mdc-menu-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    height: 48px !important;
+    padding: 0 16px !important;
+
+    .mat-icon {
+      margin: 0 !important;
+    }
   }
 }

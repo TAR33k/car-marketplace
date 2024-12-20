@@ -1,0 +1,92 @@
+{
+  "landing": {
+    "hero": {
+      "title": "Pronađite Savršen Automobil",
+      "subtitle": "Najveće tržište vozila u Bosni i Hercegovini"
+    },
+    "search": {
+      "title": "Filteri Pretrage",
+      "make": {
+        "label": "Marka",
+        "placeholder": "Sve marke"
+      },
+      "model": {
+        "label": "Model",
+        "placeholder": "Svi modeli"
+      },
+      "condition": {
+        "label": "Stanje Vozila",
+        "all": "Sva vozila",
+        "new": "Novo",
+        "used": "Korišteno",
+        "forParts": "Za dijelove",
+        "damaged": "Oštećeno"
+      },
+      "price": {
+        "label": "Raspon Cijene"
+      },
+      "year": {
+        "label": "Raspon Godina"
+      },
+      "fuelType": {
+        "label": "Gorivo",
+        "placeholder": "Svi tipovi goriva"
+      },
+      "transmission": {
+        "label": "Mjenjač",
+        "placeholder": "Svi tipovi mjenjača"
+      },
+      "mileage": {
+        "label": "Maksimalna Kilometraža",
+        "suffix": "km"
+      },
+      "buttons": {
+        "reset": "Poništi Filtere",
+        "search": "Pretraži"
+      }
+    },
+    "categories": {
+      "title": "Popularne Kategorije",
+      "vehicles": "vozila"
+    },
+    "featured": {
+      "title": "Najnoviji Oglasi",
+      "loading": "Učitavanje najnovijih oglasa...",
+      "error": "Greška pri učitavanju oglasa",
+      "noAds": "Nema pronađenih oglasa",
+      "loadMore": "Učitaj Više",
+      "viewDetails": "Pogledaj Detalje",
+      "tryAgain": "Pokušaj Ponovo",
+      "refresh": "Osvježi"
+    }
+  },
+
+  "registration": "Registracija",
+  "namePlaceholder": "Ime",
+  "nameRequired": "Ime je obavezno.",
+  "surnamePlaceholder": "Prezime",
+  "surnameRequired": "Prezime je obavezno.",
+  "addressPlaceholder": "Adresa",
+  "addressRequired": "Adresa je obavezna.",
+  "phoneNumberPlaceholder": "Broj telefona",
+  "phoneNumberRequired": "Broj telefona je obavezan.",
+  "phoneNumberInvalid": "Unesite ispravan format: +3876XXXXXXXX.",
+  "usernamePlaceholder": "Korisničko ime",
+  "usernameRequired": "Korisničko ime je obavezno.",
+  "usernameTaken": "Korisničko ime je zauzeto.",
+  "emailPlaceholder": "Email",
+  "emailRequired": "Email je obavezan.",
+  "emailInvalid": "Unesite ispravnu email adresu (npr., korisnik@example.com).",
+  "passwordPlaceholder": "Lozinka",
+  "confirmPasswordPlaceholder": "Ponovite lozinku",
+  "passwordsDoNotMatch": "Lozinke se ne podudaraju.",
+  "previous": "Nazad",
+  "next": "Dalje",
+  "submit": "Pošalji",
+  "passwordWeak": "Slaba lozinka",
+  "passwordMedium": "Srednja jačina lozinke",
+  "passwordStrong": "Jaka lozinka",
+  "pleaseFillFields": "Molimo popunite sva obavezna polja",
+  "registrationSuccess": "Registracija uspješna!",
+  "generalError": "Došlo je do problema s vašim unosom. Molimo provjerite obrazac i pokušajte ponovo."
+}

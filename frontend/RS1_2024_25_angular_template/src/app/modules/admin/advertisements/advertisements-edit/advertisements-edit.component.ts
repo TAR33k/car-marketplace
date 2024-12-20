@@ -1,12 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { finalize } from 'rxjs/operators';
+import {catchError, finalize, tap} from 'rxjs/operators';
 import {
-  AdvertisementGetByIdEndpointService,
-  AdvertGetByIdResponse, AdvertImageResponse
+  AdvertisementGetByIdEndpointService, AdvertImageResponse
 } from '../../../../endpoints/advertisement-endpoints/advertisement-get-by-id-endpoint.service';
 import {
   AdvertisementUpdateOrInsertEndpointService,
@@ -20,7 +19,7 @@ import {
   CarUpdateOrInsertEndpointService
 } from '../../../../endpoints/car-endpoints/car-update-or-insert-endpoint.service';
 import {
-  CarImageSetPrimaryEndpointService
+  CarImageSetPrimaryEndpointService, SetPrimaryRequest
 } from '../../../../endpoints/car-image-endpoints/car-image-set-primary-endpoint.service';
 import {
   CarImageDeleteEndpointService
@@ -49,6 +48,14 @@ import {
 } from '../../../../endpoints/car-endpoints/car-get-by-id-endpoint.service';
 import {ConfirmDialogComponent} from '../../../shared/confirm-dialog/confirm-dialog.component';
 import {CarEditDialogComponent} from './car-edit-dialog/car-edit-dialog.component';
+import {
+  CarImageUploadEndpointService
+} from '../../../../endpoints/car-image-endpoints/car-image-upload-endpoint.service';
+import {
+  AdvertisementImagesGetByIdEndpointService
+} from '../../../../endpoints/car-image-endpoints/car-image-get-by-advert-endpoint.service';
+import {MyConfig} from '../../../../my-config';
+import {Observable, of} from 'rxjs';
 
 interface LoadingStates {
   cars: boolean;
@@ -172,6 +179,9 @@ export class AdvertisementsEditComponent implements OnInit {
   availableCars: CarWithAdvertisement[] = [];
   groupedCars: GroupedCars = {};
   selectedCar: CarWithAdvertisement | null = null;
+  selectedFiles: File[] = [];
+  selectedImages: string[] = [];
+  imageFiles: File[] = [];
 
   loading: LoadingStates = {
     cars: false,
@@ -212,25 +222,11 @@ export class AdvertisementsEditComponent implements OnInit {
     images: []
   };
 
-  newCar: CarUpdateOrInsertRequest = {
-    name: '',
-    year: new Date().getFullYear(),
-    engineCapacity: 0,
-    fuelType: FuelType.Petrol,
-    transmission: TransmissionType.Manual,
-    doors: 4,
-    fuelConsumption: 0,
-    mileage: 0,
-    color: '',
-    hasServiceHistory: false,
-    bodyID: 0,
-    cityID: 0,
-    modelID: 0
-  };
-
   readonly fuelTypes = Object.values(FuelType).filter(value => typeof value === 'number') as FuelType[];
   readonly transmissionTypes = Object.values(TransmissionType).filter(value => typeof value === 'number') as TransmissionType[];
   readonly conditions = Object.values(VehicleCondition).filter(value => typeof value === 'string');
+
+  isDragging = false;
 
   constructor(
     private fb: FormBuilder,
@@ -245,11 +241,13 @@ export class AdvertisementsEditComponent implements OnInit {
     private carGetByIdService: CarGetByIdEndpointService,
     private carImageSetPrimaryService: CarImageSetPrimaryEndpointService,
     private carImageDeleteService: CarImageDeleteEndpointService,
+    private carImageUploadService: CarImageUploadEndpointService,
     private cityService: CityGetAll1EndpointService,
     private bodyTypeService: BodyTypeGetAllEndpointService,
     private advertisementGetAllService: AdvertisementGetAllEndpointService,
     private manufacturerService: ManufacturerGetAllEndpointService,
-    private modelService: CarModelGetByManufacturerEndpointService
+    private modelService: CarModelGetByManufacturerEndpointService,
+    private advertisementImagesGetByIdService: AdvertisementImagesGetByIdEndpointService,
   ) {
     this.initializeForms();
   }
@@ -401,7 +399,7 @@ export class AdvertisementsEditComponent implements OnInit {
           description: data.description,
           condition: this.getConditionString(data.condition),
           price: data.price,
-          listingDate: new Date(data.listingDate),
+          listingDate: new Date(data.listingDate), // Convert to Date object
           expirationDate: data.expirationDate ? new Date(data.expirationDate) : undefined,
           viewCount: data.viewCount,
           status: data.status,
@@ -409,9 +407,35 @@ export class AdvertisementsEditComponent implements OnInit {
           carName: data.carName,
           userId: data.userID,
           userName: data.userName,
-          images: data.images || []
+          images: data.images.map(image => ({
+            id: image.id,
+            url: this.formatImageUrl(image.url),  // Use the formatImageUrl function to handle URLs
+            isPrimary: image.isPrimary
+          })) || []
         };
 
+        // Load advertisement images
+        const images = await this.advertisementImagesGetByIdService.handleAsync(this.advertisementId).toPromise();
+
+        // Ensure images is defined and map correctly
+        this.advertisement.images = (images || []).map(image => ({
+          id: image.id,
+          url: this.formatImageUrl(image.imageUrl), // Use the formatImageUrl function here too
+          isPrimary: image.isPrimary
+        }));
+
+        // Ensure there is always a primary image
+        if (!this.advertisement.images.some(img => img.isPrimary)) {
+          // If no primary image exists, set the first image as primary if available
+          if (this.advertisement.images.length > 0) {
+            this.advertisement.images[0].isPrimary = true; // Set the first image as primary
+          }
+        }
+
+        // Call updateImageUrls to ensure frontend is updated with correct image URLs
+        this.updateImageUrls(this.advertisement.images.map(img => img.url));
+
+        // Patch form values with advertisement data
         this.advertisementForm.patchValue({
           title: this.advertisement.title,
           description: this.advertisement.description,
@@ -688,6 +712,12 @@ export class AdvertisementsEditComponent implements OnInit {
         }
       }
 
+      // Set the primary image before saving the advertisement
+      const primaryImageId = this.advertisement.images.find(img => img.isPrimary)?.id;
+      if (primaryImageId) {
+        await this.setPrimaryImage(primaryImageId).toPromise(); // Ensure the primary image is set
+      }
+
       const formData = this.advertisementForm.value;
       const advertRequest: AdvertUpdateOrInsertRequest = {
         ID: this.advertisementId || undefined,
@@ -699,7 +729,21 @@ export class AdvertisementsEditComponent implements OnInit {
         ExpirationDate: formData.expirationDate
       };
 
-      await this.advertisementUpdateService.handleAsync(advertRequest).toPromise();
+      const tempSelectedFiles = [...this.selectedFiles];
+
+      const response = await this.advertisementUpdateService.handleAsync(advertRequest).toPromise();
+
+      if (response && !this.advertisementId) {
+        this.advertisementId = response.id;
+        this.advertisement.id = response.id;
+
+        if (tempSelectedFiles.length > 0) {
+          this.selectedFiles = tempSelectedFiles;
+          await this.uploadImages();
+        }
+      } else if (this.advertisementId) {
+        await this.uploadImages();
+      }
 
       this.snackBar.open(
         `Advertisement ${this.advertisementId ? 'updated' : 'created'} successfully`,
@@ -733,21 +777,6 @@ export class AdvertisementsEditComponent implements OnInit {
     }
   }
 
-  setPrimaryImage(imageId: number): void {
-    if (this.loading.saving) return;
-
-    this.loading.saving = true;
-    this.carImageSetPrimaryService.handleAsync({ imageId })
-      .pipe(finalize(() => this.loading.saving = false))
-      .subscribe({
-        next: () => {
-          this.loadAdvertisementData();
-          this.snackBar.open('Primary image updated', 'Close', { duration: 3000 });
-        },
-        error: (error) => this.handleError('Error setting primary image', error)
-      });
-  }
-
   deleteImage(imageId: number): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: { message: 'Are you sure you want to delete this image?' }
@@ -756,15 +785,31 @@ export class AdvertisementsEditComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.loading.saving = true;
+
+        // Find if we're deleting a primary image before deletion
+        const deletedImage = this.advertisement.images.find(img => img.id === imageId);
+        const wasPrimary = deletedImage?.isPrimary;
+        const remainingImages = this.advertisement.images.filter(img => img.id !== imageId);
+
         this.carImageDeleteService.handleAsync(imageId)
           .pipe(finalize(() => this.loading.saving = false))
           .subscribe({
             next: () => {
-              if (this.advertisement.images) {
-                this.advertisement.images = this.advertisement.images
-                  .filter(img => img.id !== imageId);
+              // Update local state
+              this.advertisement.images = remainingImages;
+
+              // If we deleted the primary image and there are remaining images
+              if (wasPrimary && remainingImages.length > 0) {
+                // Set the first remaining image as primary
+                this.setPrimaryImage(remainingImages[0].id).subscribe({
+                  next: () => {
+                    this.snackBar.open('Image deleted and new primary image set', 'Close', { duration: 3000 });
+                  },
+                  error: (error) => this.handleError('Error setting new primary image', error)
+                });
+              } else {
+                this.snackBar.open('Image deleted successfully', 'Close', { duration: 3000 });
               }
-              this.snackBar.open('Image deleted successfully', 'Close', { duration: 3000 });
             },
             error: (error) => this.handleError('Error deleting image', error)
           });
@@ -772,11 +817,36 @@ export class AdvertisementsEditComponent implements OnInit {
     });
   }
 
+  // Helper method to handle setting primary image
+  setPrimaryImage(imageId: number): Observable<any> {
+    const request: SetPrimaryRequest = { imageId: imageId };
+
+    // Update local state immediately
+    this.advertisement.images = this.advertisement.images.map(img => ({
+      ...img,
+      isPrimary: img.id === imageId
+    }));
+
+    return this.carImageSetPrimaryService.handleAsync(request).pipe(
+      tap(response => {
+        console.log('API response for setting primary image:', response);
+      }),
+      catchError(error => {
+        this.handleError('Error setting primary image', error);
+        return of(null);
+      })
+    );
+  }
+
   private handleError(message: string, error: any): void {
     console.error(message, error);
     const errorMessage = error?.error?.message || error?.message || 'Unknown error occurred';
     this.errorMessage = `${message}: ${errorMessage}`;
-    this.snackBar.open(this.errorMessage, 'Close', { duration: 5000 });
+    this.snackBar.open(this.errorMessage, 'Close', {
+      duration: 5000,
+      panelClass: ['error-snackbar'],
+      verticalPosition: 'bottom'
+    });
   }
 
   private getConditionString(condition: string | number): string {
@@ -797,16 +867,114 @@ export class AdvertisementsEditComponent implements OnInit {
     return TransmissionType[transmissionType] || 'Unknown';
   }
 
-  getMileageDisplay(mileage: number | undefined): string {
-    if (mileage === undefined) return '';
-    return `${mileage.toLocaleString()} km`;
+  previewImages(): void {
+    const existingImages = this.advertisement.images.filter(img => !(img as any).isNew) || [];
+    const newImages = this.selectedFiles.map((file, index) => ({
+      url: URL.createObjectURL(file),
+      isPrimary: !existingImages.some(img => img.isPrimary) && index === 0,
+      id: -Math.random(), // Temporary negative ID
+      isNew: true
+    }));
+
+    this.advertisement.images = [...existingImages, ...newImages];
   }
 
-  onFileSelected(event: any): void {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      // Implement your file upload logic here
-      console.log('Files selected:', files);
+  updateImageUrls(uploadedFileUrls: string[]): void {
+    // Update the URLs of images after load
+    this.advertisement.images = this.advertisement.images.map((image, index) => ({
+      ...image,
+      url: `${uploadedFileUrls[index]}` // Correct URL format
+    }));
+  }
+
+  // Helper function to format image URLs correctly
+  formatImageUrl(imageUrl: string): string {
+    if (imageUrl.startsWith('http://localhost:7000')) {
+      return imageUrl;
+    }
+    return `${MyConfig.api_address}${imageUrl}`;
+  }
+
+  private extractErrorMessage(error: any): string {
+    if (error?.error) {
+      // Try to extract the actual error message from the stack trace
+      const match = error.error.match(/System\.Exception: (.*?)\r\n/);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return error?.message || 'An unknown error occurred';
+  }
+
+  async uploadImages(): Promise<void> {
+    if (this.selectedFiles.length === 0) return;
+
+    const errors: string[] = [];
+    const uploadPromises = this.selectedFiles.map(async (file, index) => {
+      const formData = new FormData();
+      formData.append('Image', file);
+      formData.append('AdvertisementID', this.advertisement.id.toString());
+      formData.append('IsPrimary', (index === 0 && !this.advertisement.images.some(img => img.isPrimary)).toString());
+
+      try {
+        const response = await this.carImageUploadService.handleAsync(formData).toPromise();
+        if (response) {
+          return {
+            id: response.id,
+            url: `${MyConfig.api_address}${response.imageUrl}`,
+            isPrimary: response.isPrimary
+          };
+        }
+        return null;
+      } catch (error: any) {
+        const errorMessage = this.extractErrorMessage(error);
+        errors.push(`Error uploading ${file.name}: ${errorMessage}`);
+        return null;
+      }
+    });
+
+    try {
+      const results = await Promise.all(uploadPromises);
+      const successfulUploads = results.filter((r): r is AdvertImageResponse => r !== null);
+
+      // Show errors first if any
+      if (errors.length > 0) {
+        // Show each error message with a delay
+        errors.forEach((error, index) => {
+          setTimeout(() => {
+            this.snackBar.open(error, 'Close', {
+              duration: 5000,
+              panelClass: ['error-snackbar'],
+              verticalPosition: 'bottom'
+            });
+          }, index * 300); // 300ms delay between each error
+        });
+      }
+
+      this.advertisement.images = [
+        ...this.advertisement.images.filter(img => !(img as any).isNew),
+        ...successfulUploads
+      ];
+
+      // Clear selected files
+      this.selectedFiles = [];
+
+      // Show success message after errors (if any) with a delay
+      if (successfulUploads.length > 0) {
+        setTimeout(() => {
+          this.snackBar.open('Images uploaded successfully', 'Close', {
+            duration: 3000,
+            verticalPosition: 'bottom'
+          });
+        }, errors.length * 300); // Wait for all error messages
+      }
+    } catch (error) {
+      const errorMessage = this.extractErrorMessage(error);
+      this.snackBar.open(errorMessage, 'Close', {
+        duration: 5000,
+        panelClass: ['error-snackbar'],
+        verticalPosition: 'bottom'
+      });
     }
   }
 
@@ -832,11 +1000,56 @@ export class AdvertisementsEditComponent implements OnInit {
     this.selectedCar = this.availableCars.find(car => car.id === carId) || null;
   }
 
-  getBodyTypeName(bodyTypeId: number): string {
-    return this.bodyTypes.find(type => type.id === bodyTypeId)?.name || 'Unknown';
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
   }
 
-  getCityName(cityId: number): string {
-    return this.cities.find(city => city.id === cityId)?.name || 'Unknown';
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      // Convert FileList to Array and filter for images
+      const imageFiles = Array.from(files).filter((file): file is File => {
+        return file instanceof File && file.type.startsWith('image/');
+      });
+      if (imageFiles.length > 0) {
+        imageFiles.forEach(file => this.handleImageUpload(file));
+      }
+    }
+  }
+
+  handleImageUpload(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.selectedImages.push(e.target.result);
+      this.imageFiles.push(file);
+
+      // Add to selectedFiles array for upload
+      this.selectedFiles.push(file);
+      this.previewImages();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Update onImageSelected to handle multiple files
+  onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+    if (files && files.length > 0) {
+      Array.from(files)
+        .filter((file): file is File => file instanceof File && file.type.startsWith('image/'))
+        .forEach(file => this.handleImageUpload(file));
+    }
   }
 }

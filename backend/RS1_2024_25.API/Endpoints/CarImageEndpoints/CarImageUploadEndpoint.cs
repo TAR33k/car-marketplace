@@ -7,6 +7,8 @@ using static RS1_2024_25.API.Endpoints.CarImageEndpoints.CarImageUploadEndpoint;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using RS1_2024_25.API.Services;
+using System.IdentityModel;
+
 
 namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
 {
@@ -16,7 +18,8 @@ namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
         ApplicationDbContext db,
         IImageValidator imageValidator,
         IImageProcessor imageProcessor,
-        IImageStorage imageStorage) : MyEndpointBaseAsync
+        IImageStorage imageStorage,
+        IWebHostEnvironment webHostEnvironment) : MyEndpointBaseAsync
         .WithRequest<CarImageUploadRequest>
         .WithResult<CarImageUploadResponse>
     {
@@ -25,48 +28,61 @@ namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
             [FromForm] CarImageUploadRequest request,
             CancellationToken cancellationToken = default)
         {
-            var advertisement = await db.Advertisements
-                .FirstOrDefaultAsync(a => a.ID == request.AdvertisementID, cancellationToken);
-
-            if (advertisement == null)
-                throw new KeyNotFoundException("Advertisement not found");
-
-            await imageValidator.ValidateAsync(request.Image);
-            var processedImage = await imageProcessor.ProcessImageAsync(request.Image);
-            var imageResult = await imageStorage.SaveAsync(processedImage, request.Image.FileName);
-
-            // Update primary image status if needed
-            if (request.IsPrimary)
+            try
             {
-                var existingPrimaryImages = await db.CarImages
-                    .Where(i => i.AdvertisementID == request.AdvertisementID && i.IsPrimary)
-                    .ToListAsync(cancellationToken);
+                var advertisement = await db.Advertisements
+                    .FirstOrDefaultAsync(a => a.ID == request.AdvertisementID, cancellationToken);
 
-                foreach (var img in existingPrimaryImages)
+                if (advertisement == null)
+                    throw new KeyNotFoundException("Advertisement not found");
+
+                await imageValidator.ValidateAsync(request.Image);
+                var processedImage = await imageProcessor.ProcessImageAsync(request.Image);
+                var imageResult = await imageStorage.SaveAsync(processedImage, request.Image.FileName);
+
+                // Check if this is the first image for this advertisement
+                var isFirstImage = !await db.CarImages
+                    .AnyAsync(i => i.AdvertisementID == request.AdvertisementID, cancellationToken);
+
+                // First image should always be primary
+                if (isFirstImage)
                 {
-                    img.IsPrimary = false;
+                    request.IsPrimary = true;
                 }
+
+                // If setting as primary, ensure no other images are primary
+                if (request.IsPrimary)
+                {
+                    await db.CarImages
+                        .Where(i => i.AdvertisementID == request.AdvertisementID)
+                        .ExecuteUpdateAsync(s => s
+                            .SetProperty(b => b.IsPrimary, false), cancellationToken);
+                }
+
+                var carImage = new CarImage
+                {
+                    ImageUrl = imageResult.Url,
+                    AdvertisementID = request.AdvertisementID,
+                    IsPrimary = request.IsPrimary,
+                    UploadedDate = DateTime.Now
+                };
+
+                db.CarImages.Add(carImage);
+                await db.SaveChangesAsync(cancellationToken);
+
+                return new CarImageUploadResponse
+                {
+                    ID = carImage.ID,
+                    ImageUrl = carImage.ImageUrl,
+                    IsPrimary = carImage.IsPrimary,
+                    UploadedDate = carImage.UploadedDate,
+                    AdvertisementID = carImage.AdvertisementID
+                };
             }
-
-            var carImage = new CarImage
+            catch (Exception ex) when (ex is ValidationException || ex is ArgumentException)
             {
-                ImageUrl = imageResult.Url,
-                AdvertisementID = request.AdvertisementID,
-                IsPrimary = request.IsPrimary,
-                UploadedDate = DateTime.Now
-            };
-
-            db.CarImages.Add(carImage);
-            await db.SaveChangesAsync(cancellationToken);
-
-            return new CarImageUploadResponse
-            {
-                ID = carImage.ID,
-                ImageUrl = carImage.ImageUrl,
-                IsPrimary = carImage.IsPrimary,
-                UploadedDate = carImage.UploadedDate,
-                AdvertisementID = carImage.AdvertisementID
-            };
+                throw new Exception(ex.Message);
+            }
         }
 
         public class CarImageUploadRequest

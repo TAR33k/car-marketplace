@@ -43,6 +43,8 @@ namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
 
             var uploadedImages = new List<CarImageResponse>();
             var errors = new List<string>();
+            var hasPrimaryImage = await db.CarImages
+            .AnyAsync(i => i.AdvertisementID == request.AdvertisementID && i.IsPrimary, cancellationToken);
 
             foreach (var image in request.Images)
             {
@@ -55,7 +57,7 @@ namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
                     var carImage = new CarImage
                     {
                         ImageUrl = imageResult.Url,
-                        IsPrimary = false,
+                        IsPrimary = !hasPrimaryImage, // Set the first image as primary if none exists
                         UploadedDate = DateTime.UtcNow,
                         AdvertisementID = request.AdvertisementID
                     };
@@ -70,6 +72,9 @@ namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
                         IsPrimary = carImage.IsPrimary,
                         UploadedDate = carImage.UploadedDate
                     });
+
+                    if (!hasPrimaryImage)
+                        hasPrimaryImage = true; // Mark that a primary image has been set
                 }
                 catch (Exception ex)
                 {

@@ -83,6 +83,49 @@ namespace RS1_2024_25.API.Services
                 IsLoggedIn = true
             };
         }
+
+        public MyAuthInfo GetAuthInfoFromTokenString(string? authToken)
+        {
+            if (string.IsNullOrEmpty(authToken))
+            {
+                return GetAuthInfoFromTokenModel(null);
+            }
+
+            MyAuthenticationToken? myAuthToken = applicationDbContext.MyAuthenticationTokens
+                .IgnoreQueryFilters()
+                .Include(x => x.User)
+                .SingleOrDefault(x => x.Value == authToken);
+
+            return GetAuthInfoFromTokenModel(myAuthToken);
+        }
+
+        public MyAuthInfo GetAuthInfoFromRequest()
+        {
+            string? authToken = httpContextAccessor.HttpContext?.Request.Headers["my-auth-token"];
+            return GetAuthInfoFromTokenString(authToken);
+        }
+
+        public MyAuthInfo GetAuthInfoFromTokenModel(MyAuthenticationToken? myAuthToken)
+        {
+            if (myAuthToken == null)
+            {
+                return new MyAuthInfo
+                {
+                    IsAdmin = false,
+                    IsLoggedIn = false
+                };
+            }
+
+            return new MyAuthInfo
+            {
+                UserId = myAuthToken.UserId,
+                Username = myAuthToken.User!.Username,
+                FirstName = myAuthToken.User.FirstName,
+                LastName = myAuthToken.User.LastName,
+                IsAdmin = myAuthToken.User.IsAdmin,
+                IsLoggedIn = true
+            };
+        }
     }
 
     // DTO to hold authentication information

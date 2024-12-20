@@ -1,19 +1,23 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
-import { FormBuilder, FormGroup, FormControl } from '@angular/forms';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  HostListener,
+  ChangeDetectionStrategy,
+  OnDestroy, ChangeDetectorRef, OnChanges
+} from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CarService } from '../../../services/car-services/car.service';
 import { MatSelect } from '@angular/material/select';
 import {
   CarGetAllResponse,
-  CarGetAllEndpointService,
-  CarGetAllRequest
+  CarGetAllRequest, CarGetAllEndpointService
 } from '../../../endpoints/car-endpoints/car-get-all-endpoint.service';
 import {
   BodyTypeGetAllEndpointService,
   BodyTypeGetAllResponse
 } from '../../../endpoints/body-type-endpoints/body-type-get-all-endpoint.service';
-import {MyPagedList} from '../../../helper/my-paged-request';
-import {FuelType, TransmissionType} from '../../../services/car-services/car-enums'
+import {FuelType, TransmissionType, VehicleCondition} from '../../../services/car-services/car-enums'
 import {
   ManufacturerGetAllEndpointService,
   ManufacturerGetAllResponse
@@ -22,22 +26,26 @@ import {
   CarModelGetByManufacturerEndpointService, CarModelGetByManufacturerResponse
 } from '../../../endpoints/car-model-endpoints/car-model-get-by-manufacturer-endpoint.service';
 import {Subject, takeUntil} from 'rxjs';
+import {Meta, Title} from '@angular/platform-browser';
+import {
+  AdvertGetFeaturedResponse, AdvertisementGetFeaturedEndpointService, FeaturedType
+} from '../../../endpoints/advertisement-endpoints/advertisement-get-featured-endpoint.service';
+import {finalize} from 'rxjs/operators';
+import {TranslateService} from '@ngx-translate/core';
+import {LanguageService} from '../../../services/language.service';
 
 interface BodyTypeWithCount extends BodyTypeGetAllResponse {
   icon: string;
   count: number;
 }
 
-interface ExtendedCarResponse extends CarGetAllResponse {
-  primaryImageUrl?: string;
-}
-
 @Component({
   selector: 'app-landing-page',
   templateUrl: './landing-page.component.html',
-  styleUrls: ['./landing-page.component.scss']
+  styleUrls: ['./landing-page.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LandingPageComponent implements OnInit {
+export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   // ViewChild declarations
   @ViewChild('makeSelect') makeSelect?: MatSelect;
   @ViewChild('modelSelect') modelSelect?: MatSelect;
@@ -45,97 +53,264 @@ export class LandingPageComponent implements OnInit {
   @ViewChild('fuelSelect') fuelSelect?: MatSelect;
   @ViewChild('transmissionSelect') transmissionSelect?: MatSelect;
 
-  filterForm!: FormGroup;
-  loading = false;
-  currentYear = new Date().getFullYear();
+  currentLang: string;
 
-  // Range slider values
+  // Constants
+  private readonly INITIAL_DISPLAYED_COUNT = 6;
+  private readonly LOAD_MORE_INCREMENT = 6;
+  private readonly FEATURED_COUNT = 12;
+  readonly currentYear = new Date().getFullYear();
+
+  // Form and Filters
+  filterForm: FormGroup;
   priceRange = [0, 200000];
   yearRange = [1990, this.currentYear];
 
+  // Data Collections
   manufacturers: ManufacturerGetAllResponse[] = [];
   makes: string[] = [];
   models: string[] = [];
   bodyTypes: BodyTypeWithCount[] = [];
+  featuredAds: AdvertGetFeaturedResponse[] = [];
 
+  // UI State
+  loading = false;
+  isLoading = true;
+  error: string | null = null;
+  displayedAds = this.INITIAL_DISPLAYED_COUNT;
+  heroBackground = 'assets/images/hero-background.jpg';
+
+  // Carousel State
+  currentSlide = 0;
+  itemsPerSlide = 4;
+  maxSlides = 0;
+
+  // Enums
   readonly FuelType = FuelType;
   readonly TransmissionType = TransmissionType;
 
-  featuredCars: ExtendedCarResponse[] = [];
-  isLoading = true;
-  error: string | null = null;
-  displayedCars = 6;
-  maxCategories = 0;
+  // Options
+  readonly fuelTypeOptions = this.getEnumOptions(FuelType);
+  readonly transmissionOptions = this.getEnumOptions(TransmissionType);
 
-  // Carousel properties
-  currentSlide = 0;
-  slideWidth = 280; // Width of each card + margin
-  itemsPerSlide = 4; // Number of items visible at once
-  maxSlides = 0;
-
-  private readonly bodyTypeIcons: { [key: string]: string } = {
+  private readonly bodyTypeIcons: Record<string, string> = {
     'Sedan': 'directions_car',
     'SUV': 'drive_eta',
     'Hatchback': 'hatchback',
     'Wagon': 'weekend',
-    'Coupe': 'sports_car',  // or 'directions_car'
+    'Coupe': 'sports_car',
     'Convertible': 'convertible',
     'Van': 'airport_shuttle',
     'Pickup': 'local_shipping'
   };
 
+  private readonly destroy$ = new Subject<void>();
+
   constructor(
-    private fb: FormBuilder,
-    private router: Router,
-    private manufacturerService: ManufacturerGetAllEndpointService,
-    private modelService: CarModelGetByManufacturerEndpointService,
-    private carGetAllService: CarGetAllEndpointService,
-    private bodyTypeService: BodyTypeGetAllEndpointService
+    private readonly fb: FormBuilder,
+    private readonly router: Router,
+    private readonly manufacturerService: ManufacturerGetAllEndpointService,
+    private readonly modelService: CarModelGetByManufacturerEndpointService,
+    private readonly bodyTypeService: BodyTypeGetAllEndpointService,
+    private readonly carGetAllService: CarGetAllEndpointService,
+    private readonly advertisementGetFeaturedService: AdvertisementGetFeaturedEndpointService,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly title: Title,
+    private readonly meta: Meta,
+    private languageService: LanguageService,
+    private translate: TranslateService
   ) {
-    this.initializeForm();
+    this.initializeSEO();
+    this.filterForm = this.initializeForm();
+    this.currentLang = this.languageService.getCurrentLanguage();
   }
 
-  private destroy$ = new Subject<void>();
-
-  ngOnInit() {
-    this.loadManufacturers();
-    this.loadBodyTypes();
-    this.loadCars();
-
-    this.filterForm.get('make')?.valueChanges
+  ngOnInit(): void {
+    this.languageService.currentLanguage$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(make => {
-      if (make) {
-        this.loadModels(make);
-      } else {
-        this.models = [];
-      }
-    });
+      .subscribe(lang => {
+        this.currentLang = lang;
+        this.cdr.markForCheck();
+      });
+
+    this.initializeData();
+    this.setupFormSubscriptions();
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  fuelTypeOptions = Object.entries(FuelType)
-    .filter(([key, value]) => typeof value === 'number')
-    .map(([key, value]) => ({
-      value: value as number,
-      label: key
-    }));
+  ngOnChanges() {
+    this.cdr.detectChanges();
+  }
 
-  transmissionOptions = Object.entries(TransmissionType)
-    .filter(([key, value]) => typeof value === 'number')
-    .map(([key, value]) => ({
-      value: value as number,
-      label: key
-    }));
+  onBodyTypeSelect(bodyTypeId: number): void {
+    const currentValue = this.filterForm.get('bodyType')?.value;
+    this.filterForm.patchValue({
+      bodyType: currentValue === bodyTypeId ? null : bodyTypeId
+    });
+  }
 
-  private loadBodyTypes() {
+  applyFilters(): void {
+    if (!this.filterForm.valid) return;
+
+    const filters = this.prepareFilters();
+    this.router.navigate(['/cars'], { queryParams: filters });
+  }
+
+  resetFilters(): void {
+    this.filterForm.reset({ condition: 'all' });
+    this.priceRange = [0, 200000];
+    this.yearRange = [1990, this.currentYear];
+    this.models = [];
+  }
+
+  // Carousel Methods
+  nextSlide(): void {
+    const lastPossibleSlide = Math.ceil(this.bodyTypes.length / this.itemsPerSlide) - 1;
+    if (this.currentSlide < lastPossibleSlide) {
+      this.currentSlide++;
+    }
+  }
+
+  previousSlide(): void {
+    if (this.currentSlide > 0) {
+      this.currentSlide--;
+    }
+  }
+
+  goToSlide(index: number): void {
+    this.currentSlide = index;
+  }
+
+  isNextDisabled(): boolean {
+    const lastPossibleSlide = Math.ceil(this.bodyTypes.length / this.itemsPerSlide) - 1;
+    return this.currentSlide >= lastPossibleSlide;
+  }
+
+  getDotArray(): number[] {
+    return Array(this.maxSlides).fill(0);
+  }
+
+  // Tracking Methods
+  trackByAd(index: number, ad: AdvertGetFeaturedResponse): number {
+    return ad.id;
+  }
+
+  trackByBodyType(index: number, item: BodyTypeWithCount): number {
+    return item.id;
+  }
+
+  // Host Listeners
+  @HostListener('window:resize')
+  onResize(): void {
+    this.updateItemsPerSlide();
+    this.updateMaxSlides();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const element = event.target as HTMLElement;
+    if (!element.closest('mat-select') && !element.closest('mat-option')) {
+      this.closeAllSelects();
+    }
+  }
+
+  // Private Methods
+  private initializeSEO(): void {
+    this.title.setTitle('Find Your Perfect Car | Auto Marketplace');
+    this.meta.updateTag({
+      name: 'description',
+      content: 'Browse our extensive collection of vehicles...'
+    });
+  }
+
+  private initializeForm(): FormGroup {
+    return this.fb.group({
+      bodyType: [''],
+      make: [''],
+      model: [{value: '', disabled: true}],
+      condition: ['all'],
+      fuelType: [''],
+      transmission: [''],
+      mileageTo: ['']
+    });
+  }
+
+  private initializeData(): void {
+    this.loadManufacturers();
+    this.loadBodyTypes();
+    this.loadFeaturedAds();
+  }
+
+  private setupFormSubscriptions(): void {
+    this.filterForm.get('make')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(make => {
+        if (make) {
+          this.loadModels(make);
+        } else {
+          this.models = [];
+        }
+      });
+  }
+
+  // Private Methods (continued)
+  private getEnumOptions(enumObj: any) {
+    return Object.entries(enumObj)
+      .filter(([key, value]) => typeof value === 'number')
+      .map(([key, value]) => ({
+        value: value as number,
+        label: key
+      }));
+  }
+
+  public loadFeaturedAds(): void {
+    this.isLoading = true;
+    this.error = null;
+    this.cdr.detectChanges(); // Ensure loading state is visible
+
+    const request = {
+      featuredType: FeaturedType.Newest,
+      count: this.FEATURED_COUNT
+    };
+
+    this.advertisementGetFeaturedService.handleAsync(request)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (response: any) => { // Type as any temporarily to inspect response
+          console.log('Featured Ads Response:', response); // Log the response
+
+          if (Array.isArray(response)) {
+            this.featuredAds = response;
+          } else if (response?.dataItems) {
+            this.featuredAds = response.dataItems;
+          } else {
+            this.featuredAds = [];
+            this.error = 'Invalid response format';
+          }
+
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          this.handleError('Failed to load featured advertisements', error);
+          this.featuredAds = [];
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private loadBodyTypes(): void {
     this.bodyTypeService.handleAsync().subscribe({
       next: (bodyTypes) => {
-        this.maxCategories = bodyTypes.length;
         this.bodyTypes = bodyTypes.map(type => ({
           ...type,
           icon: this.bodyTypeIcons[type.name] || 'directions_car',
@@ -144,13 +319,11 @@ export class LandingPageComponent implements OnInit {
         this.updateItemsPerSlide();
         this.updateBodyTypeCounts();
       },
-      error: (error) => {
-        console.error('Error loading body types:', error);
-      }
+      error: (error) => this.handleError('Error loading body types', error)
     });
   }
 
-  private updateBodyTypeCounts() {
+  private updateBodyTypeCounts(): void {
     const request: CarGetAllRequest = {
       pageNumber: 1,
       pageSize: 1000
@@ -158,271 +331,154 @@ export class LandingPageComponent implements OnInit {
 
     this.carGetAllService.handleAsync(request).subscribe({
       next: (response: any) => {
-        if (response && response.dataItems) {
-          const transformedResponse: MyPagedList<CarGetAllResponse> = {
-            data: response.dataItems,
-            totalCount: response.totalCount,
-            pageSize: response.pageSize,
-            currentPage: response.currentPage,
-            totalPages: response.totalPages,
-            hasNext: response.hasNext,
-            hasPrevious: response.hasPrevious
-          };
-
-          const countMap = new Map<number, number>();
-
-          transformedResponse.data.forEach((car: CarGetAllResponse) => {
-            if (car.bodyTypeName) {
-              const bodyType = this.bodyTypes.find(bt => bt.name === car.bodyTypeName);
-              if (bodyType) {
-                const count = countMap.get(bodyType.id) || 0;
-                countMap.set(bodyType.id, count + 1);
-              }
-            }
-          });
-
-          // Update counts and sort by count in descending order
-          this.bodyTypes = this.bodyTypes
-            .map(type => ({
-              ...type,
-              count: countMap.get(type.id) || 0
-            }))
-            .sort((a, b) => b.count - a.count); // Sort in descending order
-
-          console.log('Sorted body types:', this.bodyTypes);
+        if (!response?.dataItems) {
+          return;
         }
+
+        const countMap = this.createBodyTypeCountMap(response.dataItems);
+        this.updateBodyTypeCountsAndSort(countMap);
+        this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error updating body type counts:', error);
+      error: (error) => this.handleError('Error updating body type counts', error)
+    });
+  }
+
+  private createBodyTypeCountMap(cars: CarGetAllResponse[]): Map<number, number> {
+    const countMap = new Map<number, number>();
+
+    cars.forEach(car => {
+      if (car.bodyTypeName) {
+        const bodyType = this.bodyTypes.find(bt => bt.name === car.bodyTypeName);
+        if (bodyType) {
+          countMap.set(bodyType.id, (countMap.get(bodyType.id) || 0) + 1);
+        }
       }
     });
+
+    return countMap;
   }
 
-  onBodyTypeSelect(bodyTypeId: number) {
-    const currentBodyType = this.filterForm.get('bodyType')?.value;
-    this.filterForm.patchValue({
-      bodyType: currentBodyType === bodyTypeId ? null : bodyTypeId
-    });
+  private updateBodyTypeCountsAndSort(countMap: Map<number, number>): void {
+    this.bodyTypes = this.bodyTypes
+      .map(type => ({
+        ...type,
+        count: countMap.get(type.id) || 0
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    this.cdr.detectChanges();
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent) {
-    const clickedElement = event.target as HTMLElement;
-    const isSelect = clickedElement.closest('mat-select');
-    const isOption = clickedElement.closest('mat-option');
-
-    if (!isSelect && !isOption) {
-      // Close all select dropdowns
-      this.makeSelect?.close();
-      this.modelSelect?.close();
-      this.conditionSelect?.close();
-      this.fuelSelect?.close();
-      this.transmissionSelect?.close();
-    }
-  }
-
-  @HostListener('window:resize')
-  onResize() {
-    this.updateItemsPerSlide();
-    this.updateMaxSlides();
-  }
-
-  private updateItemsPerSlide() {
-    const width = window.innerWidth;
-    if (width < 600) {
-      this.itemsPerSlide = 1;
-    } else if (width < 960) {
-      this.itemsPerSlide = 2;
-    } else if (width < 1280) {
-      this.itemsPerSlide = 3;
-    } else {
-      this.itemsPerSlide = 4;
-    }
-    this.updateMaxSlides();
-  }
-
-  private updateMaxSlides() {
-    // Calculate how many slides we need to show all items
-    const totalItems = this.bodyTypes.length;
-    this.maxSlides = Math.ceil(totalItems / this.itemsPerSlide);
-
-    // Ensure currentSlide is within bounds
-    if (this.currentSlide >= this.maxSlides) {
-      this.goToSlide(this.maxSlides - 1);
-    }
-  }
-
-  nextSlide() {
-    const lastPossibleSlide = Math.ceil(this.bodyTypes.length / this.itemsPerSlide) - 1;
-    if (this.currentSlide < lastPossibleSlide) {
-      this.currentSlide++;
-    }
-  }
-
-  previousSlide() {
-    if (this.currentSlide > 0) {
-      this.currentSlide--;
-    }
-  }
-
-  goToSlide(index: number) {
-    this.currentSlide = index;
-  }
-
-  getDotArray(): number[] {
-    return Array(this.maxSlides).fill(0);
-  }
-
-  // Calculate if next button should be disabled
-  isNextDisabled(): boolean {
-    const lastPossibleSlide = Math.ceil(this.bodyTypes.length / this.itemsPerSlide) - 1;
-    return this.currentSlide >= lastPossibleSlide;
-  }
-
-  // Calculate visible items for current slide
-  getVisibleItems(): BodyTypeWithCount[] {
-    const startIndex = this.currentSlide * this.itemsPerSlide;
-    return this.bodyTypes.slice(startIndex, startIndex + this.itemsPerSlide);
-  }
-
-  private initializeForm() {
-    this.filterForm = this.fb.group({
-      bodyType: [''],
-      make: [''],
-      model: [''],
-      condition: ['all'],
-      fuelType: [''],
-      transmission: [''],
-      mileageTo: ['']
-    });
-  }
-
-  private loadManufacturers() {
+  private loadManufacturers(): void {
     this.loading = true;
-    this.manufacturerService.handleAsync().subscribe({
-      next: (manufacturers) => {
-        this.manufacturers = manufacturers;
-        this.makes = manufacturers.map(m => m.name);
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading manufacturers:', error);
-        this.loading = false;
-      }
-    });
+
+    this.manufacturerService.handleAsync()
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: (manufacturers) => {
+          this.manufacturers = manufacturers;
+          this.makes = manufacturers.map(m => m.name);
+        },
+        error: (error) => this.handleError('Error loading manufacturers', error)
+      });
   }
 
-  private loadModels(manufacturerName: string) {
+  private loadModels(manufacturerName: string): void {
     this.loading = true;
     const manufacturer = this.manufacturers.find(m => m.name === manufacturerName);
 
-    if (manufacturer) {
-      this.modelService.handleAsync(manufacturer.id).subscribe({
-        next: (models: CarModelGetByManufacturerResponse[]) => {
-          this.models = models.map(m => m.name);
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error('Error loading models:', error);
-          this.loading = false;
-        }
-      });
-    } else {
+    if (!manufacturer) {
       this.models = [];
       this.loading = false;
+      return;
+    }
+
+    this.modelService.handleAsync(manufacturer.id)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: (models: CarModelGetByManufacturerResponse[]) => {
+          this.models = models.map(m => m.name);
+        },
+        error: (error) => this.handleError('Error loading models', error)
+      });
+  }
+
+  private updateItemsPerSlide(): void {
+    const width = window.innerWidth;
+    this.itemsPerSlide = width < 600 ? 1
+      : width < 960 ? 2
+        : width < 1280 ? 3
+          : 4;
+
+    this.updateMaxSlides();
+  }
+
+  private updateMaxSlides(): void {
+    const totalItems = this.bodyTypes.length;
+    this.maxSlides = Math.ceil(totalItems / this.itemsPerSlide);
+
+    if (this.currentSlide >= this.maxSlides) {
+      this.goToSlide(Math.max(0, this.maxSlides - 1));
     }
   }
 
-  protected loadCars() {
-    this.isLoading = true;
-    this.error = null;
+  private closeAllSelects(): void {
+    [
+      this.makeSelect,
+      this.modelSelect,
+      this.conditionSelect,
+      this.fuelSelect,
+      this.transmissionSelect
+    ].forEach(select => select?.close());
+  }
 
-    const request: CarGetAllRequest = {
-      pageNumber: 1,
-      pageSize: 12
+  private handleError(message: string, error: any): void {
+    console.error(message, error);
+    this.error = this.translate.instant('landing.featured.error');
+    this.isLoading = false;
+    this.cdr.detectChanges();
+  }
+
+  getTranslatedCondition(condition: string): string {
+    return this.translate.instant(`landing.search.condition.${condition.toLowerCase()}`);
+  }
+
+  switchLanguage(lang: string) {
+    this.languageService.changeLanguage(lang);
+  }
+
+  private prepareFilters(): Record<string, any> {
+    const filters = {
+      ...this.filterForm.value,
+      priceFrom: this.priceRange[0],
+      priceTo: this.priceRange[1],
+      yearFrom: this.yearRange[0],
+      yearTo: this.yearRange[1]
     };
 
-    this.carGetAllService.handleAsync(request).subscribe({
-      next: (response: any) => {  // Use any temporarily to handle the response
-        if (response && response.dataItems) {
-          // Transform the response to match our interface
-          const transformedResponse: MyPagedList<CarGetAllResponse> = {
-            data: response.dataItems,
-            totalCount: response.totalCount,
-            pageSize: response.pageSize,
-            currentPage: response.currentPage,
-            totalPages: response.totalPages,
-            hasNext: response.hasNext,
-            hasPrevious: response.hasPrevious
-          };
-
-          this.featuredCars = transformedResponse.data;
-          console.log('Loaded cars:', this.featuredCars);
-        } else {
-          this.featuredCars = [];
-          this.error = 'No cars found';
-        }
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading cars:', error);
-        this.error = 'Failed to load cars. Please try again later.';
-        this.isLoading = false;
-      }
-    });
+    // Remove empty values
+    return Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => value != null && value !== '')
+    );
   }
 
-  getEnumLabel(enumObj: any, value: number): string {
-    return Object.entries(enumObj)
-      .find(([key, val]) => val === value)?.[0] || '';
+  // Public Getters
+  get visibleAds(): AdvertGetFeaturedResponse[] {
+    return this.featuredAds.slice(0, this.displayedAds);
   }
 
-  get visibleCars(): CarGetAllResponse[] {
-    return this.featuredCars.slice(0, this.displayedCars);
+  loadMore(): void {
+    this.displayedAds = Math.min(
+      this.displayedAds + this.LOAD_MORE_INCREMENT,
+      this.featuredAds.length
+    );
   }
 
-  loadMore() {
-    this.displayedCars = Math.min(this.displayedCars + 6, this.featuredCars.length);
-  }
+  protected readonly HTMLImageElement = HTMLImageElement;
+  protected readonly VehicleCondition = VehicleCondition;
 
-  formatPriceLabel(value: number): string {
-    return `${value.toLocaleString()} €`;
-  }
-
-  formatYearLabel(value: number): string {
-    return value.toString();
-  }
-
-  applyFilters() {
-    if (this.filterForm.valid) {
-      const filters = {
-        ...this.filterForm.value,
-        priceFrom: this.priceRange[0],
-        priceTo: this.priceRange[1],
-        yearFrom: this.yearRange[0],
-        yearTo: this.yearRange[1]
-      };
-
-      // Remove empty values
-      Object.keys(filters).forEach(key => {
-        if (!filters[key]) {
-          delete filters[key];
-        }
-      });
-
-      this.router.navigate(['/cars'], {
-        queryParams: filters
-      });
-    }
-  }
-
-// Update the resetFilters method
-  resetFilters() {
-    this.filterForm.reset({
-      condition: 'all'
-    });
-    this.priceRange = [0, 200000];
-    this.yearRange = [1990, this.currentYear];
-    this.models = [];
+  handleImageError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    img.hidden = true;
   }
 }

@@ -1,9 +1,29 @@
 <div class="landing-page">
+  <!-- Language Switcher -->
+  <div class="language-switcher">
+    <button mat-button [matMenuTriggerFor]="languageMenu">
+      <mat-icon>language</mat-icon>
+      <span>{{ currentLang | uppercase }}</span>
+    </button>
+    <mat-menu #languageMenu="matMenu"
+              xPosition="before"
+              yPosition="below"
+              class="language-menu"
+              [overlapTrigger]="false">
+      <button mat-menu-item (click)="switchLanguage('en')">
+        <span>English</span>
+      </button>
+      <button mat-menu-item (click)="switchLanguage('bs')">
+        <span>Bosanski</span>
+      </button>
+    </mat-menu>
+  </div>
+
   <!-- Hero Section -->
-  <section class="hero-section">
+  <section class="hero-section" [style.background-image]="'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url(' + heroBackground + ')'">
     <div class="hero-content">
-      <h1>Find Your Perfect Car</h1>
-      <p>The largest vehicle marketplace in Bosnia and Herzegovina</p>
+      <h1>{{ 'landing.hero.title' | translate }}</h1>
+      <p>{{ 'landing.hero.subtitle' | translate }}</p>
     </div>
   </section>
 
@@ -13,7 +33,7 @@
       <!-- Advanced Filters -->
       <mat-card class="filters-card">
         <mat-card-header>
-          <mat-card-title>Search Filters</mat-card-title>
+          <mat-card-title>{{ 'landing.search.title' | translate }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
@@ -21,9 +41,9 @@
               <!-- Primary Filters Row -->
               <div class="filter-row primary-filters">
                 <mat-form-field appearance="outline">
-                  <mat-label>Make</mat-label>
+                  <mat-label>{{ 'landing.search.make.label' | translate }}</mat-label>
                   <mat-select formControlName="make" #makeSelect>
-                    <mat-option [value]="''">Any Make</mat-option>
+                    <mat-option [value]="''">{{ 'landing.search.make.placeholder' | translate }}</mat-option>
                     <mat-option *ngFor="let make of makes" [value]="make">
                       {{make}}
                     </mat-option>
@@ -31,9 +51,9 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Model</mat-label>
+                  <mat-label>{{ 'landing.search.model.label' | translate }}</mat-label>
                   <mat-select formControlName="model" [disabled]="!filterForm.get('make')?.value" #modelSelect>
-                    <mat-option [value]="''">Any Model</mat-option>
+                    <mat-option [value]="''">{{ 'landing.search.model.placeholder' | translate }}</mat-option>
                     <mat-option *ngFor="let model of models" [value]="model">
                       {{model}}
                     </mat-option>
@@ -41,11 +61,11 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Vehicle Condition</mat-label>
+                  <mat-label>{{ 'landing.search.condition.label' | translate }}</mat-label>
                   <mat-select formControlName="condition" #conditionSelect>
-                    <mat-option value="all">All Vehicles</mat-option>
-                    <mat-option value="new">New</mat-option>
-                    <mat-option value="used">Used</mat-option>
+                    <mat-option value="all">{{ 'landing.search.condition.all' | translate }}</mat-option>
+                    <mat-option value="new">{{ 'landing.search.condition.new' | translate }}</mat-option>
+                    <mat-option value="used">{{ 'landing.search.condition.used' | translate }}</mat-option>
                   </mat-select>
                 </mat-form-field>
               </div>
@@ -54,7 +74,7 @@
               <div class="filter-row range-filters">
                 <div class="range-container">
                   <div class="range-header">
-                    <label>Price Range</label>
+                    <label>{{ 'landing.search.price.label' | translate }}</label>
                     <div class="range-values">
                       <span>{{priceRange[0] | number}} €</span>
                       <span>-</span>
@@ -69,7 +89,7 @@
 
                 <div class="range-container">
                   <div class="range-header">
-                    <label>Year Range</label>
+                    <label>{{ 'landing.search.year.label' | translate }}</label>
                     <div class="range-values">
                       <span>{{yearRange[0]}}</span>
                       <span>-</span>
@@ -86,40 +106,40 @@
               <!-- Secondary Filters Row -->
               <div class="filter-row secondary-filters">
                 <mat-form-field appearance="outline">
-                  <mat-label>Fuel Type</mat-label>
+                  <mat-label>{{ 'landing.search.fuelType.label' | translate }}</mat-label>
                   <mat-select formControlName="fuelType" #fuelSelect>
-                    <mat-option [value]="''">Any Fuel Type</mat-option>
+                    <mat-option [value]="''">{{ 'landing.search.fuelType.placeholder' | translate }}</mat-option>
                     <mat-option *ngFor="let option of fuelTypeOptions" [value]="option.value">
-                      {{option.label}}
+                      {{option.label | translate}}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Transmission</mat-label>
+                  <mat-label>{{ 'landing.search.transmission.label' | translate }}</mat-label>
                   <mat-select formControlName="transmission" #transmissionSelect>
-                    <mat-option [value]="''">Any Transmission</mat-option>
+                    <mat-option [value]="''">{{ 'landing.search.transmission.placeholder' | translate }}</mat-option>
                     <mat-option *ngFor="let option of transmissionOptions" [value]="option.value">
-                      {{option.label}}
+                      {{option.label | translate}}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Maximum Mileage</mat-label>
+                  <mat-label>{{ 'landing.search.mileage.label' | translate }}</mat-label>
                   <input matInput type="number" formControlName="mileageTo">
-                  <span matSuffix>&nbsp;km</span>
+                  <span matSuffix>&nbsp;{{ 'landing.search.mileage.suffix' | translate }}</span>
                 </mat-form-field>
               </div>
 
               <!-- Action Buttons -->
               <div class="filter-actions">
                 <button type="button" mat-button (click)="resetFilters()">
-                  Reset Filters
+                  {{ 'landing.search.buttons.reset' | translate }}
                 </button>
                 <button type="submit" mat-raised-button color="primary">
                   <mat-icon>search</mat-icon>
-                  Search
+                  {{ 'landing.search.buttons.search' | translate }}
                 </button>
               </div>
             </div>
@@ -127,17 +147,17 @@
         </mat-card-content>
       </mat-card>
 
+      <!-- Categories Section -->
       <mat-card class="categories-card">
         <mat-card-header>
-          <mat-card-title>Popular Categories</mat-card-title>
+          <mat-card-title>{{ 'landing.categories.title' | translate }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <div class="categories-carousel">
             <button mat-icon-button
                     class="nav-button prev"
                     (click)="previousSlide()"
-                    [disabled]="currentSlide === 0"
-                    aria-label="Previous slide">
+                    [disabled]="currentSlide === 0">
               <mat-icon>chevron_left</mat-icon>
             </button>
 
@@ -150,7 +170,7 @@
                      [class.selected]="filterForm.get('bodyType')?.value === type.id">
                   <mat-icon>{{type.icon}}</mat-icon>
                   <span class="type-name">{{type.name}}</span>
-                  <span class="type-count">{{type.count}} vehicles</span>
+                  <span class="type-count">{{type.count}} {{ 'landing.categories.vehicles' | translate }}</span>
                 </div>
               </div>
             </div>
@@ -173,86 +193,103 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Featured Cars -->
-      <mat-card class="featured-cars-card">
+      <!-- Featured Advertisements -->
+      <mat-card class="featured-ads-card">
         <mat-card-header>
-          <mat-card-title>Featured Cars</mat-card-title>
+          <mat-card-title>
+            {{ 'landing.featured.title' | translate }}
+          </mat-card-title>
         </mat-card-header>
 
         <mat-card-content>
           <!-- Loading State -->
-          <ng-container *ngIf="isLoading">
+          <div class="loading-state" *ngIf="isLoading">
             <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-          </ng-container>
+            <p class="loading-text">{{ 'landing.featured.loading' | translate }}</p>
+          </div>
 
           <!-- Error State -->
-          <div class="error-state" *ngIf="error">
+          <div class="error-state" *ngIf="!isLoading && error">
             <mat-icon color="warn">error</mat-icon>
-            <p>{{error}}</p>
-            <button mat-stroked-button color="primary" (click)="loadCars()">
-              Try Again
+            <p>{{ error }}</p>
+            <button mat-stroked-button color="primary" (click)="loadFeaturedAds()">
+              <mat-icon>refresh</mat-icon>
+              {{ 'landing.featured.tryAgain' | translate }}
             </button>
           </div>
 
-          <!-- Cars Grid -->
-          <div class="cars-grid" *ngIf="!isLoading && !error && featuredCars.length > 0">
-            <div class="car-card"
-                 *ngFor="let car of visibleCars"
-                 role="article"
-                 tabindex="0">
-              <div class="car-image">
-                <img [src]="'assets/images/car-placeholder.jpg'" [alt]="car.name">
-              </div>
-              <div class="car-content">
-                <h3 class="car-title">{{car.name}}</h3>
-                <div class="car-features">
-                  <div class="feature" *ngIf="car.year">
-                    <mat-icon>calendar_today</mat-icon>
-                    <span>{{car.year}}</span>
-                  </div>
-                  <div class="feature" *ngIf="car.fuelType !== undefined">
-                    <mat-icon>local_gas_station</mat-icon>
-                    <span>{{getEnumLabel(FuelType, car.fuelType)}}</span>
-                  </div>
-                  <div class="feature" *ngIf="car.transmission !== undefined">
-                    <mat-icon>settings</mat-icon>
-                    <span>{{getEnumLabel(TransmissionType, car.transmission)}}</span>
-                  </div>
-                  <div class="feature" *ngIf="car.doors">
-                    <mat-icon>door_front</mat-icon>
-                    <span>{{car.doors}} doors</span>
-                  </div>
-                  <div class="feature" *ngIf="car.engineCapacity">
-                    <mat-icon>speed</mat-icon>
-                    <span>{{car.engineCapacity}} L</span>
-                  </div>
-                  <div class="feature" *ngIf="car.fuelConsumption">
-                    <mat-icon>local_gas_station</mat-icon>
-                    <span>{{car.fuelConsumption}} L/100km</span>
-                  </div>
+          <!-- Ads Grid -->
+          <div class="ads-grid" *ngIf="!isLoading && !error && featuredAds!.length > 0">
+            <mat-card class="ad-card"
+                      *ngFor="let ad of visibleAds; trackBy: trackByAd"
+                      [attr.data-ad-id]="ad.id">
+              <div class="ad-image-container">
+                <div class="ad-image">
+                  <img [src]="ad.primaryImageUrl"
+                       [alt]="ad.title"
+                       loading="lazy"
+                       (error)="handleImageError($event)">
                 </div>
-                <div class="car-location" *ngIf="car.cityName">
-                  <mat-icon>location_on</mat-icon>
-                  <span>{{car.cityName}}</span>
-                </div>
-                <div class="car-body-type" *ngIf="car.bodyTypeName">
-                  <mat-icon>directions_car</mat-icon>
-                  <span>{{car.bodyTypeName}}</span>
+                <div class="condition-badge" [ngClass]="VehicleCondition[ad.condition].toLowerCase()">
+                  {{ getTranslatedCondition(VehicleCondition[ad.condition]) }}
                 </div>
               </div>
-            </div>
+
+              <mat-card-content>
+                <h3 class="ad-title">{{ad.title}}</h3>
+                <p class="car-name">{{ad.carName}}</p>
+
+                <div class="ad-details">
+                  <div class="price-views">
+                    <span class="price">{{ad.price | currency:'EUR':'symbol':'1.0-0'}}</span>
+                    <span class="views">
+                      <mat-icon>visibility</mat-icon>
+                      {{ad.viewCount | number}}
+                    </span>
+                  </div>
+
+                  <div class="listing-info">
+                    <span class="date">
+                      <mat-icon>calendar_today</mat-icon>
+                      {{ad.listingDate | date:'mediumDate'}}
+                    </span>
+                    <span class="seller">
+                      <mat-icon>person</mat-icon>
+                      {{ad.userName}}
+                    </span>
+                  </div>
+                </div>
+              </mat-card-content>
+
+              <mat-card-actions align="end">
+                <button mat-stroked-button
+                        color="primary"
+                        [routerLink]="['/advertisements', ad.id]">
+                  <mat-icon>visibility</mat-icon>
+                  {{ 'landing.featured.viewDetails' | translate }}
+                </button>
+              </mat-card-actions>
+            </mat-card>
           </div>
 
-          <!-- No Cars Found State -->
-          <div class="no-cars-state" *ngIf="!isLoading && !error && featuredCars.length === 0">
-            <mat-icon>directions_car_off</mat-icon>
-            <p>No cars found</p>
+          <!-- No Ads State -->
+          <div class="no-ads-state" *ngIf="!isLoading && !error && (!featuredAds || featuredAds.length === 0)">
+            <mat-icon>sentiment_dissatisfied</mat-icon>
+            <p>{{ 'landing.featured.noAds' | translate }}</p>
+            <button mat-stroked-button color="primary" (click)="loadFeaturedAds()">
+              <mat-icon>refresh</mat-icon>
+              {{ 'landing.featured.refresh' | translate }}
+            </button>
           </div>
 
-          <!-- Load More Button -->
-          <div class="load-more" *ngIf="!isLoading && !error && displayedCars < featuredCars.length">
-            <button mat-stroked-button color="primary" (click)="loadMore()">
-              Load More
+          <!-- Load More -->
+          <div class="load-more-container" *ngIf="!isLoading && !error && displayedAds < featuredAds!.length">
+            <button mat-stroked-button
+                    color="primary"
+                    (click)="loadMore()"
+                    class="load-more-btn">
+              <mat-icon>expand_more</mat-icon>
+              {{ 'landing.featured.loadMore' | translate }}
             </button>
           </div>
         </mat-card-content>

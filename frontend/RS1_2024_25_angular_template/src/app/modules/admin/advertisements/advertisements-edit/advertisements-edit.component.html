@@ -139,54 +139,54 @@
           </div>
 
             <!-- Preview of selected car -->
-            <div *ngIf="selectedCar" class="selected-car-preview mat-elevation-z1">
+            <div *ngIf="selectedCar" class="selected-car-preview">
               <div class="preview-header">
                 <h3>Selected Car Details</h3>
               </div>
               <div class="preview-content">
                 <div class="preview-grid">
                   <div class="preview-item">
-                    <span class="label">Name:</span>
+                    <span class="label">Name</span>
                     <span class="value">{{selectedCar.name}}</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Model:</span>
+                    <span class="label">Model</span>
                     <span class="value">{{selectedCar.modelName}}</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Manufacturer:</span>
+                    <span class="label">Manufacturer</span>
                     <span class="value">{{selectedCar.manufacturerName}}</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Year:</span>
+                    <span class="label">Year</span>
                     <span class="value">{{selectedCar.year}}</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Engine:</span>
+                    <span class="label">Engine</span>
                     <span class="value">{{selectedCar.engineCapacity}}L</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Fuel Type:</span>
+                    <span class="label">Fuel Type</span>
                     <span class="value">{{getFuelTypeName(selectedCar.fuelType)}}</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Transmission:</span>
+                    <span class="label">Transmission</span>
                     <span class="value">{{getTransmissionTypeName(selectedCar.transmission)}}</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Mileage:</span>
+                    <span class="label">Mileage</span>
                     <span class="value">{{selectedCar.mileage | number}} km</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Color:</span>
+                    <span class="label">Color</span>
                     <span class="value">{{selectedCar.color}}</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Body Type:</span>
+                    <span class="label">Body Type</span>
                     <span class="value">{{selectedCar.bodyTypeName}}</span>
                   </div>
                   <div class="preview-item">
-                    <span class="label">Location:</span>
+                    <span class="label">Location</span>
                     <span class="value">{{selectedCar.cityName}}</span>
                   </div>
                 </div>
@@ -408,7 +408,7 @@
   </form>
 
   <!-- Images Section -->
-  <mat-card *ngIf="advertisementId" class="images-card">
+  <mat-card class="images-card">
     <mat-card-header>
       <mat-card-title>
         <mat-icon>image</mat-icon>
@@ -417,27 +417,40 @@
     </mat-card-header>
 
     <mat-card-content>
-      <div class="image-upload-section">
-        <button mat-raised-button color="primary" (click)="fileInput.click()">
-          <mat-icon>upload</mat-icon>
-          Upload Images
-        </button>
-        <input #fileInput type="file" hidden multiple accept="image/*"
-               (change)="onFileSelected($event)">
+      <div class="image-upload-container"
+           (dragover)="onDragOver($event)"
+           (dragleave)="onDragLeave($event)"
+           (drop)="onDrop($event)"
+           [class.dragging]="isDragging">
+        
+        <div class="drop-zone">
+          <p>Drag and drop images here or</p>
+          <input type="file" 
+                 (change)="onImageSelected($event)" 
+                 accept="image/*" 
+                 multiple
+                 #fileInput 
+                 style="display: none">
+          <button type="button" (click)="fileInput.click()">Choose Files</button>
+        </div>
       </div>
 
       <div class="image-grid">
         <div *ngFor="let image of advertisement.images" class="image-item">
           <img [src]="image.url" [alt]="advertisement.title">
           <div class="image-actions">
-            <button mat-icon-button color="primary" *ngIf="!image.isPrimary"
-                    (click)="setPrimaryImage(image.id)"
-                    matTooltip="Set as Primary">
+            <button mat-icon-button color="primary"
+                    *ngIf="!image.isPrimary"
+                    (click)="setPrimaryImage(image.id)">
               <mat-icon>star_border</mat-icon>
             </button>
+            <button mat-icon-button color="primary"
+                    *ngIf="image.isPrimary"
+                    [disabled]="true">
+              <mat-icon>star</mat-icon>
+            </button>
             <button mat-icon-button color="warn"
-                    (click)="deleteImage(image.id)"
-                    matTooltip="Delete Image">
+                    (click)="deleteImage(image.id)">
               <mat-icon>delete</mat-icon>
             </button>
           </div>

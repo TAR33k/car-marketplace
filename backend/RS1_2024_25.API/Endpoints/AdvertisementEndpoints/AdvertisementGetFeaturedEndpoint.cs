@@ -12,29 +12,48 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
         .WithRequest<AdvertGetFeaturedRequest>
         .WithResult<AdvertGetFeaturedResponse[]>
     {
+        private static int? _cachedActiveStatusId;
+        private const string ImageDirectory = "uploads/images";
+
         [HttpGet("featured")]
         public override async Task<AdvertGetFeaturedResponse[]> HandleAsync(
-            [FromQuery] AdvertGetFeaturedRequest request,
-            CancellationToken cancellationToken = default)
+    [FromQuery] AdvertGetFeaturedRequest request,
+    CancellationToken cancellationToken = default)
         {
-            var query = db.Advertisements
-                .Include(a => a.Car)
-                .Include(a => a.Status)
-                .Include(a => a.User)
-                .Include(a => a.Images)
-                .Where(a => a.StatusID == 1); // Active advertisements only
-
-            // Apply featured criteria based on request type
-            query = request.FeaturedType switch
+            try
             {
-                FeaturedType.MostViewed => query.OrderByDescending(a => a.ViewCount),
-                FeaturedType.Newest => query.OrderByDescending(a => a.ListingDate),
-                FeaturedType.PriceHighToLow => query.OrderByDescending(a => a.Price),
-                FeaturedType.PriceLowToHigh => query.OrderBy(a => a.Price),
-                _ => query.OrderByDescending(a => a.ListingDate)
-            };
+                // Get or cache the Active status ID
+                if (!_cachedActiveStatusId.HasValue)
+                {
+                    _cachedActiveStatusId = await db.StatusTypes
+                        .Where(s => s.Name == "Active")
+                        .Select(s => s.ID)
+                        .FirstOrDefaultAsync(cancellationToken);
 
-            var advertisements = await query
+                    if (_cachedActiveStatusId == 0)
+                    {
+                        throw new InvalidOperationException("Active status not found in database");
+                    }
+                }
+
+                var query = db.Advertisements
+                    .Include(a => a.Car)
+                    .Include(a => a.Status)
+                    .Include(a => a.User)
+                    .Include(a => a.Images)
+                    .Where(a => a.StatusID == _cachedActiveStatusId);
+
+                // Query based on FeaturedType
+                query = request.FeaturedType switch
+                {
+                    FeaturedType.MostViewed => query.OrderByDescending(a => a.ViewCount),
+                    FeaturedType.Newest => query.OrderByDescending(a => a.ListingDate),
+                    FeaturedType.PriceHighToLow => query.OrderByDescending(a => a.Price),
+                    FeaturedType.PriceLowToHigh => query.OrderBy(a => a.Price),
+                    _ => query.OrderByDescending(a => a.ListingDate)
+                };
+
+                var advertisements = await query
                 .Take(request.Count)
                 .Select(a => new AdvertGetFeaturedResponse
                 {
@@ -44,7 +63,7 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                     ListingDate = a.ListingDate,
                     ViewCount = a.ViewCount,
                     Condition = a.Condition,
-                    CarName = a.Car.Name,
+                    CarName = a.Car.Name ?? "Unknown",
                     UserName = $"{a.User.FirstName} {a.User.LastName}",
                     PrimaryImageUrl = a.Images
                         .Where(i => i.IsPrimary)
@@ -53,8 +72,15 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                 })
                 .ToArrayAsync(cancellationToken);
 
-            return advertisements;
+                return advertisements;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in HandleAsync: {ex.Message}");
+                throw;
+            }
         }
+
 
         public class AdvertGetFeaturedRequest
         {
@@ -77,10 +103,10 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
 
         public enum FeaturedType
         {
-            MostViewed,
-            Newest,
-            PriceHighToLow,
-            PriceLowToHigh
+            MostViewed = 0,
+            Newest = 1,
+            PriceHighToLow = 2,
+            PriceLowToHigh = 3
         }
     }
 }

@@ -1,21 +1,36 @@
+nav {
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.admin-info {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 10px;
+  text-align: right; /* Align the info to the right */
+}
+
 ul {
-  list-style-type: none;
+  list-style: none;
   padding: 0;
+  margin: 0;
   display: flex;
   gap: 15px;
 }
 
-li {
-  cursor: pointer;
-  padding: 5px;
+ul li {
+  display: inline-block;
 }
 
-a {
+ul li a {
   text-decoration: none;
-  color: inherit;
+  color: #007bff;
 }
 
-a.active {
+ul li a.active {
   font-weight: bold;
-  color: #007bff;
+  text-decoration: underline;
 }

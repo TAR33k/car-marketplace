@@ -1,22 +1,74 @@
 <mat-toolbar color="primary">
   <div class="container">
     <div class="toolbar-content">
-      <!-- Logo/Brand -->
-      <a routerLink="/" class="brand">
-        <span class="brand-name">CarMarket</span>
-      </a>
+      <!-- Left Section: Logo -->
+      <div class="left-section">
+        <a routerLink="/" class="brand">
+          <span class="brand-name">CarMarket</span>
+        </a>
+      </div>
 
-      <!-- Navigation -->
+      <!-- Center Section: Navigation -->
       <nav class="nav-links">
-        <a mat-button routerLink="/search" routerLinkActive="active">Search Cars</a>
-        <a mat-button routerLink="/sell" routerLinkActive="active">Sell Your Car</a>
-        <a mat-button routerLink="/about" routerLinkActive="active">About Us</a>
+        <a mat-button routerLink="/search" routerLinkActive="active">
+          <mat-icon>search</mat-icon>
+          <span>Search Cars</span>
+        </a>
+        <a mat-button routerLink="/sell" routerLinkActive="active">
+          <mat-icon>sell</mat-icon>
+          <span>Sell Car</span>
+        </a>
       </nav>
 
-      <!-- Auth Buttons -->
-      <div class="auth-buttons">
-        <button mat-button routerLink="/auth/login">Login</button>
-        <button mat-raised-button color="accent" routerLink="/auth/register">Register</button>
+      <!-- Right Section: User Actions -->
+      <div class="right-section">
+        <!-- Chat Button (Only for logged-in users) -->
+        <button *ngIf="isLoggedIn"
+                mat-icon-button
+                [routerLink]="['/chat']"
+                routerLinkActive="active"
+                class="chat-button">
+          <mat-icon>chat</mat-icon>
+        </button>
+
+        <!-- User Menu (When logged in) -->
+        <div *ngIf="isLoggedIn" class="user-menu">
+          <button mat-button [matMenuTriggerFor]="userMenu" class="user-button">
+            <mat-icon>account_circle</mat-icon>
+            <span class="username">{{ username }}</span>
+            <mat-icon>arrow_drop_down</mat-icon>
+          </button>
+          <mat-menu #userMenu="matMenu" class="user-menu-panel" [hasBackdrop]="true" [overlapTrigger]="false">
+            <button mat-menu-item (click)="navigateToProfile()">
+              <mat-icon>person</mat-icon>
+              <span>Profile</span>
+            </button>
+            <button mat-menu-item (click)="navigateToSettings()">
+              <mat-icon>settings</mat-icon>
+              <span>Settings</span>
+            </button>
+            <button *ngIf="isAdmin" mat-menu-item (click)="switchModule()">
+              <mat-icon>swap_horiz</mat-icon>
+              <span>{{ isOnAdminPage() ? 'Switch to Public' : 'Switch to Admin' }}</span>
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="onLogout()" class="logout-menu-item">
+              <mat-icon>exit_to_app</mat-icon>
+              <span>Logout</span>
+            </button>
+          </mat-menu>
+        </div>
+
+        <!-- Auth Buttons (When logged out) -->
+        <div *ngIf="!isLoggedIn" class="auth-buttons">
+          <button mat-button routerLink="/auth/login">
+            <mat-icon>login</mat-icon>
+            <span>Login</span>
+          </button>
+          <button mat-raised-button color="accent" routerLink="/auth/register">
+            <span>Register</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

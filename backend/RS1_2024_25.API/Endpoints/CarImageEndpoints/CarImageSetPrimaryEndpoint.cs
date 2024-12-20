@@ -15,9 +15,12 @@ namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
     {
         [HttpPut("set-primary")]
         public override async Task HandleAsync(
-            CarImageSetPrimaryRequest request,
-            CancellationToken cancellationToken = default)
+    CarImageSetPrimaryRequest request,
+    CancellationToken cancellationToken = default)
         {
+            // Log the incoming request
+            Console.WriteLine($"Setting primary image with ID: {request.ImageId}");
+
             var image = await db.CarImages
                 .Include(i => i.Advertisement)
                 .FirstOrDefaultAsync(i => i.ID == request.ImageId, cancellationToken);

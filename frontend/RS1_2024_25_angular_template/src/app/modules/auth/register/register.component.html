@@ -1,1 +1,106 @@
-<p>register works!</p>
+<div class="container">
+  <!-- Language Switcher Buttons -->
+  <div class="language-switcher">
+    <button (click)="switchLanguage('en')">English</button>
+    <button (click)="switchLanguage('bs')">Bosnian</button>
+  </div>
+
+  <h2>{{ 'registration' | translate }}</h2>
+  <ul class="steps">
+    <li [class.active]="step >= 1">1</li>
+    <li [class.active]="step >= 2">2</li>
+    <li [class.active]="step >= 3">3</li>
+  </ul>
+
+  <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+    <!-- Step 1 -->
+    <div *ngIf="step === 1">
+      <input formControlName="name" type="text" [placeholder]="'namePlaceholder' | translate" />
+      <small *ngIf="registrationForm.get('name')?.invalid && registrationForm.get('name')?.touched">
+        {{ 'nameRequired' | translate }}
+      </small>
+
+      <input formControlName="surname" type="text" [placeholder]="'surnamePlaceholder' | translate" />
+      <small *ngIf="registrationForm.get('surname')?.invalid && registrationForm.get('surname')?.touched">
+        {{ 'surnameRequired' | translate }}
+      </small>
+    </div>
+
+    <!-- Step 2 -->
+    <div *ngIf="step === 2">
+      <input formControlName="address" type="text" [placeholder]="'addressPlaceholder' | translate" />
+      <small *ngIf="registrationForm.get('address')?.invalid && registrationForm.get('address')?.touched">
+        {{ 'addressRequired' | translate }}
+      </small>
+
+      <input formControlName="phoneNumber" type="text" [placeholder]="'phoneNumberPlaceholder' | translate" />
+      <div *ngIf="registrationForm.get('phoneNumber')?.invalid && registrationForm.get('phoneNumber')?.touched">
+        <small class="text-danger" *ngIf="registrationForm.get('phoneNumber')?.hasError('required')">
+          {{ 'phoneNumberRequired' | translate }}
+        </small>
+        <small class="text-danger" *ngIf="registrationForm.get('phoneNumber')?.hasError('pattern')">
+          {{ 'phoneNumberInvalid' | translate }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div *ngIf="step === 3">
+      <!-- Username Field -->
+      <input formControlName="username" type="text" [placeholder]="'usernamePlaceholder' | translate" />
+      <div *ngIf="registrationForm.get('username')?.invalid && registrationForm.get('username')?.touched">
+        <small class="text-danger">{{ 'usernameRequired' | translate }}</small>
+      </div>
+
+      <div *ngIf="isUsernameTaken" class="text-danger">
+        <small>{{ 'usernameTaken' | translate }}</small>
+      </div>
+
+      <!-- Email Address Field -->
+      <input formControlName="emailAddress" type="email" [placeholder]="'emailPlaceholder' | translate" />
+      <div *ngIf="registrationForm.get('emailAddress')?.invalid && registrationForm.get('emailAddress')?.touched">
+        <small class="text-danger" *ngIf="registrationForm.get('emailAddress')?.hasError('required')">
+          {{ 'emailRequired' | translate }}
+        </small>
+        <small class="text-danger" *ngIf="registrationForm.get('emailAddress')?.hasError('email')">
+          {{ 'emailInvalid' | translate }}
+        </small>
+      </div>
+
+      <!-- Password Field -->
+      <input formControlName="password" type="password" [placeholder]="'passwordPlaceholder' | translate" (input)="checkPasswordStrength()" />
+      <!-- Password Strength Indicator -->
+      <div class="password-strength-container">
+        <div class="strength-bar"
+             [ngClass]="passwordStrength"
+             [ngStyle]="{ width: getStrengthBarWidth() }">
+        </div>
+      </div>
+      <!-- Password Strength Message -->
+      <p *ngIf="passwordStrengthMessage" [ngClass]="passwordStrengthClass">{{ passwordStrengthMessage }}</p>
+
+      <!-- Retype Password Field -->
+      <input formControlName="confirmPassword" type="password" [placeholder]="'confirmPasswordPlaceholder' | translate" (input)="onInputChange('confirmPassword')" />
+      <div *ngIf="passwordsDoNotMatch() && registrationForm.get('confirmPassword')?.touched">
+        <small class="text-danger">{{ 'passwordsDoNotMatch' | translate }}</small>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div>
+      <button type="button" (click)="previousStep()" [disabled]="step === 1">{{ 'previous' | translate }}</button>
+      <button type="button" (click)="nextStep()" *ngIf="step < 3" [disabled]="!isCurrentStepValid()">
+        {{ 'next' | translate }}
+      </button>
+      <button type="submit" *ngIf="step === 3">
+        <span *ngIf="!isLoading">{{ 'submit' | translate }}</span>
+        <span *ngIf="isLoading" class="loader"></span>
+      </button>
+    </div>
+  </form>
+
+  <!-- Error Message -->
+  <div *ngIf="!registrationForm.valid && registrationForm.markAsTouched()" class="message error">
+    {{ 'formInvalid' | translate }}
+  </div>
+</div>

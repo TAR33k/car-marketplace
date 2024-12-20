@@ -10,20 +10,27 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDialogActions, MatDialogContent, MatDialogTitle } from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { HeaderComponent } from './components/header/header.component';
 import { FooterComponent } from './components/footer/footer.component';
-import {UnauthorizedComponent} from './unauthorized/unauthorized.component';
+import { UnauthorizedComponent } from './unauthorized/unauthorized.component';
 import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
-import {MatDialogActions, MatDialogContent, MatDialogTitle} from '@angular/material/dialog';
+
+// Chat Components
+import { ChatComponent } from './chat/components/chat.component';
+import { ChatService } from './chat/services/chat.service';
 
 @NgModule({
-  declarations: [
-    UnauthorizedComponent,
-    HeaderComponent,
-    FooterComponent,
-    ConfirmDialogComponent
-  ],
+    declarations: [
+        UnauthorizedComponent,
+        HeaderComponent,
+        FooterComponent,
+        ConfirmDialogComponent,
+        ChatComponent
+    ],
   imports: [
     CommonModule,
     RouterModule,
@@ -36,12 +43,18 @@ import {MatDialogActions, MatDialogContent, MatDialogTitle} from '@angular/mater
     MatFormFieldModule,
     MatDialogContent,
     MatDialogActions,
-    MatDialogTitle
+    MatDialogTitle,
+    MatDividerModule,
+    MatTooltipModule
   ],
-  exports: [
-    UnauthorizedComponent,
-    HeaderComponent,
-    FooterComponent
-  ]
+    exports: [
+        UnauthorizedComponent,
+        HeaderComponent,
+        FooterComponent,
+        ChatComponent
+    ],
+    providers: [
+        ChatService
+    ]
 })
 export class SharedModule { }

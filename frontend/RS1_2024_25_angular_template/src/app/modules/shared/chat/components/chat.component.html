@@ -1,0 +1,103 @@
+<div class="chat-container" [ngStyle]="{'max-height': maxHeight}">
+  <!-- Users List -->
+  <div class="users-list">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search users..."
+        (input)="searchUsers($event)"
+        aria-label="Search users"
+      />
+    </div>
+    <div
+      class="user-item"
+      *ngFor="let user of filteredUsers"
+      [class.selected]="selectedUser?.id === user.id"
+      (click)="selectUser(user)"
+    >
+      <div class="user-avatar">
+        {{ user.username.charAt(0).toUpperCase() }}
+      </div>
+      <div class="user-info">
+        <span class="username">{{ user.username }}</span>
+        <span
+          class="user-status"
+          [class.online]="user.isOnline"
+          [title]="user.isOnline ? 'Online' : 'Offline'"
+        >
+          {{ user.isOnline ? 'Online' : 'Offline' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="chat-area">
+    <!-- Connection Status -->
+    <div class="connection-status" *ngIf="!isConnected">
+      Reconnecting...
+    </div>
+
+    <!-- Messages -->
+    <div
+      class="chat-messages"
+      #scrollContainer
+      (scroll)="onScroll($event)"
+    >
+      <ng-container *ngFor="let group of messageGroups">
+        <div class="date-separator">
+          <span class="date">{{ group.date | date:'mediumDate' }}</span>
+        </div>
+        <div
+          class="message"
+          *ngFor="let message of group.messages"
+          [class.own-message]="message.senderId === currentUserId"
+        >
+          <div class="message-content">
+            {{ message.content }}
+          </div>
+          <div class="message-meta">
+            <span class="timestamp">{{ message.timestamp | date:'shortTime' }}</span>
+            <span class="status" [ngClass]="message.status">
+              <ng-container [ngSwitch]="message.status">
+                <span *ngSwitchCase="'sending'" title="Sending">⋯</span>
+                <span *ngSwitchCase="'sent'" title="Sent">✓</span>
+                <span *ngSwitchCase="'delivered'" title="Delivered">✓✓</span>
+                <span *ngSwitchCase="'read'" title="Read">✓✓</span>
+                <span *ngSwitchCase="'failed'" title="Failed">!</span>
+              </ng-container>
+            </span>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div class="typing-indicator" *ngIf="selectedUser && isUserTyping(selectedUser.id)">
+      {{ selectedUser.username }} is typing...
+    </div>
+
+    <!-- Message Input -->
+    <form
+      [formGroup]="messageForm"
+      (ngSubmit)="sendMessage()"
+      class="message-input"
+    >
+      <input
+        type="text"
+        formControlName="content"
+        placeholder="Type a message..."
+        [disabled]="!isConnected || !selectedUser"
+        (keydown.enter)="$event.preventDefault(); sendMessage()"
+        aria-label="Message input"
+      />
+      <button
+        type="submit"
+        [disabled]="messageForm.invalid || !isConnected || !selectedUser"
+        aria-label="Send message"
+      >
+        <i class="send-icon">➤</i>
+      </button>
+    </form>
+  </div>
+</div>
