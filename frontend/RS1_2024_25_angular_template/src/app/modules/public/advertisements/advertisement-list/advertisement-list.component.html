@@ -1,0 +1,151 @@
+<div class="container">
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <form [formGroup]="filterForm">
+      <div class="search-bar">
+        <mat-form-field appearance="outline">
+          <mat-label>Search advertisements</mat-label>
+          <input matInput formControlName="searchTerm" placeholder="Search by title, make, model...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="filters-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Min Price</mat-label>
+          <input matInput type="number" formControlName="minPrice">
+          <span matPrefix>€&nbsp;</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Max Price</mat-label>
+          <input matInput type="number" formControlName="maxPrice">
+          <span matPrefix>€&nbsp;</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Condition</mat-label>
+          <mat-select formControlName="condition">
+            <mat-option [value]="null">All Conditions</mat-option>
+            <mat-option *ngFor="let condition of conditionOptions" [value]="condition.value">
+              {{condition.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Make</mat-label>
+          <mat-select formControlName="make">
+            <mat-option [value]="''">All Makes</mat-option>
+            <mat-option *ngFor="let make of makes" [value]="make">
+              {{make}}
+            </mat-option>
+          </mat-select>
+          <mat-spinner matSuffix diameter="20" *ngIf="isLoading"></mat-spinner>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Model</mat-label>
+          <mat-select formControlName="model" [disabled]="!filterForm.get('make')?.value">
+            <mat-option [value]="''">All Models</mat-option>
+            <mat-option *ngFor="let model of models" [value]="model">
+              {{model}}
+            </mat-option>
+          </mat-select>
+          <mat-spinner matSuffix diameter="20" *ngIf="isLoading"></mat-spinner>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Year From</mat-label>
+          <input matInput type="number" formControlName="yearFrom">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Year To</mat-label>
+          <input matInput type="number" formControlName="yearTo">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fuel Type</mat-label>
+          <mat-select formControlName="fuelType">
+            <mat-option [value]="null">All</mat-option>
+            <mat-option *ngFor="let type of fuelTypeOptions" [value]="type.value">
+              {{type.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Transmission</mat-label>
+          <mat-select formControlName="transmission">
+            <mat-option [value]="null">All</mat-option>
+            <mat-option *ngFor="let type of transmissionOptions" [value]="type.value">
+              {{type.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Max Mileage</mat-label>
+          <input matInput type="number" formControlName="mileageTo">
+          <span matSuffix>km</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Sort By</mat-label>
+          <mat-select formControlName="sortBy">
+            <mat-option value="newest">Newest First</mat-option>
+            <mat-option value="price_asc">Price: Low to High</mat-option>
+            <mat-option value="price_desc">Price: High to Low</mat-option>
+            <mat-option value="views">Most Viewed</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button color="primary" (click)="clearFilters()">
+          <mat-icon>clear</mat-icon>
+          Clear Filters
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-section">
+    <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+
+    <div class="grid-view" *ngIf="dataSource.data.length > 0">
+      <div class="ad-card" *ngFor="let ad of dataSource.data" (click)="viewDetails(ad.id)">
+        <div class="ad-image">
+          <img [src]="ad.primaryImageUrl" [alt]="ad.title">
+          <div class="condition-badge" [ngClass]="'condition-' + ad.condition">
+            {{getConditionLabel(ad.condition)}}
+          </div>
+        </div>
+        <div class="ad-content">
+          <h3 class="ad-title">{{ad.title}}</h3>
+          <p class="ad-price">{{ad.price | currency:'EUR':'symbol':'1.0-0'}}</p>
+          <div class="ad-details">
+            <span class="ad-date">
+              <mat-icon>access_time</mat-icon>
+              {{ad.listingDate | date:'mediumDate'}}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-results" *ngIf="!isLoading && dataSource.data.length === 0">
+      <mat-icon>search_off</mat-icon>
+      <h3>No advertisements found</h3>
+      <p>Try adjusting your filters or search terms</p>
+    </div>
+
+    <mat-paginator
+      [length]="totalItems"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[12, 24, 48]"
+      [pageIndex]="currentPage - 1"
+      showFirstLastButtons>
+    </mat-paginator>
+  </div>
+</div>

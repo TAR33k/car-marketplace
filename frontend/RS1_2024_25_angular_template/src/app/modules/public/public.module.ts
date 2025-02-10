@@ -21,17 +21,26 @@ import {MatProgressBarModule} from "@angular/material/progress-bar";
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatMenuModule} from "@angular/material/menu";
 import {TranslateModule, TranslatePipe} from '@ngx-translate/core';
+import { AdvertisementListComponent } from './advertisements/advertisement-list/advertisement-list.component';
+import {MatPaginatorModule} from '@angular/material/paginator';
+import {MatSortModule} from '@angular/material/sort';
+import {MatTableModule} from '@angular/material/table';
 
 const routes: Routes = [
   {
     path: '',
     component: LandingPageComponent
+  },
+  {
+    path: 'advertisements',
+    component: AdvertisementListComponent
   }
 ];
 
 @NgModule({
   declarations: [
-    LandingPageComponent
+    LandingPageComponent,
+    AdvertisementListComponent
   ],
   imports: [
     CommonModule,
@@ -52,7 +61,10 @@ const routes: Routes = [
     MatProgressBarModule,
     MatTooltipModule,
     MatMenuModule,
-    TranslateModule.forChild()
+    TranslateModule.forChild(),
+    MatPaginatorModule,
+    MatSortModule,
+    MatTableModule
   ]
 })
 export class PublicModule { }

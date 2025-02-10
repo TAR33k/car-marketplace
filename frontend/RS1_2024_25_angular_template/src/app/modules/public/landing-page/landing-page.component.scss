@@ -29,7 +29,8 @@ $color-background: #f5f5f5;
 // Status Colors
 $status-colors: (
   'new': #4caf50,
-  'used': #ff9800
+  'used': #ff9800,
+  'damaged': #f44336
 );
 
 // Z-index
@@ -984,6 +985,10 @@ $z-layers: (
       &.used {
         background-color: map-get($status-colors, 'used');
       }
+
+      &.damaged {
+        background-color: map-get($status-colors, 'damaged');
+      }
     }
 
     // Show placeholder when no image
@@ -1094,6 +1099,10 @@ $z-layers: (
 
     &.used {
       background-color: map-get($status-colors, 'used');
+    }
+
+    &.damaged {
+      background-color: map-get($status-colors, 'damaged');
     }
   }
 }

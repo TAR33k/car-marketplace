@@ -1,0 +1,217 @@
+// Import variables and mixins from the admin styles if needed
+@import '../../../admin/admin-styles';
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.filters-section {
+  margin-bottom: 24px;
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  .search-bar {
+    margin-bottom: 16px;
+
+    mat-form-field {
+      width: 100%;
+    }
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: start;
+
+    button {
+      height: 56px; // Match height with mat-form-field
+    }
+  }
+}
+
+.results-section {
+  position: relative;
+
+  .grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+}
+
+.ad-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+
+  .ad-image {
+    position: relative;
+    padding-top: 66.67%; // 3:2 aspect ratio
+
+    img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .condition-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+      text-transform: uppercase;
+    }
+  }
+
+  .ad-content {
+    padding: 16px;
+
+    .ad-title {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    .ad-price {
+      margin: 0 0 12px;
+      font-size: 20px;
+      font-weight: 600;
+      color: #FF5722FF;
+    }
+
+    .ad-details {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: #666;
+
+      span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+}
+
+.no-results {
+  text-align: center;
+  padding: 48px 0;
+  color: #666;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+// Condition badge colors
+.condition-badge {
+  &.condition-0 { // New
+    background-color: #4caf50;
+  }
+  &.condition-1 { // Used
+    background-color: #ff9800;
+  }
+  &.condition-2 { // Damaged
+    background-color: #f44336;
+  }
+}
+
+mat-paginator {
+  background: transparent;
+  margin-top: 24px;
+}
+
+.ad-image {
+  position: relative;
+  overflow: hidden;
+  background-color: #eee;
+  border-radius: 8px 8px 0 0;
+
+  &::before {
+    content: 'No Image Available';
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000000;
+    font-size: 0.9rem;
+    text-align: center;
+    z-index: 1;
+  }
+
+  &::after {
+    content: 'photo';
+    font-family: 'Material Icons';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -80%);
+    color: #000000;
+    font-size: 2rem;
+    z-index: 1;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 2;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    // Hide placeholder when image loads successfully
+    &:not([src=""]):not([src="null"]) {
+      & + .ad-image::before,
+      & + .ad-image::after {
+        display: none;
+      }
+    }
+  }
+}

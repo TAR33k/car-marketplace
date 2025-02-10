@@ -157,7 +157,7 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
     if (!this.filterForm.valid) return;
 
     const filters = this.prepareFilters();
-    this.router.navigate(['/cars'], { queryParams: filters });
+    this.router.navigate(['/public/advertisements'], { queryParams: filters });
   }
 
   resetFilters(): void {
@@ -448,6 +448,8 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private prepareFilters(): Record<string, any> {
+    this.filterForm.get('model')?.enable();
+
     const filters = {
       ...this.filterForm.value,
       priceFrom: this.priceRange[0],
@@ -455,6 +457,8 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
       yearFrom: this.yearRange[0],
       yearTo: this.yearRange[1]
     };
+
+    this.filterForm.get('model')?.disable();
 
     // Remove empty values
     return Object.fromEntries(
