@@ -5,6 +5,8 @@ import { MyPagedList } from '../../helper/my-paged-request';
 import { MyBaseEndpointAsync } from '../../helper/my-base-endpoint-async.interface';
 import { FuelType, TransmissionType, VehicleCondition } from '../../services/car-services/car-enums';
 
+export type SortByType = 'newest' | 'price_asc' | 'price_desc' | 'most_viewed';
+
 export interface AdvertGetAllRequest {
   pageNumber?: number;
   pageSize?: number;
@@ -20,7 +22,7 @@ export interface AdvertGetAllRequest {
   yearTo?: number;
   bodyTypeId?: number;
   mileageTo?: number;
-  sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'views';
+  sortBy?: SortByType;
   statusId?: number;
 }
 
@@ -37,6 +39,7 @@ export interface AdvertGetAllResponse {
   statusName: string;
   primaryImageUrl?: string;
   images: string[];
+  imageCount: number;
 
   // Car details
   carId: number;

@@ -33,9 +33,11 @@ import {
 import {finalize} from 'rxjs/operators';
 import {TranslateService} from '@ngx-translate/core';
 import {LanguageService} from '../../../services/language.service';
+import {SvgIconService} from '../../../services/svg-icon.service';
+import {BodyTypeIcon} from '../../../services/body-type-icon.interface';
 
-interface BodyTypeWithCount extends BodyTypeGetAllResponse {
-  icon: string;
+interface BodyTypeWithIcon extends BodyTypeGetAllResponse {
+  icon: BodyTypeIcon;
   count: number;
 }
 
@@ -70,7 +72,7 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   manufacturers: ManufacturerGetAllResponse[] = [];
   makes: string[] = [];
   models: string[] = [];
-  bodyTypes: BodyTypeWithCount[] = [];
+  bodyTypes: BodyTypeWithIcon[] = [];
   featuredAds: AdvertGetFeaturedResponse[] = [];
 
   // UI State
@@ -93,17 +95,6 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   readonly fuelTypeOptions = this.getEnumOptions(FuelType);
   readonly transmissionOptions = this.getEnumOptions(TransmissionType);
 
-  private readonly bodyTypeIcons: Record<string, string> = {
-    'Sedan': 'directions_car',
-    'SUV': 'drive_eta',
-    'Hatchback': 'hatchback',
-    'Wagon': 'weekend',
-    'Coupe': 'sports_car',
-    'Convertible': 'convertible',
-    'Van': 'airport_shuttle',
-    'Pickup': 'local_shipping'
-  };
-
   private readonly destroy$ = new Subject<void>();
 
   constructor(
@@ -118,11 +109,13 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
     private readonly title: Title,
     private readonly meta: Meta,
     private languageService: LanguageService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private svgIconService: SvgIconService
   ) {
     this.initializeSEO();
     this.filterForm = this.initializeForm();
     this.currentLang = this.languageService.getCurrentLanguage();
+    this.svgIconService.registerIcons();
   }
 
   ngOnInit(): void {
@@ -147,9 +140,10 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onBodyTypeSelect(bodyTypeId: number): void {
-    const currentValue = this.filterForm.get('bodyType')?.value;
-    this.filterForm.patchValue({
-      bodyType: currentValue === bodyTypeId ? null : bodyTypeId
+    this.router.navigate(['/public/advertisements'], {
+      queryParams: {
+        bodyTypeId: bodyTypeId
+      }
     });
   }
 
@@ -197,10 +191,6 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   // Tracking Methods
   trackByAd(index: number, ad: AdvertGetFeaturedResponse): number {
     return ad.id;
-  }
-
-  trackByBodyType(index: number, item: BodyTypeWithCount): number {
-    return item.id;
   }
 
   // Host Listeners
@@ -313,11 +303,12 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
       next: (bodyTypes) => {
         this.bodyTypes = bodyTypes.map(type => ({
           ...type,
-          icon: this.bodyTypeIcons[type.name] || 'directions_car',
+          icon: this.svgIconService.getIconForBodyType(type.name),
           count: 0
         }));
         this.updateItemsPerSlide();
         this.updateBodyTypeCounts();
+        this.cdr.detectChanges();
       },
       error: (error) => this.handleError('Error loading body types', error)
     });

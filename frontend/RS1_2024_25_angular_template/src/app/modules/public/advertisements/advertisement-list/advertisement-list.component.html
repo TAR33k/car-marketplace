@@ -1,16 +1,61 @@
-<div class="container">
-  <!-- Filters Section -->
-  <div class="filters-section">
-    <form [formGroup]="filterForm">
-      <div class="search-bar">
+<div class="container" xmlns="http://www.w3.org/1999/html">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <!-- Filter Toggle Button -->
+    <button mat-button class="filter-toggle" (click)="toggleFilters()">
+      <mat-icon>{{ showFilters ? 'filter_list_off' : 'filter_list' }}</mat-icon>
+      {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
+    </button>
+
+    <!-- Search Section -->
+    <div class="search-section">
+      <form [formGroup]="filterForm">
         <mat-form-field appearance="outline">
           <mat-label>Search advertisements</mat-label>
-          <input matInput formControlName="searchTerm" placeholder="Search by title, make, model...">
-          <mat-icon matSuffix>search</mat-icon>
+          <input matInput
+                 formControlName="searchTerm"
+                 placeholder="Search by title, make, model...">
+          <button mat-icon-button
+                  matSuffix
+                  [attr.aria-label]="filterForm.get('searchTerm')?.value ? 'Clear search' : 'Search'"
+                  (click)="filterForm.get('searchTerm')?.value && clearSearch($event)">
+            <mat-icon>{{filterForm.get('searchTerm')?.value ? 'close' : 'search'}}</mat-icon>
+          </button>
         </mat-form-field>
-      </div>
+      </form>
+    </div>
 
-      <div class="filters-grid">
+    <!-- Sort and View Toggle -->
+    <div class="controls-section">
+      <form [formGroup]="filterForm">
+        <mat-form-field appearance="outline" class="sort-select">
+          <mat-label>Sort By</mat-label>
+          <mat-select formControlName="sortBy">
+            <mat-option [value]="SortOption.Newest">Newest First</mat-option>
+            <mat-option [value]="SortOption.PriceAsc">Price: Low to High</mat-option>
+            <mat-option [value]="SortOption.PriceDesc">Price: High to Low</mat-option>
+            <mat-option [value]="SortOption.MostViewed">Most Viewed</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </form>
+
+      <mat-button-toggle-group [(ngModel)]="viewMode" name="viewMode">
+        <mat-button-toggle value="grid">
+          <mat-icon>grid_view</mat-icon>
+        </mat-button-toggle>
+        <mat-button-toggle value="list">
+          <mat-icon>view_list</mat-icon>
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </div>
+
+  <div class="main-content" [class.filters-hidden]="!showFilters">
+    <!-- Filters Sidebar -->
+    <aside class="filters-container" *ngIf="showFilters">
+      <div class="filters-sidebar">
+      <h3>Filters</h3>
+      <form [formGroup]="filterForm">
         <mat-form-field appearance="outline">
           <mat-label>Min Price</mat-label>
           <input matInput type="number" formControlName="minPrice">
@@ -86,66 +131,165 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
+          <mat-label>Body Type</mat-label>
+          <mat-select formControlName="bodyType">
+            <mat-option [value]="null">All Body Types</mat-option>
+            <mat-option *ngFor="let type of bodyTypes" [value]="type.id">
+              {{type.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
           <mat-label>Max Mileage</mat-label>
           <input matInput type="number" formControlName="mileageTo">
           <span matSuffix>km</span>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Sort By</mat-label>
-          <mat-select formControlName="sortBy">
-            <mat-option value="newest">Newest First</mat-option>
-            <mat-option value="price_asc">Price: Low to High</mat-option>
-            <mat-option value="price_desc">Price: High to Low</mat-option>
-            <mat-option value="views">Most Viewed</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <button mat-stroked-button color="primary" (click)="clearFilters()">
+        <button mat-stroked-button color="primary" (click)="clearFilters()" class="clear-filters-btn">
           <mat-icon>clear</mat-icon>
           Clear Filters
         </button>
+      </form>
       </div>
-    </form>
-  </div>
+    </aside>
 
-  <!-- Results Section -->
-  <div class="results-section">
-    <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+    <!-- Results Section -->
+    <main class="results-container">
+    <div class="results-section">
+      <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
 
-    <div class="grid-view" *ngIf="dataSource.data.length > 0">
-      <div class="ad-card" *ngFor="let ad of dataSource.data" (click)="viewDetails(ad.id)">
-        <div class="ad-image">
-          <img [src]="ad.primaryImageUrl" [alt]="ad.title">
-          <div class="condition-badge" [ngClass]="'condition-' + ad.condition">
-            {{getConditionLabel(ad.condition)}}
+      <!-- Grid View -->
+      <div class="grid-view" *ngIf="viewMode === 'grid' && dataSource.data.length > 0">
+        <div class="ad-card" *ngFor="let ad of dataSource.data" (click)="viewDetails(ad.id)">
+          <div class="ad-image">
+            <img [src]="ad.primaryImageUrl" [alt]="ad.title">
+            <div class="condition-badge" [ngClass]="'condition-' + ad.condition">
+              {{getConditionLabel(ad.condition)}}
+            </div>
+          </div>
+          <div class="ad-content">
+            <h3 class="ad-title">{{ad.title}}</h3>
+            <div class="ad-specs">
+              <span><mat-icon>calendar_today</mat-icon>{{ad.year}}</span>
+              <span><mat-icon>speed</mat-icon>{{ad.mileage | number}} km</span>
+            </div>
+            <p class="ad-price">{{ad.price | currency:'EUR':'symbol':'1.0-0'}}</p>
+            <div class="ad-details">
+              <span class="ad-date">
+                <mat-icon>access_time</mat-icon>
+                {{ad.listingDate | date:'mediumDate'}}
+              </span>
+            </div>
           </div>
         </div>
-        <div class="ad-content">
-          <h3 class="ad-title">{{ad.title}}</h3>
-          <p class="ad-price">{{ad.price | currency:'EUR':'symbol':'1.0-0'}}</p>
-          <div class="ad-details">
-            <span class="ad-date">
-              <mat-icon>access_time</mat-icon>
-              {{ad.listingDate | date:'mediumDate'}}
-            </span>
+      </div>
+
+      <!-- List View -->
+      <div class="list-view" *ngIf="viewMode === 'list' && dataSource.data.length > 0">
+        <div class="ad-list-item" *ngFor="let ad of dataSource.data" (click)="viewDetails(ad.id)">
+          <!-- Image Section -->
+          <div class="ad-list-image-section">
+            <div class="ad-list-image">
+              <img [src]="ad.primaryImageUrl" [alt]="ad.title">
+              <div class="condition-badge" [ngClass]="'condition-' + ad.condition">
+                {{getConditionLabel(ad.condition)}}
+              </div>
+            </div>
+            <div class="image-count">
+              <mat-icon>photo_library</mat-icon>
+              {{ad.imageCount}} photos
+            </div>
+          </div>
+
+          <!-- Content Section -->
+          <div class="ad-list-content">
+            <div class="ad-header">
+              <h3 class="ad-title">{{ad.title}}</h3>
+              <div class="ad-status" [ngClass]="'status-' + ad.statusId">
+                {{ad.statusName}}
+              </div>
+            </div>
+
+            <div class="car-details">
+              <div class="main-specs">
+                <span class="make-model">{{ad.make}} {{ad.model}}</span>
+                <span class="year">{{ad.year}}</span>
+                <span class="body-type">{{ad.bodyType}}</span>
+              </div>
+
+              <div class="detailed-specs">
+                <div class="spec-item">
+                  <mat-icon>speed</mat-icon>
+                  <span>{{ad.mileage | number}} km</span>
+                </div>
+                <div class="spec-item">
+                  <mat-icon>local_gas_station</mat-icon>
+                  <span>{{getFuelTypeLabel(ad.fuelType)}}</span>
+                </div>
+                <div class="spec-item">
+                  <mat-icon>settings</mat-icon>
+                  <span>{{getTransmissionLabel(ad.transmission)}}</span>
+                </div>
+                <div class="spec-item">
+                  <mat-icon>visibility</mat-icon>
+                  <span>{{ad.viewCount}} views</span>
+                </div>
+              </div>
+            </div>
+
+            <p class="ad-description">{{ad.description | slice:0:300}}...</p>
+          </div>
+
+          <!-- Price and Contact Section -->
+          <div class="ad-list-price">
+            <div class="price-section">
+              <p class="price">{{ad.price | currency:'EUR':'symbol':'1.0-0'}}</p>
+              <span class="date">Listed {{ad.listingDate | date:'mediumDate'}}</span>
+              <span class="expiration" *ngIf="ad.expirationDate">
+          Expires {{ad.expirationDate | date:'mediumDate'}}
+        </span>
+            </div>
+
+            <div class="seller-info">
+              <div class="seller-details">
+                <mat-icon>person</mat-icon>
+                <span>{{ad.userName}}</span>
+              </div>
+              <div class="contact-details" *ngIf="ad.userPhone">
+                <mat-icon>phone</mat-icon>
+                <span>{{ad.userPhone}}</span>
+              </div>
+              <div class="contact-details">
+                <mat-icon>email</mat-icon>
+                <span>{{ad.userEmail}}</span>
+              </div>
+            </div>
+
+            <button mat-stroked-button color="primary" class="view-details-btn">
+              <span>View Details</span>
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="no-results" *ngIf="!isLoading && dataSource.data.length === 0">
-      <mat-icon>search_off</mat-icon>
-      <h3>No advertisements found</h3>
-      <p>Try adjusting your filters or search terms</p>
+      <!-- No Results Message -->
+      <div class="no-results" *ngIf="!isLoading && dataSource.data.length === 0">
+        <mat-icon>search_off</mat-icon>
+        <h3>No advertisements found</h3>
+        <p>Try adjusting your filters or search terms</p>
+      </div>
     </div>
-
-    <mat-paginator
-      [length]="totalItems"
-      [pageSize]="pageSize"
-      [pageSizeOptions]="[12, 24, 48]"
-      [pageIndex]="currentPage - 1"
-      showFirstLastButtons>
-    </mat-paginator>
+    </main>
   </div>
+
+  <!-- Paginator -->
+  <mat-paginator
+    [length]="totalItems"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[20, 40, 60]"
+    [pageIndex]="currentPage - 1"
+    showFirstLastButtons>
+  </mat-paginator>
 </div>

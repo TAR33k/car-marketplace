@@ -70,6 +70,8 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                     .Where(i => !i.IsPrimary)
                     .Select(i => i.ImageUrl)
                     .ToList(),
+                ImageCount = a.Images
+                    .ToList().Count(),
                 // Car details
                 CarId = a.Car.ID,
                 CarName = a.Car.Name,
@@ -171,15 +173,16 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
         }
 
         private static IQueryable<Advertisement> ApplySorting(
-            IQueryable<Advertisement> query,
-            string? sortBy)
+        IQueryable<Advertisement> query,
+        string? sortBy)
         {
             return sortBy?.ToLower() switch
             {
                 "newest" => query.OrderByDescending(a => a.ListingDate),
                 "price_asc" => query.OrderBy(a => a.Price),
                 "price_desc" => query.OrderByDescending(a => a.Price),
-                "views" => query.OrderByDescending(a => a.ViewCount),
+                "most_viewed" => query.OrderByDescending(a => a.ViewCount)
+                    .ThenByDescending(a => a.ListingDate), // Secondary sort by date
                 _ => query.OrderByDescending(a => a.ListingDate) // Default sorting
             };
         }
@@ -218,6 +221,7 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
         public string StatusName { get; set; } = string.Empty;
         public string? PrimaryImageUrl { get; set; }
         public List<string> Images { get; set; } = new();
+        public int ImageCount { get; set; }
 
         // Car details
         public int CarId { get; set; }

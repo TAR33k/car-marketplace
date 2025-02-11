@@ -66,6 +66,8 @@
                     <mat-option value="all">{{ 'landing.search.condition.all' | translate }}</mat-option>
                     <mat-option value="new">{{ 'landing.search.condition.new' | translate }}</mat-option>
                     <mat-option value="used">{{ 'landing.search.condition.used' | translate }}</mat-option>
+                    <mat-option value="damaged">{{ 'landing.search.condition.damaged' | translate }}</mat-option>
+                    <mat-option value="forParts">{{ 'landing.search.condition.forParts' | translate }}</mat-option>
                   </mat-select>
                 </mat-form-field>
               </div>
@@ -166,9 +168,10 @@
                    [style.transform]="'translateX(' + (-currentSlide * 100) + '%)'">
                 <div class="body-type-card"
                      *ngFor="let type of bodyTypes"
-                     (click)="onBodyTypeSelect(type.id)"
-                     [class.selected]="filterForm.get('bodyType')?.value === type.id">
-                  <mat-icon>{{type.icon}}</mat-icon>
+                     (click)="onBodyTypeSelect(type.id)">
+                  <div class="icon-wrapper">
+                    <mat-icon [svgIcon]="type.icon.name"></mat-icon>
+                  </div>
                   <span class="type-name">{{type.name}}</span>
                   <span class="type-count">{{type.count}} {{ 'landing.categories.vehicles' | translate }}</span>
                 </div>

@@ -41,7 +41,7 @@
         "suffix": "km"
       },
       "buttons": {
-        "reset": "Reset Filters",
+        "reset": "Clear Filters",
         "search": "Search"
       }
     },

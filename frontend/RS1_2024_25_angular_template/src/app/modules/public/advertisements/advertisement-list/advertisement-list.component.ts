@@ -15,6 +15,17 @@ import {
 import {
   CarModelGetByManufacturerEndpointService
 } from '../../../../endpoints/car-model-endpoints/car-model-get-by-manufacturer-endpoint.service';
+import {
+  BodyTypeGetAllEndpointService,
+  BodyTypeGetAllResponse
+} from '../../../../endpoints/body-type-endpoints/body-type-get-all-endpoint.service';
+
+enum SortOption {
+  Newest = 'newest',
+  PriceAsc = 'price_asc',
+  PriceDesc = 'price_desc',
+  MostViewed = 'most_viewed'
+}
 
 @Component({
   selector: 'app-advertisement-list',
@@ -22,6 +33,7 @@ import {
   styleUrl: './advertisement-list.component.scss'
 })
 export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewInit {
+  bodyTypes: BodyTypeGetAllResponse[] = [];
   manufacturers: ManufacturerGetAllResponse[] = [];
   makes: string[] = [];
   models: string[] = [];
@@ -29,8 +41,11 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
   filterForm: FormGroup;
   isLoading = false;
   totalItems = 0;
-  pageSize = 12;
+  pageSize = 20;
   currentPage = 1;
+  viewMode: 'grid' | 'list' = 'grid';
+  showFilters = true;
+  SortOption = SortOption;
 
   conditionOptions = Object.entries(VehicleCondition)
     .filter(([key]) => !isNaN(Number(key)))
@@ -48,6 +63,7 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
     private advertisementGetService: AdvertisementCarFilterEndpointService,
     private manufacturerService: ManufacturerGetAllEndpointService,
     private modelService: CarModelGetByManufacturerEndpointService,
+    private bodyTypeService: BodyTypeGetAllEndpointService,
     private router: Router,
     private route: ActivatedRoute,
     private fb: FormBuilder
@@ -56,6 +72,18 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   ngOnInit(): void {
+    // Load body types
+    this.bodyTypeService.handleAsync()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (bodyTypes) => {
+          this.bodyTypes = bodyTypes;
+        },
+        error: (error) => {
+          console.error('Error loading body types:', error);
+        }
+      });
+
     // Load manufacturers first, then handle query params
     this.manufacturerService.handleAsync()
       .pipe(takeUntil(this.destroy$))
@@ -147,7 +175,7 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
       yearTo: null,
       bodyType: null,
       mileageTo: null,
-      sortBy: 'newest'
+      sortBy: SortOption.Newest
     });
 
     // Clear models array
@@ -190,7 +218,7 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
       yearTo: params.yearTo ? Number(params.yearTo) : null,
       bodyType: params.bodyTypeId ? Number(params.bodyTypeId) : null,
       mileageTo: params.mileageTo ? Number(params.mileageTo) : null,
-      sortBy: params.sortBy || 'newest'
+      sortBy: params.sortBy || SortOption.Newest
     };
 
     this.filterForm.patchValue(formValues, { emitEvent: false });
@@ -255,7 +283,7 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
       yearTo: [null],
       bodyType: [null],
       mileageTo: [null],
-      sortBy: ['newest']
+      sortBy: [SortOption.Newest]
     });
   }
 
@@ -295,7 +323,7 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
       bodyTypeId: formValues.bodyType,
       mileageTo: formValues.mileageTo,
       sortBy: formValues.sortBy,
-      statusId: 1 // Only show active listings
+      statusId: 1
     };
 
     // Remove null/undefined values
@@ -334,6 +362,14 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
     return VehicleCondition[condition];
   }
 
+  getFuelTypeLabel(type: FuelType): string {
+    return FuelType[type];
+  }
+
+  getTransmissionLabel(type: TransmissionType): string {
+    return TransmissionType[type];
+  }
+
   readonly fuelTypeOptions = Object.entries(FuelType)
     .filter(([key]) => !isNaN(Number(key)))
     .map(([key, value]) => ({
@@ -347,4 +383,13 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
       value: Number(key),
       label: value as string
     }));
+
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  clearSearch(event: Event): void {
+    event.stopPropagation(); // Prevent event bubbling
+    this.filterForm.patchValue({ searchTerm: '' }); // Clear only the search term
+  }
 }
