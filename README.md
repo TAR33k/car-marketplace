@@ -1,20 +1,87 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# 🚗 Car Marketplace
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+A modern web application for buying and selling vehicles, built with ASP.NET Core and Angular.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+## 🎯 About
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+Car Marketplace is a comprehensive platform that connects vehicle buyers and sellers in a secure, user-friendly environment. The application streamlines the vehicle transaction process by providing advanced search capabilities, real-time chat functionality, and detailed vehicle listings.
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+## ✨ Features
+
+- 🔐 User authentication and authorization
+- 📝 Vehicle listing creation and management
+- 🔍 Advanced search with multiple criteria
+- 💬 Real-time chat between users
+- 📱 Responsive design for all devices
+
+## 🛠️ Tech Stack
+
+### Backend
+- ASP.NET Core
+- Entity Framework Core
+- C#
+- SignalR for real-time communications
+
+### Frontend
+- Angular
+- TypeScript
+- Angular Material
+- RxJS
+
+### Development Tools
+- Microsoft Visual Studio
+- WebStorm
+- Azure DevOps
+
+## 🚀 Getting Started
+
+### Prerequisites
+- .NET 8.0 SDK or later
+- Node.js
+- npm
+- SQL Server
+
+### Installation
+
+1. Clone the repository
+
+	https://github.com/TAR33k/car-marketplace.git
+
+2. Backend Setup
+
+	update-database
+
+	run
+
+	execute DataSeedGenerateEndpoint
+
+3. Frontend Setup
+
+	npm install
+
+	ng serve
+
+4. Open your browser and navigate to `http://localhost:4200`
+
+## 📝 Documentation (TODO)
+
+Detailed documentation including architecture diagrams can be found in the `/documents` directory:
+- Use Case Diagram
+- Domain Models
+- Class Diagram
+
+## 🔜 Upcoming Features (TODO)
+
+- User profiles
+- Settings management
+- Advertisement details page with:
+  - Image zoom functionality
+  - Rating and review system
+  - Social media sharing integration
+  - Advanced product visualization
+
+------------------------------------------------------------------------------------------------------------------
+
+Developed as a student project at the Faculty of Information Technologies, "Džemal Bijedić" University of Mostar.
+
+Built by Tarik Kukuljac (IB220202), Aida Ušanović (IB220012)
