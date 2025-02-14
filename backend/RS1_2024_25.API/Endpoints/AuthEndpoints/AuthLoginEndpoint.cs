@@ -22,13 +22,18 @@ namespace RS1_2024_25.API.Endpoints.Auth
         public override async Task<ActionResult<LoginResponse>> HandleAsync(LoginRequest request, CancellationToken cancellationToken = default)
         {
             var user = await db.Users
-            .FirstOrDefaultAsync(u => u.Username == request.Username, cancellationToken);
+                .FirstOrDefaultAsync(u => u.Username == request.Username, cancellationToken);
 
             // Check if the user exists and verify the password
             if (user == null || !PasswordHelper.VerifyPassword(request.Password, user.PasswordHash))
             {
                 return Unauthorized("Invalid username or password.");
             }
+
+            // Update online status and last seen
+            user.IsOnline = true;
+            user.LastSeen = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
 
             var newAuthToken = await authService.GenerateAuthToken(user, cancellationToken);
             var authInfo = authService.GetAuthInfo(newAuthToken);
@@ -38,7 +43,6 @@ namespace RS1_2024_25.API.Endpoints.Auth
                 Token = newAuthToken.Value,
                 MyAuthInfo = authInfo
             };
-
         }
 
         public class LoginRequest

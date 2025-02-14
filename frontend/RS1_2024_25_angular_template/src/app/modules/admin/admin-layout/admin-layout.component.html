@@ -1,7 +1,4 @@
 <nav>
-  <div class="admin-info">
-    Logged in as: <strong>{{ getAdminName() }}</strong>
-  </div>
   <ul>
     <li><a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a></li>
     <li><a routerLink="/admin/users" routerLinkActive="active">Users</a></li>
@@ -12,7 +9,6 @@
   </ul>
 </nav>
 
-<div>
+<div class="content-container">
   <router-outlet></router-outlet>
 </div>
-

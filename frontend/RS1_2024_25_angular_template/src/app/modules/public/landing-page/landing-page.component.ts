@@ -4,7 +4,7 @@ import {
   ViewChild,
   HostListener,
   ChangeDetectionStrategy,
-  OnDestroy, ChangeDetectorRef, OnChanges
+  OnDestroy, ChangeDetectorRef, OnChanges, ElementRef, AfterViewInit
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -47,25 +47,23 @@ interface BodyTypeWithIcon extends BodyTypeGetAllResponse {
   styleUrls: ['./landing-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
+export class LandingPageComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   // ViewChild declarations
   @ViewChild('makeSelect') makeSelect?: MatSelect;
   @ViewChild('modelSelect') modelSelect?: MatSelect;
   @ViewChild('conditionSelect') conditionSelect?: MatSelect;
   @ViewChild('fuelSelect') fuelSelect?: MatSelect;
   @ViewChild('transmissionSelect') transmissionSelect?: MatSelect;
+  @ViewChild('scrollTrigger', { static: false }) scrollTrigger?: ElementRef;
 
   currentLang: string;
 
   // Constants
-  private readonly INITIAL_DISPLAYED_COUNT = 6;
-  private readonly LOAD_MORE_INCREMENT = 6;
-  private readonly FEATURED_COUNT = 12;
   readonly currentYear = new Date().getFullYear();
 
   // Form and Filters
   filterForm: FormGroup;
-  priceRange = [0, 200000];
+  priceRange = [0, 300000];
   yearRange = [1990, this.currentYear];
 
   // Data Collections
@@ -79,7 +77,6 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   loading = false;
   isLoading = true;
   error: string | null = null;
-  displayedAds = this.INITIAL_DISPLAYED_COUNT;
   heroBackground = 'assets/images/hero-background.jpg';
 
   // Carousel State
@@ -96,6 +93,13 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   readonly transmissionOptions = this.getEnumOptions(TransmissionType);
 
   private readonly destroy$ = new Subject<void>();
+
+  private readonly PAGE_SIZE = 6;
+  private currentPage = 1;
+  private observer?: IntersectionObserver;
+
+  hasMoreAds = true;
+  isLoadingMore = false;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -133,10 +137,51 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this.observer) {
+      this.observer.disconnect();
+    }
   }
 
   ngOnChanges() {
     this.cdr.detectChanges();
+  }
+
+  ngAfterViewInit(): void {
+    // Setup observer after initial data load
+    this.setupIntersectionObserver();
+
+    // Re-setup observer when content changes
+    this.cdr.detectChanges();
+  }
+
+  private setupIntersectionObserver(): void {
+    if (!this.scrollTrigger?.nativeElement) {
+      return;
+    }
+
+    // Update visibility based on conditions
+    const shouldBeVisible = !this.isLoading && !this.error && this.hasMoreAds && this.featuredAds.length > 0;
+    this.scrollTrigger.nativeElement.classList.toggle('visible', shouldBeVisible);
+
+    // Disconnect existing observer if it exists
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !this.isLoadingMore && this.hasMoreAds) {
+          this.loadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: '200px',
+        threshold: 0
+      }
+    );
+
+    this.observer.observe(this.scrollTrigger.nativeElement);
   }
 
   onBodyTypeSelect(bodyTypeId: number): void {
@@ -260,11 +305,21 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
   public loadFeaturedAds(): void {
     this.isLoading = true;
     this.error = null;
-    this.cdr.detectChanges(); // Ensure loading state is visible
+    this.currentPage = 1;
+    this.hasMoreAds = true;
+    this.featuredAds = [];
+
+    // Update scroll trigger visibility
+    if (this.scrollTrigger?.nativeElement) {
+      this.scrollTrigger.nativeElement.classList.remove('visible');
+    }
+
+    this.cdr.detectChanges();
 
     const request = {
       featuredType: FeaturedType.Newest,
-      count: this.FEATURED_COUNT
+      count: this.PAGE_SIZE,
+      page: this.currentPage
     };
 
     this.advertisementGetFeaturedService.handleAsync(request)
@@ -272,27 +327,32 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
         takeUntil(this.destroy$),
         finalize(() => {
           this.isLoading = false;
+
+          // Update scroll trigger visibility after loading
+          if (this.scrollTrigger?.nativeElement) {
+            const shouldBeVisible = !this.error && this.hasMoreAds && this.featuredAds.length > 0;
+            this.scrollTrigger.nativeElement.classList.toggle('visible', shouldBeVisible);
+          }
+
           this.cdr.detectChanges();
+          this.setupIntersectionObserver();
         })
       )
       .subscribe({
-        next: (response: any) => { // Type as any temporarily to inspect response
-          console.log('Featured Ads Response:', response); // Log the response
+        next: (response: any) => {
+          const ads = Array.isArray(response) ? response : response?.dataItems || [];
 
-          if (Array.isArray(response)) {
-            this.featuredAds = response;
-          } else if (response?.dataItems) {
-            this.featuredAds = response.dataItems;
-          } else {
-            this.featuredAds = [];
-            this.error = 'Invalid response format';
+          if (ads.length < this.PAGE_SIZE) {
+            this.hasMoreAds = false;
           }
 
+          this.featuredAds = ads;
           this.cdr.detectChanges();
         },
         error: (error) => {
           this.handleError('Failed to load featured advertisements', error);
           this.featuredAds = [];
+          this.hasMoreAds = false;
           this.cdr.detectChanges();
         }
       });
@@ -457,16 +517,55 @@ export class LandingPageComponent implements OnInit, OnDestroy, OnChanges {
     );
   }
 
-  // Public Getters
-  get visibleAds(): AdvertGetFeaturedResponse[] {
-    return this.featuredAds.slice(0, this.displayedAds);
-  }
+  private loadMore(): void {
+    if (this.isLoadingMore || !this.hasMoreAds) {
+      return;
+    }
 
-  loadMore(): void {
-    this.displayedAds = Math.min(
-      this.displayedAds + this.LOAD_MORE_INCREMENT,
-      this.featuredAds.length
-    );
+    this.isLoadingMore = true;
+
+    const request = {
+      featuredType: FeaturedType.Newest,
+      count: this.PAGE_SIZE,
+      page: this.currentPage + 1
+    };
+
+    this.advertisementGetFeaturedService.handleAsync(request)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isLoadingMore = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (newAds: AdvertGetFeaturedResponse[]) => {
+          if (newAds.length === 0) {
+            this.hasMoreAds = false;
+            return;
+          }
+
+          // Check for duplicates before adding
+          const existingIds = new Set(this.featuredAds.map(ad => ad.id));
+          const uniqueNewAds = newAds.filter(ad => !existingIds.has(ad.id));
+
+          if (uniqueNewAds.length === 0) {
+            this.hasMoreAds = false;
+            return;
+          }
+
+          this.currentPage++;
+          this.featuredAds = [...this.featuredAds, ...uniqueNewAds];
+          this.hasMoreAds = newAds.length === this.PAGE_SIZE;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading more ads:', error);
+          this.handleError('Failed to load more advertisements', error);
+          this.hasMoreAds = false;
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   protected readonly HTMLImageElement = HTMLImageElement;

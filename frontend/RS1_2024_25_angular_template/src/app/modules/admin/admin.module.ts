@@ -30,8 +30,6 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 import { MatDialogModule } from '@angular/material/dialog';
 import { StatusTypeGetAllEndpointService } from '../../endpoints/status-type-endpoints/status-type-get-all-endpoint.service';
 import {MatDatepickerModule} from '@angular/material/datepicker';
-import {BrowserModule} from '@angular/platform-browser';
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {MatNativeDateModule} from '@angular/material/core';
 import {MatButtonToggleModule} from '@angular/material/button-toggle';
 import {MatCheckboxModule} from '@angular/material/checkbox';
@@ -73,7 +71,7 @@ import { CarEditDialogComponent } from './advertisements/advertisements-edit/car
     MatDatepickerModule,
     MatNativeDateModule,
     MatButtonToggleModule,
-    MatCheckboxModule,
+    MatCheckboxModule
   ],
   providers: [
     BodyTypeGetAllEndpointService,

@@ -1168,3 +1168,33 @@ $z-layers: (
     color: $color-black-60;
   }
 }
+
+.featured-ads-card {
+  margin-bottom: 20px;
+}
+
+.scroll-trigger {
+  width: 100%;
+  height: 20px;
+  margin: 20px 0;
+  background: transparent;
+  visibility: hidden;
+
+  &.visible {
+    visibility: visible;
+  }
+}
+
+.ads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  padding: 24px;
+}
+
+.infinite-scroll-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}

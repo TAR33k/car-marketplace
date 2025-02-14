@@ -1,1 +1,135 @@
-<p>dashboard works!</p>
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <button mat-raised-button color="primary" (click)="refreshData()">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+  </div>
+
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="analytics && !loading" class="dashboard-content">
+    <!-- Quick Stats Section -->
+    <div class="quick-stats">
+      <mat-card>
+        <mat-card-content>
+          <div class="stat-grid">
+            <div class="stat-item">
+              <div class="stat-value">{{analytics.advertStats.totalAdvertisements}}</div>
+              <div class="stat-label">Total Ads</div>
+              <div class="stat-growth">+{{advertGrowthRate | number:'1.1-1'}}%</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{analytics.userStats.totalUsers}}</div>
+              <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{analytics.userStats.activeUsers}}</div>
+              <div class="stat-label">Users Online</div>
+              <mat-icon class="status-icon">{{'fiber_manual_record'}}</mat-icon>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="charts-container">
+      <!-- First Row -->
+      <div class="charts-row-main">
+        <mat-card *ngIf="analytics.advertStats" class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Advertisement Growth</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-container">
+            <canvas id="advertisementChart"></canvas>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card *ngIf="analytics.manufacturerStats?.length" class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Top Manufacturers</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-container">
+            <canvas id="manufacturersChart"></canvas>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Secondary Charts Grid -->
+      <div class="charts-grid">
+        <mat-card *ngIf="analytics.vehicleStats?.byFuelType?.length" class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Fuel Type Distribution</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-container">
+            <canvas id="fuelTypeChart"></canvas>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card *ngIf="analytics.vehicleStats?.byTransmission?.length" class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Transmission Types</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-container">
+            <canvas id="transmissionChart"></canvas>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card *ngIf="analytics.priceRangeDistribution?.length" class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Price Distribution</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-container">
+            <canvas id="priceDistributionChart"></canvas>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Detailed Stats -->
+    <div class="detailed-stats">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Top Manufacturers</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <table mat-table [dataSource]="analytics.manufacturerStats">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let item">{{item.name}}</td>
+            </ng-container>
+            <ng-container matColumnDef="country">
+              <th mat-header-cell *matHeaderCellDef>Country</th>
+              <td mat-cell *matCellDef="let item">{{item.country}}</td>
+            </ng-container>
+            <ng-container matColumnDef="totalCars">
+              <th mat-header-cell *matHeaderCellDef>Total Cars</th>
+              <td mat-cell *matCellDef="let item">{{item.totalCars}}</td>
+            </ng-container>
+            <ng-container matColumnDef="averagePrice">
+              <th mat-header-cell *matHeaderCellDef>Avg. Price</th>
+              <td mat-cell *matCellDef="let item">{{item.averagePrice | currency:'EUR':'symbol':'1.0-0'}}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="['name', 'country', 'totalCars', 'averagePrice']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['name', 'country', 'totalCars', 'averagePrice'];"></tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card *ngIf="analytics.viewStats?.length" class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Most Viewed Advertisements</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="chart-container">
+          <canvas id="viewsChart"></canvas>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

@@ -1,16 +1,12 @@
 nav {
   display: flex;
-  flex-direction: column;
-  background-color: #f8f9fa;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.admin-info {
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 10px;
-  text-align: right; /* Align the info to the right */
+  justify-content: space-evenly;
+  align-items: center;
+  background-color: white;
+  padding: 1rem 2rem;
+  color: var(--primary-color);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
 }
 
 ul {
@@ -18,19 +14,61 @@ ul {
   padding: 0;
   margin: 0;
   display: flex;
-  gap: 15px;
-}
-
-ul li {
-  display: inline-block;
+  gap: 1.5rem;
+  align-items: center;
 }
 
 ul li a {
   text-decoration: none;
-  color: #007bff;
+  color: var(--primary-color);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+ul li a:hover {
+  background-color: rgba(var(--primary-color-rgb), 0.1);
 }
 
 ul li a.active {
-  font-weight: bold;
-  text-decoration: underline;
+  background-color: rgba(var(--primary-color-rgb), 0.15);
+  font-weight: 700;
+}
+
+/* Style for logout button */
+ul li a[routerLink="/auth/logout"] {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+ul li a[routerLink="/auth/logout"]:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Container for router-outlet */
+.content-container {
+  padding: 0;
+  margin: 0 auto;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 64px);
+}
+
+@media (max-width: 768px) {
+  nav {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  ul {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .content-container {
+    padding: 1rem;
+  }
 }

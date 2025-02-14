@@ -5,9 +5,16 @@ import { LoginTokenDto } from './dto/login-token-dto';
 
 @Injectable({ providedIn: 'root' })
 export class MyAuthService {
-  private authState = new BehaviorSubject<LoginTokenDto | null>(this.getLoginToken());
+  private authState = new BehaviorSubject<LoginTokenDto | null>(null);
 
-  constructor() {}
+  constructor() {
+    // Initialize with stored token on service creation
+    const storedToken = this.getLoginToken();
+    if (storedToken) {
+      // Emit the stored token to trigger auth state observers
+      this.setLoggedInUser(storedToken);
+    }
+  }
 
   getMyAuthInfo(): MyAuthInfo | null {
     return this.authState.getValue()?.myAuthInfo ?? null;
@@ -49,5 +56,10 @@ export class MyAuthService {
 
   getUsername(): string | null {
     return this.getMyAuthInfo()?.username ?? null;
+  }
+
+  hasValidStoredSession(): boolean {
+    const token = this.getLoginToken();
+    return token !== null && token.myAuthInfo?.isLoggedIn === true;
   }
 }

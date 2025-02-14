@@ -10,6 +10,10 @@ namespace RS1_2024_25.API.Hubs
     {
         private readonly ApplicationDbContext _db;
         private readonly MyAuthService _myAuthService;
+
+        private static readonly Dictionary<int, HashSet<string>> UserConnections = new();
+        private static readonly object LockObject = new();
+
         public ChatHub(ApplicationDbContext db, MyAuthService myAuthService)
         {
             _db = db;
@@ -26,36 +30,114 @@ namespace RS1_2024_25.API.Hubs
 
             if (!authInfo.IsLoggedIn)
                 throw new HubException("Unauthorized");
+
             var currentUserId = authInfo.UserId;
+
+            // Mark messages as delivered when retrieving chat history
+            var undeliveredMessages = await _db.ChatMessages
+                .Where(m => m.SenderId == otherUserId &&
+                            m.ReceiverId == currentUserId &&
+                            m.Status == MessageStatus.Sent)
+                .ToListAsync();
+
+            foreach (var message in undeliveredMessages)
+            {
+                message.Status = MessageStatus.Delivered;
+                await Clients.Group($"user_{message.SenderId}")
+                             .SendAsync("MessageDelivered", message.Id);
+            }
+
+            if (undeliveredMessages.Any())
+            {
+                await _db.SaveChangesAsync();
+            }
+
             return await _db.ChatMessages
-               .Where(m =>
-                   (m.SenderId == currentUserId && m.ReceiverId == otherUserId) ||
-                   (m.SenderId == otherUserId && m.ReceiverId == currentUserId))
-               .OrderBy(m => m.Timestamp)
-               .ToListAsync();
+                .Where(m =>
+                    (m.SenderId == currentUserId && m.ReceiverId == otherUserId) ||
+                    (m.SenderId == otherUserId && m.ReceiverId == currentUserId))
+                .OrderBy(m => m.Timestamp)
+                .ToListAsync();
         }
         public override async Task OnConnectedAsync()
         {
-            var tokenString = Context.GetHttpContext()?.Request.Query["my-auth-token"].ToString();
+            var tokenString = GetMyAuthToken();
             var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
 
             if (authInfo.IsLoggedIn)
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{authInfo.UserId}");
+                var user = await _db.Users.FindAsync(authInfo.UserId);
+                if (user != null)
+                {
+                    lock (LockObject)
+                    {
+                        if (!UserConnections.ContainsKey(user.ID))
+                        {
+                            UserConnections[user.ID] = new HashSet<string>();
+                        }
+                        UserConnections[user.ID].Add(Context.ConnectionId);
+
+                        // Only update status if this is the first connection for this user
+                        if (UserConnections[user.ID].Count == 1)
+                        {
+                            user.IsOnline = true;
+                            user.LastSeen = DateTime.UtcNow;
+                            _db.SaveChanges();
+
+                            // Broadcast status change to all clients
+                            Clients.All.SendAsync("UserStatusChanged", new
+                            {
+                                userId = user.ID,
+                                isOnline = true,
+                                lastSeen = user.LastSeen?.ToUniversalTime()
+                            });
+                        }
+                    }
+
+                    await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{authInfo.UserId}");
+                }
             }
+
             await base.OnConnectedAsync();
         }
+
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var tokenString = GetMyAuthToken();
-            if (!string.IsNullOrEmpty(tokenString))
+            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+
+            if (authInfo.IsLoggedIn)
             {
-                var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
-                if (authInfo.IsLoggedIn)
+                var user = await _db.Users.FindAsync(authInfo.UserId);
+                if (user != null)
                 {
-                    await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user_{authInfo.UserId}");
+                    lock (LockObject)
+                    {
+                        if (UserConnections.ContainsKey(user.ID))
+                        {
+                            UserConnections[user.ID].Remove(Context.ConnectionId);
+
+                            // Only update status if this was the last connection for this user
+                            if (UserConnections[user.ID].Count == 0)
+                            {
+                                UserConnections.Remove(user.ID);
+                                user.IsOnline = false;
+                                user.LastSeen = DateTime.UtcNow;
+                                _db.SaveChanges();
+
+                                // Broadcast status change to all clients
+                                Clients.All.SendAsync("UserStatusChanged", new
+                                {
+                                    userId = user.ID,
+                                    isOnline = false,
+                                    lastSeen = user.LastSeen?.ToUniversalTime()
+                                });
+                            }
+                        }
+                    }
                 }
             }
+
             await base.OnDisconnectedAsync(exception);
         }
         public async Task SendMessage(SendMessageRequest request)
@@ -77,9 +159,12 @@ namespace RS1_2024_25.API.Hubs
             _db.ChatMessages.Add(newMessage);
             await _db.SaveChangesAsync();
 
+            // Send to receiver first
             await Clients.Group($"user_{request.ReceiverId}")
                          .SendAsync("ReceiveMessage", newMessage);
-            await Clients.Caller.SendAsync("ReceiveMessage", newMessage);
+
+            // Then send back to sender with the actual ID
+            await Clients.Caller.SendAsync("MessageSent", newMessage);
         }
         public async Task UserTyping(int receiverId)
         {
@@ -87,8 +172,46 @@ namespace RS1_2024_25.API.Hubs
             var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
             if (!authInfo.IsLoggedIn)
                 throw new HubException("Unauthorized.");
+
             await Clients.Group($"user_{receiverId}")
-                       .SendAsync("UserTyping", authInfo.UserId);
+                        .SendAsync("UserTyping", new { userId = authInfo.UserId, isTyping = true });
+        }
+
+        public async Task StopTyping(int receiverId)
+        {
+            var tokenString = GetMyAuthToken();
+            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            if (!authInfo.IsLoggedIn)
+                throw new HubException("Unauthorized.");
+
+            await Clients.Group($"user_{receiverId}")
+                        .SendAsync("UserTyping", new { userId = authInfo.UserId, isTyping = false });
+        }
+        public async Task MarkMessagesAsDelivered(int senderId)
+        {
+            var tokenString = GetMyAuthToken();
+            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            if (!authInfo.IsLoggedIn)
+                throw new HubException("Unauthorized.");
+
+            var messages = await _db.ChatMessages
+                .Where(m => m.SenderId == senderId &&
+                           m.ReceiverId == authInfo.UserId &&
+                           m.Status == MessageStatus.Sent)
+                .ToListAsync();
+
+            foreach (var message in messages)
+            {
+                message.Status = MessageStatus.Delivered;
+                // Notify sender immediately for each message
+                await Clients.Group($"user_{message.SenderId}")
+                            .SendAsync("MessageDelivered", message.Id);
+            }
+
+            if (messages.Any())
+            {
+                await _db.SaveChangesAsync();
+            }
         }
         public async Task MarkMessageAsRead(int messageId)
         {
@@ -105,10 +228,35 @@ namespace RS1_2024_25.API.Hubs
                            .SendAsync("MessageRead", messageId);
             }
         }
+        public async Task<List<UnreadMessageCount>> GetUnreadMessageCounts()
+        {
+            var tokenString = GetMyAuthToken();
+            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            if (!authInfo.IsLoggedIn)
+                throw new HubException("Unauthorized");
+
+            var unreadCounts = await _db.ChatMessages
+                .Where(m => m.ReceiverId == authInfo.UserId && m.Status != MessageStatus.Read)
+                .GroupBy(m => m.SenderId)
+                .Select(g => new UnreadMessageCount
+                {
+                    SenderId = g.Key,
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            await Clients.Caller.SendAsync("UnreadMessageCounts", unreadCounts);
+            return unreadCounts;
+        }
         public class SendMessageRequest
         {
             public int ReceiverId { get; set; }
             public string Content { get; set; }
+        }
+        public class UnreadMessageCount
+        {
+            public int SenderId { get; set; }
+            public int Count { get; set; }
         }
     }
 }

@@ -1,26 +1,27 @@
-import {AfterViewChecked, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {filter, Subject} from 'rxjs';
-import {debounceTime, distinctUntilChanged, takeUntil, switchMap} from 'rxjs/operators';
+import {filter, Subject, take} from 'rxjs';
+import {debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import {DomSanitizer} from '@angular/platform-browser';
 import {ChatService} from '../services/chat.service';
-import {ChatMessage, ChatTheme, ChatUser, MessageStatus, SendMessageRequest} from '../models/chat.model';
-import { timer } from 'rxjs';
+import {ChatMessage, ChatUser, MessageStatus, SendMessageRequest} from '../models/chat.model';
 import { ChatUserService } from '../services/chat-user.service';
 import { MyAuthService } from '../../../../services/auth-services/my-auth.service';
+import {Router} from '@angular/router';
+import {ChatSoundService} from '../services/chat-sound.service';
 
 @Component({
     selector: 'app-chat',
     templateUrl: './chat.component.html',
-    styleUrls: ['./chat.component.scss']
+    styleUrls: ['./chat.component.scss'],
+    host: {
+      class: 'chat-page'
+    }
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
   private shouldScrollToBottom = true;
-  private lastScrollHeight = 0;
-  private readonly SCROLL_THRESHOLD = 100;
-  private readonly TYPING_TIMEOUT = 2000;
-  theme?: ChatTheme;
+  private readonly SCROLL_THRESHOLD = 1;
   maxHeight: string = '100vh';
   messages: ChatMessage[] = [];
   users: ChatUser[] = [];
@@ -32,13 +33,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   messageGroups: { date: string; messages: ChatMessage[] }[] = [];
   currentUserId: number;
   private destroy$ = new Subject<void>();
-  private typingSubject = new Subject<void>();
+  unreadCounts = new Map<number, number>();
+  soundsEnabled = true;
+
   constructor(
     private chatService: ChatService,
     private chatUserService: ChatUserService,
+    private chatSoundService: ChatSoundService,
     private authService: MyAuthService,
     private fb: FormBuilder,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private router: Router
   ) {
     this.messageForm = this.fb.group({
       content: ['', [Validators.required, Validators.maxLength(1000)]]
@@ -47,26 +52,83 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.currentUserId = authInfo?.userId ?? 0;
   }
   ngOnInit() {
-    if (this.currentUserId === 0) {
-      console.error('User not authenticated');
-      return;
+    // Check for stored session first
+    if (this.authService.hasValidStoredSession()) {
+      this.initializeChatService();
     }
-    // Wait for connection before loading initial data
-    this.chatService.getConnectionStatus()
+
+    // Subscribe to auth state changes for fresh logins
+    this.authService.authStateObservable()
       .pipe(
-        takeUntil(this.destroy$),
-        filter(isConnected => isConnected)
+        filter(token => token !== null),
+        takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        this.initializeSubscriptions();
-        this.setupTypingNotification();
-        this.loadUsers();
-
-        // Load messages for selected user if exists
-        if (this.selectedUser) {
-          this.chatService.loadMessages(this.selectedUser.id);
-        }
+        this.initializeChatService();
       });
+  }
+
+  private initializeChatService(): void {
+    if (this.currentUserId === 0) {
+      this.router.navigate(['/unauthorized']);
+      return;
+    }
+
+    // Subscribe to unread counts before connection
+    this.chatService.unreadCounts$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(counts => {
+        this.unreadCounts = counts;
+      });
+
+    // Initialize chat connection
+    this.chatService.initializeChat().then(() => {
+      // Wait for connection before loading initial data
+      this.chatService.getConnectionStatus()
+        .pipe(
+          takeUntil(this.destroy$),
+          filter(isConnected => isConnected)
+        )
+        .subscribe(() => {
+          this.initializeSubscriptions();
+          this.setupTypingNotification();
+          this.loadUsers();
+          this.chatService.refreshUnreadCounts();
+
+          // Load messages for selected user if exists
+          if (this.selectedUser) {
+            this.chatService.loadMessages(this.selectedUser.id);
+          }
+        });
+
+      // Subscribe to user updates
+      this.chatService.getUsersObservable()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(users => {
+          this.users = users;
+          this.filteredUsers = users;
+
+          if (this.selectedUser) {
+            const updatedUser = users.find(u => u.id === this.selectedUser!.id);
+            if (updatedUser) {
+              this.selectedUser = updatedUser;
+            }
+          }
+        });
+
+      // Subscribe to new messages for sound notifications
+      this.chatService.getNewMessageReceived()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(message => {
+          if (this.selectedUser?.id === message.senderId) {
+            // Message is in current chat
+            this.chatSoundService.playMessageReceived();
+          } else {
+            // Message is in another chat
+            this.chatSoundService.playNotification();
+          }
+        });
+    });
   }
 
   ngAfterViewChecked() {
@@ -116,10 +178,27 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         distinctUntilChanged()
       )
       .subscribe(value => {
-        if (this.selectedUser && value) {
-          this.chatService.sendTypingNotification(this.selectedUser.id);
+        if (this.selectedUser) {
+          this.chatService.sendTypingNotification(this.selectedUser.id, !!value);
         }
       });
+  }
+
+  getMessageStatusIcon(status: MessageStatus): string {
+    switch (status) {
+      case MessageStatus.Sending:
+        return '⋯';
+      case MessageStatus.Sent:
+        return '✓';
+      case MessageStatus.Delivered:
+        return '✓✓';
+      case MessageStatus.Read:
+        return '✓✓';
+      case MessageStatus.Failed:
+        return '❌';
+      default:
+        return '';
+    }
   }
 
   async sendMessage() {
@@ -128,19 +207,24 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       console.error('Cannot send message: Not connected to server');
       return;
     }
+
     const content = this.messageForm.get('content')?.value;
     const sanitizedContent = this.sanitizer.sanitize(1, content);
     if (!sanitizedContent?.trim()) return;
+
+    this.messageForm.reset();
+
     const messageRequest: SendMessageRequest = {
       receiverId: this.selectedUser.id,
       content: sanitizedContent
     };
+
     try {
       const success = await this.chatService.sendMessage(messageRequest);
-      if (!success) {
-        console.error('Failed to send message');
+      if (success) {
+        this.chatSoundService.playMessageSent();
       } else {
-        this.messageForm.reset();
+        console.error('Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -150,15 +234,25 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private handleReceivedMessage(message: ChatMessage) {
     if (message.receiverId === this.currentUserId) {
       if (this.selectedUser?.id === message.senderId) {
-        this.chatService.markMessageAsRead(message.id);
+        // Mark message as read immediately if chat is open
+        if (message.status !== MessageStatus.Read) {
+          this.chatService.markMessageAsRead(message.id);
+        }
+      } else if (message.status === MessageStatus.Sent) {
+        // Mark as delivered if we received it but chat isn't open
+        this.chatService.markMessageAsDelivered(message.id);
       }
     }
   }
-  async selectUser(user: any) {
+  getUnreadCount(userId: number): number {
+    const count = this.unreadCounts.get(userId);
+    return count !== undefined ? count : 0;
+  }
+
+  async selectUser(user: ChatUser) {
     this.selectedUser = user;
-    this.chatService.clearMessages(); // Clear existing messages
-    await this.chatService.loadMessages(user.id); // Load messages for this chat
-    this.groupMessagesByDate();
+    this.chatService.clearMessages();
+    await this.chatService.loadMessages(user.id);
   }
   private loadUsers() {
     this.chatUserService.getAvailableUsers()
@@ -171,15 +265,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         error: (error) => {
           console.error('Error loading users:', error);
         }
-      });
-  }
-  private loadChatHistory(userId: number) {
-    this.chatService.loadChatHistory(userId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(messages => {
-        this.messages = messages;
-        this.groupMessagesByDate();
-        this.scrollToBottom();
       });
   }
   searchUsers(event: Event) {
@@ -221,5 +306,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       date,
       messages: groups[date]
     }));
+  }
+
+  getAvatarColor(username: string): string {
+    const colors = [
+      '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#34495e',
+      '#16a085', '#27ae60', '#2980b9', '#8e44ad', '#2c3e50',
+      '#f1c40f', '#e67e22', '#e74c3c', '#95a5a6', '#f39c12',
+      '#d35400', '#c0392b', '#bdc3c7', '#7f8c8d'
+    ];
+
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+      hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  toggleSounds() {
+    this.soundsEnabled = !this.soundsEnabled;
+    this.chatSoundService.toggleSounds(this.soundsEnabled);
   }
 }

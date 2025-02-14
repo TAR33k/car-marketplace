@@ -31,7 +31,8 @@ const routes: Routes = [
   {
     path: 'chat',
     component: ChatComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { requiresAuth: true }
   },
   { path: '', redirectTo: 'public', pathMatch: 'full' },
   { path: '**', redirectTo: 'public', pathMatch: 'full' }

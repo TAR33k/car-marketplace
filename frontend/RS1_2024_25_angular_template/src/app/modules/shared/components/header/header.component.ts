@@ -1,10 +1,11 @@
-import {Component, OnInit, OnDestroy, ViewChild} from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MyAuthService } from '../../../../services/auth-services/my-auth.service';
-import { Subscription } from 'rxjs';
-import {MatMenuTrigger} from '@angular/material/menu';
+import {Subscription, Subject, takeUntil} from 'rxjs';
+import { MatMenuTrigger } from '@angular/material/menu';
+import { ChatService } from '../../chat/services/chat.service';
 
 @Component({
   selector: 'app-header',
@@ -13,16 +14,18 @@ import {MatMenuTrigger} from '@angular/material/menu';
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   @ViewChild('userMenuTrigger') userMenuTrigger!: MatMenuTrigger;
-  isDarkMode = false;
   searchControl = new FormControl('');
   isLoggedIn = false;
   isAdmin = false;
   username: string | null = null;
   private authSubscription: Subscription = new Subscription();
+  private destroy$ = new Subject<void>();
+  totalUnreadCount: number = 0;
 
   constructor(
     private router: Router,
-    private myAuthService: MyAuthService
+    private myAuthService: MyAuthService,
+    private chatService: ChatService
   ) {}
 
   ngOnInit() {
@@ -43,10 +46,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     // Initialize user state
     this.updateUserState();
+
+    this.chatService.unreadCounts$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(counts => {
+        this.totalUnreadCount = Array.from(counts.values())
+          .reduce((total, count) => total + count, 0);
+      });
   }
 
   ngOnDestroy() {
     this.authSubscription.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   handleSearch(searchTerm: string) {
@@ -55,22 +67,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
         queryParams: { search: searchTerm }
       });
     }
-  }
-
-  navigateToSell() {
-    this.router.navigate(['/client/sell']);
-  }
-
-  navigateToLogin() {
-    this.router.navigate(['/auth/login']);
-  }
-
-  navigateToRegister() {
-    this.router.navigate(['/auth/register']);
-  }
-
-  navigateToHome() {
-    this.router.navigate(['/']);
   }
 
   navigateToProfile() {

@@ -28,7 +28,12 @@
                 [routerLink]="['/chat']"
                 routerLinkActive="active"
                 class="chat-button">
-          <mat-icon>chat</mat-icon>
+          <mat-icon [matBadge]="totalUnreadCount || null"
+                    [matBadgeHidden]="totalUnreadCount === 0"
+                    matBadgeColor="warn"
+                    matBadgeSize="small">
+            chat
+          </mat-icon>
         </button>
 
         <!-- User Menu (When logged in) -->

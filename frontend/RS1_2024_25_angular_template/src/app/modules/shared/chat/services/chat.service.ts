@@ -1,11 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
-import { BehaviorSubject, Observable, catchError } from 'rxjs';
+import {BehaviorSubject, Observable, Subject} from 'rxjs';
 import { MyConfig } from '../../../../my-config';
 import {ChatMessage, ChatUser, MessageStatus, SendMessageRequest} from '../models/chat.model';
-import { ChatUserService } from './chat-user.service';
-import { throwError } from 'rxjs';
 import {MyAuthService} from '../../../../services/auth-services/my-auth.service';
 
 @Injectable({
@@ -13,19 +10,38 @@ import {MyAuthService} from '../../../../services/auth-services/my-auth.service'
 })
 export class ChatService {
   private hubConnection!: HubConnection;
-  private hubUrl = `${MyConfig.api_address}/chathub`;
+  private currentChatUserId?: number;
+  private messagesByUser = new Map<number, ChatMessage[]>();
+  private unreadMessageCounts = new BehaviorSubject<Map<number, number>>(new Map());
+  public unreadCounts$ = this.unreadMessageCounts.asObservable();
   private messagesSubject = new BehaviorSubject<ChatMessage[]>([]);
-  public messages$ = this.messagesSubject.asObservable();
+  private hubUrl = `${MyConfig.api_address}/chathub`;
   private typingUsersSubject = new BehaviorSubject<number[]>([]);
   private connectionStatusSubject = new BehaviorSubject<boolean>(false);
   private reconnectAttempts = 0;
   private readonly MAX_RECONNECT_ATTEMPTS = 5;
-  private typingTimeout: any;
+  private users: ChatUser[] = [];
+  private usersSubject = new BehaviorSubject<ChatUser[]>([]);
+  public users$ = this.usersSubject.asObservable();
+  private newMessageReceived$ = new Subject<ChatMessage>();
+  private isInitializing = false;
+
   constructor(
-    private http: HttpClient,
     private authService: MyAuthService
   ) {
-    this.initializeConnection();
+    this.loadUnreadCountsFromStorage();
+  }
+  public async initializeChat(): Promise<void> {
+    if (this.isInitializing || this.isConnected()) {
+      return;
+    }
+
+    this.isInitializing = true;
+    try {
+      await this.initializeConnection();
+    } finally {
+      this.isInitializing = false;
+    }
   }
   private async initializeConnection() {
     const loginToken = this.authService.getLoginToken();
@@ -44,6 +60,10 @@ export class ChatService {
       console.error('Error initializing connection:', err);
     }
   }
+  updateUsers(users: ChatUser[]) {
+    this.users = users;
+    this.usersSubject.next(users);
+  }
   private setupHubEvents() {
     if (!this.hubConnection) {
       console.error('Hub connection not initialized');
@@ -61,16 +81,122 @@ export class ChatService {
       console.log('Reconnected with ID:', connectionId);
       this.connectionStatusSubject.next(true);
     });
-    this.hubConnection.on('ReceiveMessage', (message: ChatMessage) => {
-      console.log('Received new message:', message);
-      const currentMessages = this.messagesSubject.value;
-      this.messagesSubject.next([...currentMessages, message]);
+    this.hubConnection.on('MessageSent', (message: ChatMessage) => {
+      const userMessages = this.messagesByUser.get(this.currentChatUserId!) || [];
+
+      // Find and replace the temporary message
+      const tempIndex = userMessages.findIndex(m =>
+        m.timestamp.getTime() === new Date(message.timestamp).getTime() &&
+        m.status === MessageStatus.Sending
+      );
+
+      if (tempIndex !== -1) {
+        userMessages[tempIndex] = {
+          ...message,
+          timestamp: new Date(message.timestamp)
+        };
+        this.messagesByUser.set(this.currentChatUserId!, [...userMessages]);
+        this.messagesSubject.next([...userMessages]);
+      }
     });
-    this.hubConnection.on('UserTyping', (userId: number) => {
+
+    this.hubConnection.on('ReceiveMessage', (message: ChatMessage) => {
+      const authInfo = this.authService.getMyAuthInfo();
+      const currentUserId = authInfo?.userId;
+      message.timestamp = new Date(message.timestamp);
+
+      const conversationUserId = message.senderId === currentUserId ?
+        message.receiverId : message.senderId;
+
+      let userMessages = this.messagesByUser.get(conversationUserId) || [];
+
+      // Add new message to conversation
+      userMessages = [...userMessages, message];
+      userMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+      this.messagesByUser.set(conversationUserId, userMessages);
+
+      // Emit the new message event separately
+      if (message.receiverId === currentUserId) {
+        this.newMessageReceived$.next(message);
+      }
+
+      if (conversationUserId === this.currentChatUserId) {
+        this.messagesSubject.next(userMessages);
+      } else if (message.receiverId === currentUserId) {
+        // Update unread count for other conversations
+        const counts = this.unreadMessageCounts.value;
+        const currentCount = counts.get(conversationUserId) || 0;
+        counts.set(conversationUserId, currentCount + 1);
+        this.unreadMessageCounts.next(new Map(counts));
+        this.saveUnreadCountsToStorage(counts);
+      }
+    });
+    this.hubConnection.on('UserTyping', (data: { userId: number, isTyping: boolean }) => {
       const typingUsers = [...this.typingUsersSubject.value];
-      if (!typingUsers.includes(userId)) {
-        typingUsers.push(userId);
-        this.typingUsersSubject.next(typingUsers);
+      if (data.isTyping) {
+        if (!typingUsers.includes(data.userId)) {
+          typingUsers.push(data.userId);
+        }
+      } else {
+        const index = typingUsers.indexOf(data.userId);
+        if (index > -1) {
+          typingUsers.splice(index, 1);
+        }
+      }
+      this.typingUsersSubject.next(typingUsers);
+    });
+
+    this.hubConnection.on('MessageDelivered', (messageId: number) => {
+      this.updateMessageStatus(messageId, MessageStatus.Delivered);
+    });
+
+    this.hubConnection.on('MessageRead', (messageId: number) => {
+      this.updateMessageStatus(messageId, MessageStatus.Read);
+    });
+
+    this.hubConnection.on('UnreadMessageCounts', (counts: Array<{senderId: number, count: number}>) => {
+      const unreadMap = new Map<number, number>();
+      counts.forEach(c => unreadMap.set(c.senderId, c.count));
+      this.unreadMessageCounts.next(unreadMap);
+      this.saveUnreadCountsToStorage(unreadMap);
+    });
+
+    this.hubConnection.on('UserStatusChanged', (data: {
+      userId: number,
+      isOnline: boolean,
+      lastSeen: string
+    }) => {
+      const userIndex = this.users.findIndex((user: ChatUser) => user.id === data.userId);
+      if (userIndex !== -1) {
+        const lastSeenDate = data.lastSeen ? new Date(data.lastSeen + 'Z') : new Date();
+
+        this.users[userIndex] = {
+          ...this.users[userIndex],
+          isOnline: data.isOnline,
+          lastSeen: lastSeenDate
+        };
+        this.usersSubject.next([...this.users]);
+      }
+    });
+  }
+  getUsersObservable(): Observable<ChatUser[]> {
+    return this.users$;
+  }
+  private updateMessageStatus(messageId: number, status: MessageStatus) {
+    this.messagesByUser.forEach((messages, userId) => {
+      const messageIndex = messages.findIndex(m => m.id === messageId);
+      if (messageIndex !== -1) {
+        const updatedMessages = [...messages];
+        updatedMessages[messageIndex] = {
+          ...updatedMessages[messageIndex],
+          status: status
+        };
+        this.messagesByUser.set(userId, updatedMessages);
+
+        if (userId === this.currentChatUserId) {
+          this.messagesSubject.next(updatedMessages);
+        }
       }
     });
   }
@@ -84,6 +210,9 @@ export class ChatService {
       console.log('SignalR Connected successfully');
       this.connectionStatusSubject.next(true);
       this.reconnectAttempts = 0;
+
+      // Request initial unread counts after connection
+      await this.hubConnection.invoke('GetUnreadMessageCounts');
 
       // Load initial messages once connected
       const authInfo = this.authService.getMyAuthInfo();
@@ -109,47 +238,51 @@ export class ChatService {
       console.error('Cannot send message: Not connected');
       return false;
     }
+
+    // Create a temporary message
+    const tempMessage: ChatMessage = {
+      id: Date.now(), // Temporary ID
+      senderId: this.authService.getMyAuthInfo()?.userId!,
+      receiverId: messageRequest.receiverId,
+      content: messageRequest.content,
+      timestamp: new Date(),
+      status: MessageStatus.Sending
+    };
+
+    // Add to local messages immediately
+    const userMessages = this.messagesByUser.get(this.currentChatUserId!) || [];
+    const updatedMessages = [...userMessages, tempMessage];
+    this.messagesByUser.set(this.currentChatUserId!, updatedMessages);
+    this.messagesSubject.next(updatedMessages);
+
     try {
       await this.hubConnection.invoke('SendMessage', messageRequest);
-      console.log('Message sent successfully');
+
+      // Update the message status to sent
+      tempMessage.status = MessageStatus.Sent;
+      this.messagesSubject.next([...updatedMessages]);
       return true;
     } catch (err) {
       console.error('Error sending message:', err);
-      if (err instanceof Error) {
-        console.error('Error details:', err.message);
-      }
+      // Update the message status to failed
+      tempMessage.status = MessageStatus.Failed;
+      this.messagesSubject.next([...updatedMessages]);
       return false;
     }
   }
 
-  async sendTypingNotification(receiverId: number): Promise<void> {
+  async sendTypingNotification(receiverId: number, isTyping: boolean): Promise<void> {
     if (!this.isConnected()) return;
 
     try {
-      await this.hubConnection.invoke('UserTyping', receiverId);
-
-      // Clear existing timeout
-      if (this.typingTimeout) {
-        clearTimeout(this.typingTimeout);
+      if (isTyping) {
+        await this.hubConnection.invoke('UserTyping', receiverId);
+      } else {
+        await this.hubConnection.invoke('StopTyping', receiverId);
       }
-
-      // Remove user from typing list after 2 seconds
-      this.typingTimeout = setTimeout(() => {
-        const typingUsers = this.typingUsersSubject.value
-          .filter(id => id !== receiverId);
-        this.typingUsersSubject.next(typingUsers);
-      }, 2000);
     } catch (err) {
       console.error('Error sending typing notification:', err);
     }
-  }
-
-  loadChatHistory(userId: number): Observable<ChatMessage[]> {
-    return this.http.get<ChatMessage[]>(`${MyConfig.api_address}/chats/history/${userId}`)
-      .pipe(catchError(error => {
-        console.error('Error loading chat history:', error);
-        return [];
-      }));
   }
 
   async markMessageAsRead(messageId: number): Promise<void> {
@@ -174,25 +307,72 @@ export class ChatService {
   getConnectionStatus(): Observable<boolean> {
     return this.connectionStatusSubject.asObservable();
   }
-  async loadMessages(otherUserId: number): Promise<void> {
-    if (!this.isConnected()) {
-      console.error('Cannot load messages: Not connected');
-      return;
-    }
-    try {
-      const messages = await this.hubConnection.invoke('GetChatHistory', otherUserId);
-      this.messagesSubject.next(messages);
+  async loadMessages(userId: number): Promise<void> {
+    this.currentChatUserId = userId;
 
+    try {
+      const messages: ChatMessage[] = await this.hubConnection.invoke('GetChatHistory', userId);
+
+      // Convert timestamps to Date objects
+      const processedMessages = messages.map(m => ({
+        ...m,
+        timestamp: new Date(m.timestamp)
+      }));
+
+      // Mark unread messages as read
+      const unreadMessages = processedMessages.filter(m =>
+        m.receiverId === this.authService.getMyAuthInfo()?.userId &&
+        m.status !== MessageStatus.Read
+      );
+
+      this.messagesByUser.set(userId, processedMessages);
+      this.messagesSubject.next(processedMessages);
+
+      // Update unread counts
+      const counts = this.unreadMessageCounts.value;
+      counts.delete(userId);
+      this.unreadMessageCounts.next(new Map(counts));
+      this.saveUnreadCountsToStorage(counts);
+
+      // Mark messages as read after updating UI
+      for (const message of unreadMessages) {
+        await this.markMessageAsRead(message.id);
+      }
     } catch (err) {
       console.error('Error loading messages:', err);
-      // Optionally fallback to HTTP endpoint
-      this.loadChatHistory(otherUserId).subscribe(
-        messages => this.messagesSubject.next(messages)
-      );
     }
   }
+
+  private saveUnreadCountsToStorage(counts: Map<number, number>) {
+    const countsObj = Object.fromEntries(counts);
+    localStorage.setItem('unreadCounts', JSON.stringify(countsObj));
+  }
+
+  private loadUnreadCountsFromStorage() {
+    const stored = localStorage.getItem('unreadCounts');
+    if (stored) {
+      const countsObj = JSON.parse(stored);
+      const counts = new Map(Object.entries(countsObj).map(([k, v]) => [Number(k), v as number]));
+      this.unreadMessageCounts.next(counts);
+    }
+  }
+
   // Clear messages when changing chats
   clearMessages() {
+    this.currentChatUserId = undefined;
     this.messagesSubject.next([]);
+  }
+
+  getNewMessageReceived(): Observable<ChatMessage> {
+    return this.newMessageReceived$.asObservable();
+  }
+
+  async refreshUnreadCounts(): Promise<void> {
+    if (!this.isConnected()) return;
+    try {
+      await this.hubConnection.invoke('GetUnreadMessageCounts');
+    } catch (err) {
+      console.error('Error refreshing unread counts:', err);
+    }
   }
 }

@@ -8,25 +8,32 @@ import {MyBaseEndpointAsync} from '../../helper/my-base-endpoint-async.interface
 @Injectable({
   providedIn: 'root'
 })
-export class AuthLogoutEndpointService implements MyBaseEndpointAsync<void, void> {
+export class AuthLogoutEndpointService implements MyBaseEndpointAsync {
   private apiUrl = `${MyConfig.api_address}/auth/logout`;
 
   constructor(private httpClient: HttpClient, private authService: MyAuthService) {
   }
 
-  handleAsync() {
+  handleAsync(): Observable<void> {
     return new Observable<void>((observer) => {
       this.httpClient.post<void>(this.apiUrl, {}).subscribe({
         next: () => {
-          // Nakon uspješnog odgovora sa servera, uklonite token na klijentu
-          this.authService.setLoggedInUser(null); // Uklanja token iz localStorage
+          // Clear authentication data
+          localStorage.clear();
+          sessionStorage.clear();
+          this.authService.setLoggedInUser(null);
+
           observer.next();
           observer.complete();
+
+          window.location.href = '/login';
         },
         error: (error) => {
           console.error('Error during logout:', error);
+          localStorage.clear();
+          sessionStorage.clear();
+          this.authService.setLoggedInUser(null);
           observer.error(error);
-          this.authService.setLoggedInUser(null); // Uklanja token iz localStorage
         }
       });
     });

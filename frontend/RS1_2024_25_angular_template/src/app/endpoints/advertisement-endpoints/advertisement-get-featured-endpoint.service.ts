@@ -14,6 +14,7 @@ export enum FeaturedType {
 export interface AdvertGetFeaturedRequest {
   featuredType: FeaturedType;
   count: number;
+  page: number;
 }
 
 export interface AdvertGetFeaturedResponse {
@@ -39,8 +40,9 @@ export class AdvertisementGetFeaturedEndpointService implements MyBaseEndpointAs
   handleAsync(request: AdvertGetFeaturedRequest) {
     return this.httpClient.get<AdvertGetFeaturedResponse[]>(`${this.apiUrl}`, {
       params: {
-        featuredType: FeaturedType[request.featuredType], // Convert enum to string
-        count: request.count.toString()
+        featuredType: FeaturedType[request.featuredType],
+        count: request.count.toString(),
+        page: request.page.toString()
       }
     });
   }

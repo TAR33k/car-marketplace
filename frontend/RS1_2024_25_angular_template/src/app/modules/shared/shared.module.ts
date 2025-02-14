@@ -22,6 +22,10 @@ import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.componen
 // Chat Components
 import { ChatComponent } from './chat/components/chat.component';
 import { ChatService } from './chat/services/chat.service';
+import {TimeAgoPipe} from './chat/services/time-ago.pipe';
+import {MatProgressBarModule} from '@angular/material/progress-bar';
+import {MatRippleModule} from '@angular/material/core';
+import {MatBadgeModule} from '@angular/material/badge';
 
 @NgModule({
     declarations: [
@@ -29,7 +33,8 @@ import { ChatService } from './chat/services/chat.service';
         HeaderComponent,
         FooterComponent,
         ConfirmDialogComponent,
-        ChatComponent
+        ChatComponent,
+        TimeAgoPipe
     ],
   imports: [
     CommonModule,
@@ -45,7 +50,10 @@ import { ChatService } from './chat/services/chat.service';
     MatDialogActions,
     MatDialogTitle,
     MatDividerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatProgressBarModule,
+    MatRippleModule,
+    MatBadgeModule
   ],
     exports: [
         UnauthorizedComponent,

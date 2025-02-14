@@ -83,7 +83,7 @@
                       <span>{{priceRange[1] | number}} €</span>
                     </div>
                   </div>
-                  <mat-slider class="custom-range-slider" [min]="0" [max]="200000" [step]="1000" [discrete]="true">
+                  <mat-slider class="custom-range-slider" [min]="0" [max]="300000" [step]="1000" [discrete]="true">
                     <input matSliderStartThumb [(ngModel)]="priceRange[0]" [ngModelOptions]="{standalone: true}">
                     <input matSliderEndThumb [(ngModel)]="priceRange[1]" [ngModelOptions]="{standalone: true}">
                   </mat-slider>
@@ -222,9 +222,9 @@
           </div>
 
           <!-- Ads Grid -->
-          <div class="ads-grid" *ngIf="!isLoading && !error && featuredAds!.length > 0">
+          <div class="ads-grid" *ngIf="!isLoading && !error && featuredAds.length > 0">
             <mat-card class="ad-card"
-                      *ngFor="let ad of visibleAds; trackBy: trackByAd"
+                      *ngFor="let ad of featuredAds; trackBy: trackByAd"
                       [attr.data-ad-id]="ad.id">
               <div class="ad-image-container">
                 <div class="ad-image">
@@ -285,18 +285,15 @@
             </button>
           </div>
 
-          <!-- Load More -->
-          <div class="load-more-container" *ngIf="!isLoading && !error && displayedAds < featuredAds!.length">
-            <button mat-stroked-button
-                    color="primary"
-                    (click)="loadMore()"
-                    class="load-more-btn">
-              <mat-icon>expand_more</mat-icon>
-              {{ 'landing.featured.loadMore' | translate }}
-            </button>
+          <!-- Loading indicator -->
+          <div class="infinite-scroll-loading" *ngIf="isLoadingMore">
+            <mat-spinner diameter="40"></mat-spinner>
           </div>
         </mat-card-content>
       </mat-card>
+
+      <!-- Scroll trigger -->
+      <div #scrollTrigger class="scroll-trigger"></div>
     </div>
   </section>
 </div>

@@ -1,11 +1,16 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using RS1_2024_25.API.Data;
+using RS1_2024_25.API.Endpoints.AdvertisementEndpoints;
+using RS1_2024_25.API.Endpoints.UserEndpoints;
 using RS1_2024_25.API.Helper;
 using RS1_2024_25.API.Helper.Auth;
 using RS1_2024_25.API.Hubs;
 using RS1_2024_25.API.Options;
 using RS1_2024_25.API.Services;
 using RS1_2024_25.API.Services.Interfaces;
+using static RS1_2024_25.API.Endpoints.AdvertisementEndpoints.AdvertisementUpdateOrInsertEndpoint;
+using static RS1_2024_25.API.Endpoints.UserEndpoints.UserUpdateOrInsertEndpoint;
 
 
 var config = new ConfigurationBuilder()
@@ -34,6 +39,11 @@ builder.Services.AddScoped<IImageValidator, ImageValidator>();
 builder.Services.AddScoped<IImageProcessor, ImageProcessor>();
 builder.Services.AddScoped<IImageStorage, LocalImageStorage>();
 builder.Services.AddSignalR();
+
+builder.Services.AddScoped<IValidator<AdvertUpdateOrInsertRequest>, AdvertisementUpdateOrInsertValidator>();
+builder.Services.AddScoped<IValidator<UserUpdateOrInsertRequest>, UserUpdateOrInsertValidator>();
+
+builder.Services.AddHostedService<UserStatusCleanupService>();
 
 var app = builder.Build();
 

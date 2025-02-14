@@ -11,12 +11,12 @@ namespace RS1_2024_25.API.Endpoints.ChatEndpoints
     public class ChatHistoryEndpoint(
        ApplicationDbContext db,
        MyAuthService myAuthService) : MyEndpointBaseAsync
-       .WithRequest<int> // Changed to int since that's what the error suggests
+       .WithRequest<int>
        .WithActionResult<List<ChatMessage>>
     {
         [HttpGet("history/{id}")]
         public override async Task<ActionResult<List<ChatMessage>>> HandleAsync(
-            int id, // Changed parameter type to int
+            int id,
             CancellationToken cancellationToken = default)
         {
             var authInfo = myAuthService.GetAuthInfo();

@@ -37,13 +37,13 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                 }
 
                 var query = db.Advertisements
-                    .Include(a => a.Car)
-                    .Include(a => a.Status)
-                    .Include(a => a.User)
-                    .Include(a => a.Images)
-                    .Where(a => a.StatusID == _cachedActiveStatusId);
+            .Include(a => a.Car)
+            .Include(a => a.Status)
+            .Include(a => a.User)
+            .Include(a => a.Images)
+            .Where(a => a.StatusID == _cachedActiveStatusId);
 
-                // Query based on FeaturedType
+                // Apply ordering
                 query = request.FeaturedType switch
                 {
                     FeaturedType.MostViewed => query.OrderByDescending(a => a.ViewCount),
@@ -53,24 +53,41 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                     _ => query.OrderByDescending(a => a.ListingDate)
                 };
 
+                // Get total count for pagination
+                var totalCount = await query.CountAsync(cancellationToken);
+
+                // Apply pagination
+                var pageSize = request.Count;
+                var skip = (request.Page - 1) * pageSize;
+
+                // Check if there are more pages
+                var hasMore = totalCount > skip + pageSize;
+
                 var advertisements = await query
-                .Take(request.Count)
-                .Select(a => new AdvertGetFeaturedResponse
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .Select(a => new AdvertGetFeaturedResponse
+                    {
+                        ID = a.ID,
+                        Title = a.Title,
+                        Price = a.Price,
+                        ListingDate = a.ListingDate,
+                        ViewCount = a.ViewCount,
+                        Condition = a.Condition,
+                        CarName = a.Car.Name ?? "Unknown",
+                        UserName = $"{a.User.FirstName} {a.User.LastName}",
+                        PrimaryImageUrl = a.Images
+                            .Where(i => i.IsPrimary)
+                            .Select(i => i.ImageUrl)
+                            .FirstOrDefault()
+                    })
+                    .ToArrayAsync(cancellationToken);
+
+                // Return empty array if no results
+                if (!advertisements.Any())
                 {
-                    ID = a.ID,
-                    Title = a.Title,
-                    Price = a.Price,
-                    ListingDate = a.ListingDate,
-                    ViewCount = a.ViewCount,
-                    Condition = a.Condition,
-                    CarName = a.Car.Name ?? "Unknown",
-                    UserName = $"{a.User.FirstName} {a.User.LastName}",
-                    PrimaryImageUrl = a.Images
-                        .Where(i => i.IsPrimary)
-                        .Select(i => i.ImageUrl)
-                        .FirstOrDefault()
-                })
-                .ToArrayAsync(cancellationToken);
+                    return Array.Empty<AdvertGetFeaturedResponse>();
+                }
 
                 return advertisements;
             }
@@ -85,7 +102,8 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
         public class AdvertGetFeaturedRequest
         {
             public FeaturedType FeaturedType { get; set; } = FeaturedType.Newest;
-            public int Count { get; set; } = 6; // Default number of featured items
+            public int Count { get; set; } = 6;
+            public int Page { get; set; } = 1;
         }
 
         public class AdvertGetFeaturedResponse

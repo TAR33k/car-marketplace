@@ -27,10 +27,3 @@ export enum MessageStatus {
     Read = 'read',
     Failed = 'failed'
 }
-
-export interface ChatTheme {
-    primaryColor?: string;
-    backgroundColor?: string;
-    textColor?: string;
-    fontSize?: string;
-}

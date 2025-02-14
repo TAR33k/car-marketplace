@@ -34,6 +34,7 @@ $theme: mat.define-light-theme((
 :root {
   --primary-color: #ff5722;
   --accent-color: #607d8b;
+  --primary-color-rgb: 255, 87, 34;
 
   // Add slider variables
   --slider-handle-size: 14px;
@@ -196,4 +197,12 @@ body {
   position: fixed;
   width: 100%;
   overflow-y: scroll;
+}
+
+body {
+  &:has(.chat-page) {
+    app-footer {
+      display: none;
+    }
+  }
 }

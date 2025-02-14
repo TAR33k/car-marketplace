@@ -2,102 +2,126 @@
   <!-- Users List -->
   <div class="users-list">
     <div class="search-box">
-      <input
-        type="text"
-        placeholder="Search users..."
-        (input)="searchUsers($event)"
-        aria-label="Search users"
-      />
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput
+               placeholder="Search users..."
+               (input)="searchUsers($event)"
+               aria-label="Search users"
+        />
+      </mat-form-field>
+      <button class="sound-button" mat-icon-button (click)="toggleSounds()">
+        <mat-icon>{{ soundsEnabled ? 'volume_up' : 'volume_off' }}</mat-icon>
+      </button>
     </div>
-    <div
-      class="user-item"
-      *ngFor="let user of filteredUsers"
-      [class.selected]="selectedUser?.id === user.id"
-      (click)="selectUser(user)"
-    >
-      <div class="user-avatar">
-        {{ user.username.charAt(0).toUpperCase() }}
-      </div>
-      <div class="user-info">
-        <span class="username">{{ user.username }}</span>
-        <span
-          class="user-status"
-          [class.online]="user.isOnline"
-          [title]="user.isOnline ? 'Online' : 'Offline'"
-        >
-          {{ user.isOnline ? 'Online' : 'Offline' }}
-        </span>
+
+    <div class="users-scroll">
+      <div
+        class="user-item"
+        *ngFor="let user of filteredUsers"
+        [class.selected]="selectedUser?.id === user.id"
+        [class.has-unread]="getUnreadCount(user.id) > 0"
+        (click)="selectUser(user)"
+        matRipple
+      >
+        <div class="user-avatar"
+             [style.background-color]="getAvatarColor(user.username)">
+          <span>{{ user.username.charAt(0).toUpperCase() }}</span>
+        </div>
+        <div class="user-info">
+          <span class="username">{{ user.username }}</span>
+          <span class="user-status" [class.online]="user.isOnline">
+            <mat-icon class="status-icon">{{ user.isOnline ? 'fiber_manual_record' : 'schedule' }}</mat-icon>
+            {{ user.isOnline ? 'Online' : 'Last seen ' + (user.lastSeen! | timeAgo) }}
+          </span>
+        </div>
+        <div class="unread-badge" *ngIf="getUnreadCount(user.id) > 0">
+          {{ getUnreadCount(user.id) }}
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Chat Area -->
-  <div class="chat-area">
-    <!-- Connection Status -->
-    <div class="connection-status" *ngIf="!isConnected">
-      Reconnecting...
-    </div>
-
-    <!-- Messages -->
-    <div
-      class="chat-messages"
-      #scrollContainer
-      (scroll)="onScroll($event)"
-    >
-      <ng-container *ngFor="let group of messageGroups">
-        <div class="date-separator">
-          <span class="date">{{ group.date | date:'mediumDate' }}</span>
+  <div class="chat-area" [class.no-user-selected]="!selectedUser">
+    <div class="chat-header" *ngIf="selectedUser">
+      <div class="user-info">
+        <div class="user-avatar"
+             [style.background-color]="getAvatarColor(selectedUser.username)">
+          <span>{{ selectedUser.username.charAt(0).toUpperCase() }}</span>
         </div>
-        <div
-          class="message"
-          *ngFor="let message of group.messages"
-          [class.own-message]="message.senderId === currentUserId"
-        >
-          <div class="message-content">
-            {{ message.content }}
-          </div>
-          <div class="message-meta">
-            <span class="timestamp">{{ message.timestamp | date:'shortTime' }}</span>
-            <span class="status" [ngClass]="message.status">
-              <ng-container [ngSwitch]="message.status">
-                <span *ngSwitchCase="'sending'" title="Sending">⋯</span>
-                <span *ngSwitchCase="'sent'" title="Sent">✓</span>
-                <span *ngSwitchCase="'delivered'" title="Delivered">✓✓</span>
-                <span *ngSwitchCase="'read'" title="Read">✓✓</span>
-                <span *ngSwitchCase="'failed'" title="Failed">!</span>
-              </ng-container>
-            </span>
-          </div>
+        <div class="user-details">
+          <span class="username">{{ selectedUser.username }}</span>
+          <span class="user-status" [class.online]="selectedUser.isOnline">
+            <mat-icon class="status-icon">{{ selectedUser.isOnline ? 'fiber_manual_record' : 'schedule' }}</mat-icon>
+            {{ selectedUser.isOnline ? 'Online' : 'Last seen ' + (selectedUser.lastSeen! | timeAgo) }}
+          </span>
         </div>
-      </ng-container>
+      </div>
     </div>
 
-    <!-- Typing Indicator -->
-    <div class="typing-indicator" *ngIf="selectedUser && isUserTyping(selectedUser.id)">
-      {{ selectedUser.username }} is typing...
+    <div class="no-chat-selected" *ngIf="!selectedUser">
+      <mat-icon>chat</mat-icon>
+      <h2>Select a conversation</h2>
+      <p>Choose a user from the list to start chatting</p>
     </div>
 
-    <!-- Message Input -->
-    <form
-      [formGroup]="messageForm"
-      (ngSubmit)="sendMessage()"
-      class="message-input"
-    >
-      <input
-        type="text"
-        formControlName="content"
-        placeholder="Type a message..."
-        [disabled]="!isConnected || !selectedUser"
-        (keydown.enter)="$event.preventDefault(); sendMessage()"
-        aria-label="Message input"
-      />
-      <button
-        type="submit"
-        [disabled]="messageForm.invalid || !isConnected || !selectedUser"
-        aria-label="Send message"
-      >
-        <i class="send-icon">➤</i>
-      </button>
-    </form>
+    <ng-container *ngIf="selectedUser">
+      <!-- Connection Status -->
+      <div class="connection-status" *ngIf="!isConnected">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <span>Reconnecting...</span>
+      </div>
+
+      <!-- Messages -->
+      <div class="chat-messages" #scrollContainer (scroll)="onScroll($event)">
+        <ng-container *ngFor="let group of messageGroups">
+          <div class="date-separator">
+            <span class="date">{{ group.date | date:'dd MMM yyyy' }}</span>
+          </div>
+          <div
+            class="message"
+            *ngFor="let message of group.messages"
+            [class.own-message]="message.senderId === currentUserId"
+          >
+            <div class="message-content">
+              {{ message.content }}
+            </div>
+            <div class="message-meta">
+              <span class="timestamp">{{ message.timestamp | date:'HH:mm' }}</span>
+              <span class="status" [ngClass]="message.status">
+                {{ getMessageStatusIcon(message.status) }}
+              </span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div class="typing-indicator" *ngIf="isUserTyping(selectedUser.id)">
+        <div class="typing-animation">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <span>{{ selectedUser.username }} is typing...</span>
+      </div>
+
+      <!-- Message Input -->
+      <form [formGroup]="messageForm" (ngSubmit)="sendMessage()" class="message-input">
+        <mat-form-field appearance="outline">
+          <input matInput
+                 formControlName="content"
+                 placeholder="Type a message..."
+                 [disabled]="!isConnected"
+                 (keydown.enter)="$event.preventDefault(); sendMessage()"
+          />
+        </mat-form-field>
+        <button mat-fab color="primary" type="submit"
+                [disabled]="messageForm.invalid || !isConnected">
+          <mat-icon>send</mat-icon>
+        </button>
+      </form>
+    </ng-container>
   </div>
 </div>

@@ -18,7 +18,6 @@ public class AuthLogoutEndpoint(ApplicationDbContext db, MyAuthService authServi
     [HttpPost("logout")]
     public override async Task<LogoutResponse> HandleAsync(CancellationToken cancellationToken = default)
     {
-        // Dohvatanje tokena iz headera
         string? authToken = Request.Headers["my-auth-token"];
 
         if (string.IsNullOrEmpty(authToken))
@@ -30,7 +29,21 @@ public class AuthLogoutEndpoint(ApplicationDbContext db, MyAuthService authServi
             };
         }
 
-        // Pokušaj revokacije tokena
+        // Get user info before revoking token
+        var authInfo = authService.GetAuthInfoFromTokenString(authToken);
+        if (authInfo.IsLoggedIn)
+        {
+            var user = await db.Users.FindAsync(authInfo.UserId);
+            if (user != null)
+            {
+                // Update online status and last seen
+                user.IsOnline = false;
+                user.LastSeen = DateTime.UtcNow;
+                await db.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        // Revoke token
         bool isRevoked = await authService.RevokeAuthToken(authToken, cancellationToken);
 
         return new LogoutResponse

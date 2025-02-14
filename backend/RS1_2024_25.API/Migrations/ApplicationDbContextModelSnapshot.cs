@@ -133,9 +133,15 @@ namespace RS1_2024_25.API.Migrations
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsOnline")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastSeen")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
