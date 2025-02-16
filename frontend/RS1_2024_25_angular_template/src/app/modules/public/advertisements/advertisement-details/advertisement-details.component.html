@@ -1,0 +1,243 @@
+<div class="advertisement-details" *ngIf="!isLoading">
+  <!-- Image Gallery -->
+  <div class="gallery-section">
+    <div class="main-image" (click)="openGallery()">
+      <img [src]="images[selectedImageIndex]?.imageUrl" [alt]="advertisement.title">
+      <div class="zoom-overlay">
+        <mat-icon>zoom_in</mat-icon>
+      </div>
+    </div>
+    <div class="thumbnail-strip">
+      <div class="thumbnail"
+           *ngFor="let image of images; let i = index"
+           [class.active]="i === selectedImageIndex"
+           (click)="selectImage(i)">
+        <img [src]="image.imageUrl" [alt]="advertisement.title">
+      </div>
+    </div>
+  </div>
+
+  <div class="owner-actions" *ngIf="isAdvertisementOwner">
+    <div class="action-buttons">
+      <button mat-raised-button
+              color="primary"
+              (click)="editAdvertisement()">
+        <mat-icon>edit</mat-icon>
+        Edit Advertisement
+      </button>
+
+      <ng-container [ngSwitch]="advertisement?.status">
+        <button *ngSwitchCase="'Active'"
+                mat-raised-button
+                color="accent"
+                (click)="updateStatus(STATUS.SOLD)">
+          <mat-icon>shopping_cart</mat-icon>
+          Mark as Sold
+        </button>
+
+        <button *ngSwitchCase="'Sold'"
+                mat-raised-button
+                color="primary"
+                (click)="updateStatus(STATUS.ACTIVE)">
+          <mat-icon>refresh</mat-icon>
+          Mark as Active
+        </button>
+
+        <button *ngSwitchCase="'Expired'"
+                mat-raised-button
+                color="primary"
+                class="reactivate"
+                (click)="updateStatus(STATUS.ACTIVE)">
+          <mat-icon>refresh</mat-icon>
+          Reactivate
+        </button>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-section">
+    <div class="main-info">
+      <div class="header-section">
+        <h1>{{advertisement.title}}</h1>
+        <div class="meta-info">
+          <span class="view-count">
+            <mat-icon>visibility</mat-icon>
+            {{advertisement.viewCount}} views
+          </span>
+          <ng-container *ngIf="isAdvertisementOwner">
+            <span class="expiration-date">
+              <mat-icon>event</mat-icon>
+              Expires: {{advertisement.expirationDate | date:'mediumDate'}}
+            </span>
+          </ng-container>
+        </div>
+      </div>
+      <div class="price">{{advertisement.price | currency:'EUR':'symbol':'1.0-0'}}</div>
+
+      <!-- Car Details -->
+      <div class="car-details">
+        <!-- Basic Info -->
+        <div class="info-group">
+          <div class="info-item">
+            <mat-icon>calendar_today</mat-icon>
+            <span>Year: {{car.year}}</span>
+          </div>
+          <div class="info-item">
+            <mat-icon>speed</mat-icon>
+            <span>Mileage: {{car.mileage | number}} km</span>
+          </div>
+          <div class="info-item">
+            <mat-icon>local_gas_station</mat-icon>
+            <span>Fuel: {{getFuelTypeName(car.fuelType)}}</span>
+          </div>
+        </div>
+
+        <!-- Additional Details -->
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>More Details</mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="additional-details">
+            <!-- Vehicle Details -->
+            <div class="details-section">
+              <h3>Vehicle Details</h3>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="label">Make & Model</span>
+                  <span class="value">{{car.model.manufacturer.name}} {{car.model.name}}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Body Type</span>
+                  <span class="value">{{car.bodyType.name}}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Transmission</span>
+                  <span class="value">{{getTransmissionTypeName(car.transmission)}}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Color</span>
+                  <span class="value">{{car.color}}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Doors</span>
+                  <span class="value">{{car.doors}}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Condition</span>
+                  <span class="value">{{getConditionString(advertisement.condition)}}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Engine & Performance -->
+            <div class="details-section">
+              <h3>Engine & Performance</h3>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="label">Engine Size</span>
+                  <span class="value">{{car.engineCapacity}} L</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Fuel Type</span>
+                  <span class="value">{{getFuelTypeName(car.fuelType)}}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Fuel Consumption</span>
+                  <span class="value">{{car.fuelConsumption}} L/100km</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Location & History -->
+            <div class="details-section">
+              <h3>Location & History</h3>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="label">Location</span>
+                  <span class="value">
+                  <img *ngIf="getCountryFlag(car.location.countryName)"
+                       [src]="getCountryFlag(car.location.countryName)"
+                       [alt]="car.location.countryName"
+                       class="country-flag">
+                                    {{car.location.cityName}}, {{car.location.countryName}}
+                </span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Service History</span>
+                  <span class="value">{{car.hasServiceHistory ? 'Available' : 'Not Available'}}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Listed Date</span>
+                  <span class="value">{{advertisement.listingDate | date:'mediumDate'}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </div>
+
+      <!-- Description -->
+      <div class="description">
+        <h2>Description</h2>
+        <p>{{advertisement.description}}</p>
+      </div>
+    </div>
+
+    <!-- Seller Info & Actions -->
+    <div class="sidebar">
+      <div class="seller-info">
+        <h3>Seller Information</h3>
+        <div class="seller-details clickable" (click)="navigateToUserProfile(seller.id)">
+          <p><mat-icon>person</mat-icon> {{seller.firstName}} {{seller.lastName}}</p>
+          <p><mat-icon>phone</mat-icon> {{seller.phoneNumber}}</p>
+          <p><mat-icon>email</mat-icon> {{seller.email}}</p>
+        </div>
+        <div class="action-buttons" *ngIf="!isAdvertisementOwner">
+          <button mat-raised-button
+                  color="primary"
+                  (click)="openChat()">
+            <mat-icon>chat</mat-icon>
+            Send Message
+          </button>
+          <button mat-raised-button
+                  [color]="isSaved ? 'accent' : 'primary'"
+                  (click)="toggleSave()">
+            <mat-icon>{{ isSaved ? 'bookmark' : 'bookmark_border' }}</mat-icon>
+            {{ isSaved ? 'Saved' : 'Save' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Social Sharing -->
+      <div class="social-sharing">
+        <h3>Share</h3>
+        <div class="share-buttons">
+          <button mat-icon-button color="primary" (click)="shareOnFacebook()">
+            <i class="bi bi-facebook"></i>
+          </button>
+          <button mat-icon-button color="primary" (click)="shareOnTwitter()">
+            <i class="bi bi-twitter-x"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Public Questions -->
+  <div class="questions-section">
+    <h2>Questions & Answers</h2>
+    <app-advertisement-questions
+      [advertisementId]="adId"
+      [isAdvertisementOwner]="isAdvertisementOwner">
+    </app-advertisement-questions>
+  </div>
+</div>
+
+<mat-progress-spinner
+  *ngIf="isLoading"
+  mode="indeterminate"
+  diameter="50"
+  class="loading-spinner">
+</mat-progress-spinner>

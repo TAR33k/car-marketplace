@@ -57,9 +57,10 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 PasswordHash = Helper.PasswordHelper.HashPassword("admin1"),
                 FirstName = "Admin",
                 LastName = "One",
-                PhoneNumber = "123123123",
+                PhoneNumber = "061123456",
                 Email = "admin@admin.com",
                 Address = "Admin address 1",
+                CreatedAt = DateTime.Now,
                 IsAdmin = true
             },
             new User
@@ -68,9 +69,10 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 PasswordHash = Helper.PasswordHelper.HashPassword("user123"),
                 FirstName = "User",
                 LastName = "One",
-                PhoneNumber = "123456789",
+                PhoneNumber = "062222456",
                 Email = "user1@user.com",
                 Address = "User address 1",
+                CreatedAt = DateTime.Now,
                 IsAdmin = false 
             },
             new User
@@ -79,9 +81,10 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 PasswordHash = Helper.PasswordHelper.HashPassword("user456"),
                 FirstName = "User",
                 LastName = "Two",
-                PhoneNumber = "987654321",
+                PhoneNumber = "0603334456",
                 Email = "user2@user.com",
                 Address = "User address 2",
+                CreatedAt = DateTime.Now,
                 IsAdmin = false
             }
         };
@@ -651,7 +654,7 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 HasServiceHistory = true,
                 BodyType = bodyTypes[4], // Coupe
                 City = cities[3], // Berlin
-                Model = carModels[22] // 911
+                Model = carModels[21] // 911
             },
             // Luxury Sedan - S-Class
             new Car
@@ -702,7 +705,7 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 HasServiceHistory = true,
                 BodyType = bodyTypes[1], // Pickup
                 City = cities[6], // Los Angeles
-                Model = carModels[20] // F-150
+                Model = carModels[19] // F-150
             }
         };
 
@@ -717,7 +720,9 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 ViewCount = 156,
                 Status = statusTypes[0], // Active
                 Car = cars[0],
-                User = users[1]
+                User = users[1],
+                Condition = VehicleCondition.Used,
+                ExpirationDate =DateTime.Now.AddDays(30)
             },
             new Advertisement
             {
@@ -728,7 +733,9 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 ViewCount = 245,
                 Status = statusTypes[0],
                 Car = cars[1],
-                User = users[2]
+                User = users[2],
+                Condition = VehicleCondition.Used,
+                ExpirationDate =DateTime.Now.AddDays(34)
             },
             new Advertisement
             {
@@ -739,7 +746,9 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 ViewCount = 178,
                 Status = statusTypes[0],
                 Car = cars[2],
-                User = users[1]
+                User = users[1],
+                Condition = VehicleCondition.New,
+                ExpirationDate =DateTime.Now.AddDays(37)
             },
             new Advertisement
             {
@@ -750,7 +759,9 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 ViewCount = 203,
                 Status = statusTypes[0],
                 Car = cars[3],
-                User = users[2]
+                User = users[2],
+                Condition = VehicleCondition.Used,
+                ExpirationDate =DateTime.Now.AddDays(20)
             },
             new Advertisement
             {
@@ -761,7 +772,9 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 ViewCount = 289,
                 Status = statusTypes[0],
                 Car = cars[4],
-                User = users[1]
+                User = users[1],
+                Condition = VehicleCondition.New,
+                ExpirationDate =DateTime.Now.AddDays(30)
             },
             new Advertisement
             {
@@ -772,7 +785,9 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 ViewCount = 423,
                 Status = statusTypes[0],
                 Car = cars[5],
-                User = users[2]
+                User = users[2],
+                Condition = VehicleCondition.New,
+                ExpirationDate =DateTime.Now.AddDays(17)
             },
             new Advertisement
             {
@@ -783,7 +798,9 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 ViewCount = 167,
                 Status = statusTypes[0],
                 Car = cars[6],
-                User = users[1]
+                User = users[1],
+                Condition = VehicleCondition.New,
+                ExpirationDate =DateTime.Now.AddDays(24)
             },
             new Advertisement
             {
@@ -794,7 +811,9 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 ViewCount = 356,
                 Status = statusTypes[0],
                 Car = cars[7],
-                User = users[2]
+                User = users[2],
+                Condition = VehicleCondition.New,
+                ExpirationDate =DateTime.Now.AddDays(22)
             },
             new Advertisement
             {
@@ -805,7 +824,9 @@ public class DataSeedGenerateEndpoint(ApplicationDbContext db)
                 ViewCount = 234,
                 Status = statusTypes[0],
                 Car = cars[8],
-                User = users[1]
+                User = users[1],
+                Condition = VehicleCondition.Used,
+                ExpirationDate =DateTime.Now.AddDays(27)
             }
         };
 

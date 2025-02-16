@@ -27,6 +27,8 @@ public class UserGetByIdEndpoint(ApplicationDbContext db) : MyEndpointBaseAsync
                                 Email = u.Email,
                                 Address = u.Address,
                                 PasswordHash = u.PasswordHash,
+                                LastSeen = u.LastSeen,
+                                CreatedAt = u.CreatedAt,
                                 IsAdmin = u.IsAdmin
                             })
                             .FirstOrDefaultAsync(x => x.ID == id, cancellationToken);
@@ -47,6 +49,8 @@ public class UserGetByIdEndpoint(ApplicationDbContext db) : MyEndpointBaseAsync
         public required string Email { get; set; }
         public required string Address { get; set; }
         public required string PasswordHash { get; set; }
+        public DateTime? LastSeen { get; set; }
+        public required DateTime CreatedAt { get; set; }
         public required bool IsAdmin { get; set; }
     }
 }

@@ -1,0 +1,101 @@
+<div class="profile-edit-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Edit Profile</mat-card-title>
+    </mat-card-header>
+
+    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+      <mat-card-content>
+        <div class="form-grid">
+          <!-- Personal Information -->
+          <div class="section">
+            <h3>Personal Information</h3>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Username</mat-label>
+              <input matInput formControlName="userName">
+              <mat-error *ngIf="profileForm.get('userName')?.errors?.['required']">
+                Username is required
+              </mat-error>
+              <mat-error *ngIf="profileForm.get('userName')?.errors?.['pattern']">
+                Username can only contain letters, numbers, underscore and dash.
+              </mat-error>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="firstName">
+                <mat-error *ngIf="profileForm.get('firstName')?.errors?.['required']">
+                  First name is required
+                </mat-error>
+                <mat-error *ngIf="profileForm.get('firstName')?.errors?.['pattern']">
+                  Only letters and spaces allowed
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="lastName">
+                <mat-error *ngIf="profileForm.get('lastName')?.errors?.['required']">
+                  Last name is required
+                </mat-error>
+                <mat-error *ngIf="profileForm.get('lastName')?.errors?.['pattern']">
+                  Only letters and spaces allowed
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" type="email">
+              <mat-error *ngIf="profileForm.get('email')?.errors?.['required']">
+                Email is required
+              </mat-error>
+              <mat-error *ngIf="profileForm.get('email')?.errors?.['email']">
+                Please enter a valid email address
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Phone Number</mat-label>
+              <input matInput formControlName="phoneNumber">
+              <mat-error *ngIf="profileForm.get('phoneNumber')?.errors?.['required']">
+                Phone number is required
+              </mat-error>
+              <mat-error *ngIf="profileForm.get('phoneNumber')?.errors?.['pattern']">
+                Please enter a valid phone number
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Address</mat-label>
+              <textarea matInput formControlName="address" rows="2"></textarea>
+              <mat-error *ngIf="profileForm.get('address')?.errors?.['required']">
+                Address is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        <button mat-button type="button" (click)="cancel()" [disabled]="loading">
+          Cancel
+        </button>
+        <button mat-button type="button"
+                color="primary"
+                (click)="openChangePasswordDialog()"
+                [disabled]="loading">
+          <mat-icon>lock</mat-icon>
+          Change Password
+        </button>
+        <button mat-raised-button color="primary"
+                type="submit"
+                [disabled]="profileForm.invalid || loading">
+          Save Changes
+        </button>
+      </mat-card-actions>
+    </form>
+  </mat-card>
+</div>

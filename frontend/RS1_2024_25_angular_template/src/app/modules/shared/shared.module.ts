@@ -55,12 +55,13 @@ import {MatBadgeModule} from '@angular/material/badge';
     MatRippleModule,
     MatBadgeModule
   ],
-    exports: [
-        UnauthorizedComponent,
-        HeaderComponent,
-        FooterComponent,
-        ChatComponent
-    ],
+  exports: [
+    UnauthorizedComponent,
+    HeaderComponent,
+    FooterComponent,
+    ChatComponent,
+    TimeAgoPipe
+  ],
     providers: [
         ChatService
     ]

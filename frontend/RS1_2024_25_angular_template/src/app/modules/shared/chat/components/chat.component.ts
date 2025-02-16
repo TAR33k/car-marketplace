@@ -1,6 +1,6 @@
 import {AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {filter, Subject, take} from 'rxjs';
+import {filter, Subject} from 'rxjs';
 import {debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import {DomSanitizer} from '@angular/platform-browser';
 import {ChatService} from '../services/chat.service';
@@ -66,6 +66,20 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       .subscribe(() => {
         this.initializeChatService();
       });
+
+    const storedUser = sessionStorage.getItem('selectedChatUser');
+    if (storedUser) {
+      const chatUser = JSON.parse(storedUser);
+      // Add the user to the users list if not already present
+      if (!this.users.some(u => u.id === chatUser.id)) {
+        this.users = [...this.users, chatUser];
+        this.filteredUsers = this.users;
+      }
+      // Select the user
+      this.selectedUser = chatUser;
+      // Clear the stored user
+      sessionStorage.removeItem('selectedChatUser');
+    }
   }
 
   private initializeChatService(): void {

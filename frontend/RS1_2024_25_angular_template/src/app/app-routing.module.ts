@@ -29,6 +29,10 @@ const routes: Routes = [
     loadChildren: () => import('./modules/admin/car/car.module').then(m => m.CarsModule)
   },
   {
+    path: 'profile',
+    loadChildren: () => import('./modules/profile/profile.module').then(m => m.ProfileModule)
+  },
+  {
     path: 'chat',
     component: ChatComponent,
     canActivate: [AuthGuard],

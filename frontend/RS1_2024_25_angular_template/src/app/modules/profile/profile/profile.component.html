@@ -1,0 +1,141 @@
+<div class="profile-container">
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+  <!-- Profile Header -->
+  <mat-card class="profile-header" *ngIf="user">
+    <div class="profile-avatar">
+      <div class="avatar-circle" [style.background-color]="getAvatarColor(user.username)">
+        {{ user.username.charAt(0).toUpperCase() }}
+      </div>
+
+      <div class="profile-info">
+        <h1>{{ user.firstName }} {{ user.lastName }}</h1>
+        <p class="username">{{ user.username }}</p>
+
+        <div class="contact-info">
+          <span class="contact-item">
+            <mat-icon>email</mat-icon>
+            {{ user.email }}
+          </span>
+          <span class="contact-item" *ngIf="user.phoneNumber">
+            <mat-icon>phone</mat-icon>
+            {{ user.phoneNumber }}
+          </span>
+          <span class="contact-item" *ngIf="user.address">
+            <mat-icon>location_on</mat-icon>
+            {{ user.address }}
+          </span>
+          <span class="contact-item">
+            <mat-icon>calendar_today</mat-icon>
+            Member since {{ user.createdAt | date:'mediumDate' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <button mat-raised-button color="primary" [routerLink]="['edit']" *ngIf="isOwnProfile">
+          <mat-icon>edit</mat-icon>
+          Edit Profile
+        </button>
+
+        <button mat-raised-button
+                color="primary"
+                *ngIf="!isOwnProfile && isLoggedIn"
+                (click)="startChat()">
+          <mat-icon>chat</mat-icon>
+          Send Message
+        </button>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Profile Content -->
+  <mat-tab-group [(selectedIndex)]="activeTab"
+                 [animationDuration]="'200ms'"
+                 (selectedTabChange)="onTabChange($event)"
+                 mat-align-tabs="start"
+                 class="profile-tabs"
+                 *ngIf="user">
+    <!-- Advertisements Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <div class="tab-label">
+          <mat-icon>inventory_2</mat-icon>
+          <span>Advertisements</span>
+        </div>
+      </ng-template>
+      <ng-template matTabContent>
+        <div class="tab-content">
+          <app-user-advertisements
+            [userId]="userId"
+            [showExpired]="isOwnProfile">
+          </app-user-advertisements>
+        </div>
+      </ng-template>
+    </mat-tab>
+
+    <!-- Saved Advertisements Tab -->
+    <mat-tab *ngIf="isOwnProfile">
+      <ng-template mat-tab-label>
+        <div class="tab-label">
+          <mat-icon>bookmark</mat-icon>
+          <span>Saved</span>
+        </div>
+      </ng-template>
+      <ng-template matTabContent>
+        <div class="tab-content">
+          <app-saved-advertisements></app-saved-advertisements>
+        </div>
+      </ng-template>
+    </mat-tab>
+
+    <!-- Statistics Tab -->
+    <mat-tab *ngIf="isOwnProfile">
+      <ng-template mat-tab-label>
+        <div class="tab-label">
+          <mat-icon>analytics</mat-icon>
+          <span>Statistics</span>
+        </div>
+      </ng-template>
+      <ng-template matTabContent>
+        <div class="tab-content">
+          <app-profile-statistics [userId]="userId"></app-profile-statistics>
+        </div>
+      </ng-template>
+    </mat-tab>
+
+    <!-- Activity Tab -->
+    <mat-tab *ngIf="isOwnProfile">
+      <ng-template mat-tab-label>
+        <div class="tab-label">
+          <mat-icon>history</mat-icon>
+          <span>Activity</span>
+        </div>
+      </ng-template>
+      <ng-template matTabContent>
+        <div class="tab-content">
+          <app-profile-activity [userId]="userId"></app-profile-activity>
+        </div>
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- No User Found -->
+  <mat-card class="error-card" *ngIf="!loading && !user">
+    <mat-card-content>
+      <div class="error-content">
+        <mat-icon>error_outline</mat-icon>
+        <h2>User Not Found</h2>
+        <p>The requested profile could not be found.</p>
+        <button mat-raised-button color="primary" routerLink="/">
+          Return to Home
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner diameter="48"></mat-spinner>
+</div>

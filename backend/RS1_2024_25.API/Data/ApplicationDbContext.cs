@@ -22,6 +22,8 @@ namespace RS1_2024_25.API.Data
         public DbSet<Manufacturer> Manufacturers { get; set; }
         public DbSet<CarModel> CarModels { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<AdvertisementQuestion> AdvertisementQuestions { get; set; }
+        public DbSet<SavedAdvertisement> SavedAdvertisements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -106,6 +108,21 @@ namespace RS1_2024_25.API.Data
             modelBuilder.Entity<Advertisement>()
                 .Property(a => a.ViewCount)
                 .HasDefaultValue(0);
+
+            modelBuilder.Entity<AdvertisementQuestion>()
+            .HasIndex(q => q.AdvertisementID);
+
+            modelBuilder.Entity<AdvertisementQuestion>()
+                .Property(q => q.CreatedAt)
+                .HasDefaultValueSql("GETDATE()");
+
+            modelBuilder.Entity<SavedAdvertisement>()
+                .HasIndex(sa => new { sa.UserID, sa.AdvertisementID })
+                .IsUnique();
+
+            modelBuilder.Entity<SavedAdvertisement>()
+                .Property(sa => sa.SavedDate)
+                .HasDefaultValueSql("GETDATE()");
         }
     }
 }

@@ -1,0 +1,24 @@
+<div class="activity-feed">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Recent Activity</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+      <mat-list *ngIf="!loading">
+        <mat-list-item *ngFor="let activity of activities">
+          <mat-icon matListItemIcon>{{ getActivityIcon(activity.type) }}</mat-icon>
+          <div matListItemTitle>{{ activity.description }}</div>
+          <div matListItemLine>{{ activity.date | date:'medium' }}</div>
+        </mat-list-item>
+
+        <div class="no-activity" *ngIf="!loading && activities.length === 0">
+          <mat-icon>history</mat-icon>
+          <p>No recent activity</p>
+        </div>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+</div>

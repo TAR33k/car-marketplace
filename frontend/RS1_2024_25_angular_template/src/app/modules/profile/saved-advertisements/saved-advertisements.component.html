@@ -1,0 +1,38 @@
+<div class="saved-advertisements-container">
+  <div class="header">
+    <h2>Saved Advertisements</h2>
+  </div>
+
+  <div class="content">
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+    <div class="no-items" *ngIf="!loading && savedAds.length === 0">
+      <mat-icon>bookmark_border</mat-icon>
+      <p>No saved advertisements yet</p>
+      <button mat-raised-button color="primary" routerLink="/public/advertisements">
+        Browse Advertisements
+      </button>
+    </div>
+
+    <div class="saved-grid" *ngIf="!loading && savedAds.length > 0">
+      <mat-card *ngFor="let ad of savedAds" class="saved-item">
+        <div class="card-content" [routerLink]="['/public/advertisements', ad.advertisementID]">
+          <img mat-card-image [src]="ad.primaryImageUrl" [alt]="ad.title">
+
+          <mat-card-content>
+            <h3>{{ ad.title }}</h3>
+            <p class="price">{{ad.price | currency:'EUR':'symbol':'1.0-0'}}</p>
+            <p class="saved-date">Saved on {{ ad.savedDate | date }}</p>
+          </mat-card-content>
+        </div>
+
+        <mat-card-actions>
+          <button mat-button color="warn" (click)="removeFromSaved(ad)">
+            <mat-icon>bookmark_remove</mat-icon>
+            Remove
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </div>
+</div>

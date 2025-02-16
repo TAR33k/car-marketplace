@@ -1,0 +1,43 @@
+<div class="statistics-container">
+  <mat-card>
+    <mat-card-content>
+      <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+      <ng-container *ngIf="!loading">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">{{ statistics.totalAdvertisements }}</div>
+            <div class="stat-label">Total Advertisements</div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-value">{{ statistics.activeAdvertisements }}</div>
+            <div class="stat-label">Active Listings</div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-value">{{ statistics.totalViews }}</div>
+            <div class="stat-label">Total Views</div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-value">{{ statistics.totalSold }}</div>
+            <div class="stat-label">Cars Sold</div>
+          </div>
+        </div>
+
+        <div class="top-performing" *ngIf="statistics.topPerformingAds.length > 0">
+          <h3>Top Performing Advertisements</h3>
+          <mat-list>
+            <mat-list-item *ngFor="let ad of statistics.topPerformingAds">
+              <div matListItemTitle>{{ ad.title }}</div>
+              <div matListItemLine>
+                Views: {{ ad.views }} | Saves: {{ ad.saveCount }} | Status: {{ ad.status }}
+              </div>
+            </mat-list-item>
+          </mat-list>
+        </div>
+      </ng-container>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,60 @@
+.profile-edit-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+
+  mat-card {
+    mat-card-header {
+      margin-bottom: 1rem;
+    }
+
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+
+      .section {
+        h3 {
+          margin: 0 0 1rem;
+          color: rgba(0, 0, 0, 0.87);
+          font-size: 1.1rem;
+          font-weight: 500;
+        }
+
+        .form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+
+        .full-width {
+          width: 100%;
+        }
+
+        mat-slide-toggle {
+          display: block;
+          margin: 1rem 0;
+        }
+      }
+    }
+
+    mat-card-actions {
+      padding: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 600px) {
+  .profile-edit-container {
+    .form-grid {
+      .section {
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+  }
+}

@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
 {
-    [MyAuthorization(isAdmin: true)]
     [Route("advertisements")]
     public class AdvertisementDeleteEndpoint(
         ApplicationDbContext db,

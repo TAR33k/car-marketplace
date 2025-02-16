@@ -13,6 +13,8 @@ export interface UserGetByIdResponse {
   address: string;
   phoneNumber: string;
   isAdmin: boolean;
+  lastSeen?: Date,
+  createdAt?: Date,
   passwordHash: string;
 }
 

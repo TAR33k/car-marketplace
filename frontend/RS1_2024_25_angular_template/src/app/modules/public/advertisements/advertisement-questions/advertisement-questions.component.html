@@ -1,0 +1,134 @@
+<div class="questions-container">
+  <!-- Login Required Message -->
+  <div class="login-required" *ngIf="!isLoggedIn">
+    <mat-card>
+      <mat-card-content>
+        <mat-icon>lock</mat-icon>
+        <p>Please log in to ask questions about this advertisement</p>
+        <button mat-raised-button color="primary" (click)="navigateToLogin()">
+          Login to Ask Questions
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Question Form -->
+  <form [formGroup]="questionForm"
+        (ngSubmit)="submitQuestion()"
+        class="question-form"
+        *ngIf="isLoggedIn && !isAdvertisementOwner">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Ask a question</mat-label>
+      <textarea matInput
+                formControlName="content"
+                placeholder="What would you like to know about this vehicle?"
+                rows="3">
+      </textarea>
+      <mat-hint align="end">{{questionForm.get('content')?.getRawValue().length || 0}}/1000</mat-hint>
+      <mat-error *ngIf="questionForm.get('content')?.hasError('required')">
+        Question is required
+      </mat-error>
+      <mat-error *ngIf="questionForm.get('content')?.hasError('maxlength')">
+        Question must be less than 1000 characters
+      </mat-error>
+    </mat-form-field>
+
+    <div class="form-actions">
+      <button mat-raised-button
+              color="primary"
+              type="submit"
+              [disabled]="questionForm.invalid || isLoading">
+        <mat-icon>send</mat-icon>
+        Ask Question
+      </button>
+    </div>
+  </form>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+  </div>
+
+  <!-- Questions List -->
+  <div class="questions-list" *ngIf="!isLoading">
+    <div class="no-questions" *ngIf="questions.length === 0 && !isAdvertisementOwner">
+      <mat-icon>question_answer</mat-icon>
+      <p>No questions yet. Be the first to ask!</p>
+    </div>
+    <div class="no-questions" *ngIf="questions.length === 0 && isAdvertisementOwner">
+      <mat-icon>question_answer</mat-icon>
+      <p>No questions yet.</p>
+    </div>
+
+    <mat-accordion>
+      <mat-expansion-panel *ngFor="let question of questions" class="question-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <div class="question-header">
+              <div class="user-info clickable" (click)="$event.stopPropagation(); navigateToUserProfile(question.user.id)">
+                <div class="user-avatar" [style.background-color]="getAvatarColor(question.user.userName)">
+                  {{question.user.firstName.charAt(0).toUpperCase()}}
+                </div>
+                <span class="user-name">{{question.user.firstName}} {{question.user.lastName}}</span>
+              </div>
+              <span class="question-date">{{question.createdAt | date:'medium'}}</span>
+            </div>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <!-- Question Content -->
+        <div class="question-content">
+          <p>{{question.content}}</p>
+        </div>
+
+        <!-- Answer Section -->
+        <div class="answer-section" *ngIf="question.answer || canAnswer(question)">
+          <mat-divider></mat-divider>
+
+          <!-- Existing Answer -->
+          <div class="existing-answer" *ngIf="question.answer">
+            <div class="answer-header">
+              <mat-icon>reply</mat-icon>
+              <span *ngIf="!isAdvertisementOwner">Answer from seller</span>
+              <span *ngIf="isAdvertisementOwner">Your answer</span>
+              <span class="answer-date">{{question.answeredAt | date:'medium'}}</span>
+            </div>
+            <p class="answer-content">{{question.answer}}</p>
+          </div>
+
+          <!-- Answer Form -->
+          <form [formGroup]="answerForm"
+                (ngSubmit)="submitAnswer(question.id)"
+                *ngIf="canAnswer(question)"
+                class="answer-form">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Your Answer</mat-label>
+              <textarea matInput
+                        formControlName="answer"
+                        placeholder="Type your answer here..."
+                        rows="3">
+              </textarea>
+              <mat-hint align="end">{{answerForm.get('answer')?.getRawValue().length || 0}}/1000</mat-hint>
+              <mat-error *ngIf="answerForm.get('answer')?.hasError('required')">
+                Answer is required
+              </mat-error>
+              <mat-error *ngIf="answerForm.get('answer')?.hasError('maxlength')">
+                Answer must be less than 1000 characters
+              </mat-error>
+            </mat-form-field>
+
+            <div class="form-actions">
+              <button mat-raised-button
+                      color="primary"
+                      type="submit"
+                      [disabled]="answerForm.invalid || isLoading">
+                <mat-icon>reply</mat-icon>
+                Submit Answer
+              </button>
+            </div>
+          </form>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </div>
+</div>

@@ -70,7 +70,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   navigateToProfile() {
-    this.router.navigate(['/client/profile']);
+    this.router.navigate(['/profile', this.myAuthService.getMyAuthInfo()!.userId]);
   }
 
   navigateToSettings() {

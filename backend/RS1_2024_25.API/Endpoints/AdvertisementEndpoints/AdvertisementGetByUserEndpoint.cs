@@ -9,28 +9,44 @@ using RS1_2024_25.API.Data.Enums;
 
 namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
 {
-    [MyAuthorization(isAdmin: true)]
     [Route("advertisements")]
-    public class AdvertisementGetByUserEndpoint(
-        ApplicationDbContext db,
-        MyAuthService myAuthService) : MyEndpointBaseAsync
-        .WithRequest<AdvertGetByUserRequest>
-        .WithResult<MyPagedList<AdvertGetByUserResponse>>
+    public class AdvertisementGetByUserEndpoint : MyEndpointBaseAsync
+    .WithRequest<AdvertisementGetByUserEndpoint.AdvertGetByUserRequest>
+    .WithResult<MyPagedList<AdvertisementGetByUserEndpoint.AdvertGetByUserResponse>>
     {
-        [HttpGet("my")]
+        private readonly ApplicationDbContext _db;
+        private readonly MyAuthService _myAuthService;
+
+        public AdvertisementGetByUserEndpoint(ApplicationDbContext db, MyAuthService myAuthService)
+        {
+            _db = db;
+            _myAuthService = myAuthService;
+        }
+
+        [HttpGet("user/{userID}")]
         public override async Task<MyPagedList<AdvertGetByUserResponse>> HandleAsync(
             [FromQuery] AdvertGetByUserRequest request,
             CancellationToken cancellationToken = default)
         {
-            var authInfo = myAuthService.GetAuthInfo();
+            var authInfo = _myAuthService.GetAuthInfo();
+            var isOwnProfile = authInfo?.UserId == request.UserID;
 
-            var query = db.Advertisements
+            var query = _db.Advertisements
                 .Include(a => a.Car)
                 .Include(a => a.Status)
                 .Include(a => a.Images)
-                .Where(a => a.UserID == authInfo.UserId);
+                .Where(a => a.UserID == request.UserID);
 
-            if (request.StatusID.HasValue)
+            // If not viewing own profile, only show active and sold listings
+            if (!isOwnProfile)
+            {
+                if (request.StatusID == 1)
+                    query = query.Where(a => a.StatusID == 1);
+                if (request.StatusID == 2)
+                    query = query.Where(a => a.StatusID == 2);
+            }
+            // If viewing own profile and status filter is provided
+            else if (request.StatusID.HasValue)
             {
                 query = query.Where(a => a.StatusID == request.StatusID.Value);
             }
@@ -58,20 +74,22 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
 
         public class AdvertGetByUserRequest : MyPagedRequest
         {
+            [FromRoute]
+            public int UserID { get; set; }
             public int? StatusID { get; set; }
         }
 
         public class AdvertGetByUserResponse
         {
             public int ID { get; set; }
-            public string Title { get; set; }
+            public required string Title { get; set; }
             public VehicleCondition Condition { get; set; }
             public decimal Price { get; set; }
             public DateTime ListingDate { get; set; }
             public DateTime? ExpirationDate { get; set; }
             public int ViewCount { get; set; }
-            public string Status { get; set; }
-            public string CarName { get; set; }
+            public required string Status { get; set; }
+            public required string CarName { get; set; }
             public string? PrimaryImageUrl { get; set; }
         }
     }

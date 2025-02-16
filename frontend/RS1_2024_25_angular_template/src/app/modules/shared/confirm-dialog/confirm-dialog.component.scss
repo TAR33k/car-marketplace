@@ -119,10 +119,3 @@ mat-dialog-actions {
     }
   }
 }
-
-// High contrast mode support
-@media (forced-colors: active) {
-  .warning-icon {
-    forced-color-adjust: none;
-  }
-}

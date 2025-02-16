@@ -85,9 +85,9 @@
           <mat-form-field appearance="outline">
             <mat-label>Phone Number *</mat-label>
             <input matInput [(ngModel)]="user.phoneNumber" name="phoneNumber"
-                   #phone="ngModel" required pattern="^\+?[\d\s-]{10,}$">
+                   #phone="ngModel" required pattern="^(?:(?:\+|00)?387|0)?6[0-3][0-9]{6,7}$">
             <mat-icon matSuffix>phone</mat-icon>
-            <mat-hint>Format: +1234567890 or 123-456-7890</mat-hint>
+            <mat-hint>Format: +38761123456 ili 061123456</mat-hint>
             <mat-error *ngIf="phone.errors?.['required']">
               Phone number is required
             </mat-error>

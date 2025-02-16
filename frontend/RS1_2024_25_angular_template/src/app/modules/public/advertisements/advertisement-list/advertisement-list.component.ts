@@ -355,7 +355,7 @@ export class AdvertisementListComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   viewDetails(id: number): void {
-    this.router.navigate(['/advertisements', id]);
+    this.router.navigate(['/public/advertisements', id]);
   }
 
   getConditionLabel(condition: VehicleCondition): string {

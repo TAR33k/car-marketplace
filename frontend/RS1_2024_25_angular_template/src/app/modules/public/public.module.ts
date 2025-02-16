@@ -26,6 +26,11 @@ import {MatPaginatorModule} from '@angular/material/paginator';
 import {MatSortModule} from '@angular/material/sort';
 import {MatTableModule} from '@angular/material/table';
 import {HttpClientModule} from '@angular/common/http';
+import { AdvertisementDetailsComponent } from './advertisements/advertisement-details/advertisement-details.component';
+import {MatExpansionModule} from '@angular/material/expansion';
+import { AdvertisementQuestionsComponent } from './advertisements/advertisement-questions/advertisement-questions.component';
+import {MatDividerModule} from '@angular/material/divider';
+import {ImageGalleryDialogComponent} from './advertisements/advertisement-details/image-gallery-dialog.component';
 
 const routes: Routes = [
   {
@@ -35,13 +40,20 @@ const routes: Routes = [
   {
     path: 'advertisements',
     component: AdvertisementListComponent
+  },
+  {
+    path: 'advertisements/:id',
+    component: AdvertisementDetailsComponent
   }
 ];
 
 @NgModule({
   declarations: [
     LandingPageComponent,
-    AdvertisementListComponent
+    AdvertisementListComponent,
+    AdvertisementDetailsComponent,
+    AdvertisementQuestionsComponent,
+    ImageGalleryDialogComponent
   ],
   imports: [
     CommonModule,
@@ -66,7 +78,9 @@ const routes: Routes = [
     MatPaginatorModule,
     MatSortModule,
     MatTableModule,
-    HttpClientModule
+    HttpClientModule,
+    MatExpansionModule,
+    MatDividerModule
   ]
 })
 export class PublicModule { }

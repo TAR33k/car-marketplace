@@ -61,6 +61,15 @@ export class ChatService {
     }
   }
   updateUsers(users: ChatUser[]) {
+    // Preserve any stored user that might not be in the users list
+    const storedUser = sessionStorage.getItem('selectedChatUser');
+    if (storedUser) {
+      const chatUser = JSON.parse(storedUser);
+      if (!users.some(u => u.id === chatUser.id)) {
+        users = [...users, chatUser];
+      }
+    }
+
     this.users = users;
     this.usersSubject.next(users);
   }

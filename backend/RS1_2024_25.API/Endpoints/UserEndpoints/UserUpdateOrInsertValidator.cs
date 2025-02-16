@@ -38,7 +38,7 @@ namespace RS1_2024_25.API.Endpoints.UserEndpoints
             RuleFor(x => x.PhoneNumber)
                 .NotEmpty().WithMessage("Phone number is required.")
                 .MaximumLength(20).WithMessage("Phone number cannot exceed 20 characters.")
-                .Matches(@"^\+?[\d\s-]{10,}$").WithMessage("Please enter a valid phone number.");
+                .Matches(@"^(?:(?:\+|00)?387|0)?6[0-3][0-9]{6,7}$").WithMessage("Please enter a valid phone number.");
 
             // Address validation
             RuleFor(x => x.Address)

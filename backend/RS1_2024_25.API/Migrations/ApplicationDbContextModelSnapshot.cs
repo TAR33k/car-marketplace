@@ -81,6 +81,46 @@ namespace RS1_2024_25.API.Migrations
                     b.ToTable("Advertisements");
                 });
 
+            modelBuilder.Entity("RS1_2024_25.API.Data.Models.AdvertisementQuestion", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<int>("AdvertisementID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Answer")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("AnsweredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("AdvertisementID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("AdvertisementQuestions");
+                });
+
             modelBuilder.Entity("RS1_2024_25.API.Data.Models.Auth.MyAuthenticationToken", b =>
                 {
                     b.Property<int>("ID")
@@ -121,6 +161,9 @@ namespace RS1_2024_25.API.Migrations
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -317,6 +360,35 @@ namespace RS1_2024_25.API.Migrations
                     b.ToTable("Countries");
                 });
 
+            modelBuilder.Entity("RS1_2024_25.API.Data.Models.SavedAdvertisement", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<int>("AdvertisementID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SavedDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("AdvertisementID");
+
+                    b.HasIndex("UserID", "AdvertisementID")
+                        .IsUnique();
+
+                    b.ToTable("SavedAdvertisements");
+                });
+
             modelBuilder.Entity("RS1_2024_25.API.Data.Models.StatusType", b =>
                 {
                     b.Property<int>("ID")
@@ -464,6 +536,25 @@ namespace RS1_2024_25.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("RS1_2024_25.API.Data.Models.AdvertisementQuestion", b =>
+                {
+                    b.HasOne("RS1_2024_25.API.Data.Models.Ad.Advertisement.Advertisement", "Advertisement")
+                        .WithMany()
+                        .HasForeignKey("AdvertisementID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("RS1_2024_25.API.Data.Models.Auth.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Advertisement");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("RS1_2024_25.API.Data.Models.Auth.MyAuthenticationToken", b =>
                 {
                     b.HasOne("RS1_2024_25.API.Data.Models.Auth.User", "User")
@@ -522,6 +613,25 @@ namespace RS1_2024_25.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Country");
+                });
+
+            modelBuilder.Entity("RS1_2024_25.API.Data.Models.SavedAdvertisement", b =>
+                {
+                    b.HasOne("RS1_2024_25.API.Data.Models.Ad.Advertisement.Advertisement", "Advertisement")
+                        .WithMany()
+                        .HasForeignKey("AdvertisementID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("RS1_2024_25.API.Data.Models.Auth.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Advertisement");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("RS1_2024_25.API.Data.Models.Vehicle.CarModel", b =>

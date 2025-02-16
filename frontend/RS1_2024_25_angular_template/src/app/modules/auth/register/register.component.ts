@@ -46,7 +46,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         name: ['', Validators.required],
         surname: ['', Validators.required],
         address: ['', Validators.required],
-        phoneNumber: ['', [Validators.required, Validators.pattern('^[+]{1}387[6]{1}[0-9]{1}[0-9]{3}[0-9]{3,4}$')]],
+        phoneNumber: ['', [Validators.required, Validators.pattern('^(?:(?:\\+|00)?387|0)?6[0-3][0-9]{6,7}$')]],
         username: ['', [Validators.required]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', [Validators.required]],
