@@ -26,6 +26,7 @@ import {TimeAgoPipe} from './chat/services/time-ago.pipe';
 import {MatProgressBarModule} from '@angular/material/progress-bar';
 import {MatRippleModule} from '@angular/material/core';
 import {MatBadgeModule} from '@angular/material/badge';
+import {SafeUrlPipe} from './safe-url.pipe';
 
 @NgModule({
     declarations: [
@@ -34,7 +35,8 @@ import {MatBadgeModule} from '@angular/material/badge';
         FooterComponent,
         ConfirmDialogComponent,
         ChatComponent,
-        TimeAgoPipe
+        TimeAgoPipe,
+        SafeUrlPipe
     ],
   imports: [
     CommonModule,
@@ -60,7 +62,8 @@ import {MatBadgeModule} from '@angular/material/badge';
     HeaderComponent,
     FooterComponent,
     ChatComponent,
-    TimeAgoPipe
+    TimeAgoPipe,
+    SafeUrlPipe
   ],
     providers: [
         ChatService

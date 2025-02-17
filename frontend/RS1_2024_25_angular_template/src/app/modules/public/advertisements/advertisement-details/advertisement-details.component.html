@@ -1,9 +1,12 @@
 <div class="advertisement-details" *ngIf="!isLoading">
   <!-- Image Gallery -->
   <div class="gallery-section">
-    <div class="main-image" (click)="openGallery()">
-      <img [src]="images[selectedImageIndex]?.imageUrl" [alt]="advertisement.title">
-      <div class="zoom-overlay">
+    <div class="main-image"
+         [class.has-images]="images && images.length > 0"
+         (click)="openGallery()">
+      <img [src]="images && images.length > 0 ? images[selectedImageIndex]?.imageUrl : ''"
+           [alt]="advertisement.title">
+      <div class="zoom-overlay" *ngIf="images && images.length > 0">
         <mat-icon>zoom_in</mat-icon>
       </div>
     </div>
@@ -191,8 +194,8 @@
         <h3>Seller Information</h3>
         <div class="seller-details clickable" (click)="navigateToUserProfile(seller.id)">
           <p><mat-icon>person</mat-icon> {{seller.firstName}} {{seller.lastName}}</p>
-          <p><mat-icon>phone</mat-icon> {{seller.phoneNumber}}</p>
-          <p><mat-icon>email</mat-icon> {{seller.email}}</p>
+          <p *ngIf="seller.phoneNumber !== '[Hidden]'"><mat-icon>phone</mat-icon> {{seller.phoneNumber}}</p>
+          <p *ngIf="seller.email !== '[Hidden]'"><mat-icon>email</mat-icon> {{seller.email}}</p>
         </div>
         <div class="action-buttons" *ngIf="!isAdvertisementOwner">
           <button mat-raised-button

@@ -45,7 +45,7 @@
   <!-- Chat Area -->
   <div class="chat-area" [class.no-user-selected]="!selectedUser">
     <div class="chat-header" *ngIf="selectedUser">
-      <div class="user-info">
+      <div class="user-info" (click)="navigateToUserProfile(selectedUser)" style="cursor: pointer;">
         <div class="user-avatar"
              [style.background-color]="getAvatarColor(selectedUser.username)">
           <span>{{ selectedUser.username.charAt(0).toUpperCase() }}</span>
@@ -53,9 +53,9 @@
         <div class="user-details">
           <span class="username">{{ selectedUser.username }}</span>
           <span class="user-status" [class.online]="selectedUser.isOnline">
-            <mat-icon class="status-icon">{{ selectedUser.isOnline ? 'fiber_manual_record' : 'schedule' }}</mat-icon>
+        <mat-icon class="status-icon">{{ selectedUser.isOnline ? 'fiber_manual_record' : 'schedule' }}</mat-icon>
             {{ selectedUser.isOnline ? 'Online' : 'Last seen ' + (selectedUser.lastSeen! | timeAgo) }}
-          </span>
+      </span>
         </div>
       </div>
     </div>

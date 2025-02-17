@@ -256,11 +256,11 @@
                 <mat-icon>person</mat-icon>
                 <span>{{ad.userName}}</span>
               </div>
-              <div class="contact-details" *ngIf="ad.userPhone">
+              <div class="contact-details" *ngIf="ad.userPhone && ad.userPhone !== '[Hidden]'">
                 <mat-icon>phone</mat-icon>
                 <span>{{ad.userPhone}}</span>
               </div>
-              <div class="contact-details">
+              <div class="contact-details" *ngIf="ad.userEmail && ad.userEmail !== '[Hidden]'">
                 <mat-icon>email</mat-icon>
                 <span>{{ad.userEmail}}</span>
               </div>

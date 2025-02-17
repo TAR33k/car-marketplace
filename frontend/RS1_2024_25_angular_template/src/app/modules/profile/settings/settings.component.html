@@ -1,0 +1,71 @@
+<div class="main-content">
+  <mat-card *ngIf="isAuthorized" class="settings-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>security</mat-icon>
+      <mat-card-title>Privacy Settings</mat-card-title>
+      <mat-card-subtitle>Manage your information visibility</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="info-box">
+        <mat-icon>info</mat-icon>
+        <p>
+          These settings only affect what other users can see. You will always be able to view your own information on your profile and advertisements. Administrators can also access this information when necessary.
+        </p>
+      </div>
+
+      <form [formGroup]="settingsForm" (ngSubmit)="onSubmit()">
+        <div class="settings-container">
+          <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+          <div class="settings-item">
+            <div class="toggle-header">
+              <mat-icon>email</mat-icon>
+              <mat-slide-toggle formControlName="showEmail">
+                Show Email Address
+              </mat-slide-toggle>
+            </div>
+            <p class="settings-description">
+              Allow other users to see your email address on your profile and advertisements
+            </p>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="settings-item">
+            <div class="toggle-header">
+              <mat-icon>phone</mat-icon>
+              <mat-slide-toggle formControlName="showPhone">
+                Show Phone Number
+              </mat-slide-toggle>
+            </div>
+            <p class="settings-description">
+              Allow other users to see your phone number on your profile and advertisements
+            </p>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="settings-item">
+            <div class="toggle-header">
+              <mat-icon>location_on</mat-icon>
+              <mat-slide-toggle formControlName="showLocation">
+                Show Location
+              </mat-slide-toggle>
+            </div>
+            <p class="settings-description">
+              Allow other users to see your address on your profile and advertisements
+            </p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+            <mat-icon>save</mat-icon>
+            Save Settings
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

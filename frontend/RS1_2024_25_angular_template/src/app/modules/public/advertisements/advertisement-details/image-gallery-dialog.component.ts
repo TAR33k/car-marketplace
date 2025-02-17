@@ -79,6 +79,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
       justify-content: center;
       position: relative;
       cursor: zoom-in;
+      background: rgba(0,0,0,0.95);
 
       &.zoomed {
         cursor: zoom-out;

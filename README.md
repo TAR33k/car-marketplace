@@ -45,7 +45,7 @@ Car Marketplace is a comprehensive platform that connects vehicle buyers and sel
 
 1. Clone the repository
 
-	https://github.com/TAR33k/car-marketplace.git
+	https://rs1-2024-25-carmarketplace@dev.azure.com/rs1-2024-25-carmarketplace/Car%20marketplace/_git/Car%20marketplace
 
 2. Backend Setup
 
@@ -63,22 +63,16 @@ Car Marketplace is a comprehensive platform that connects vehicle buyers and sel
 
 4. Open your browser and navigate to `http://localhost:4200`
 
-## 📝 Documentation (TODO)
+## 📝 Documentation
 
 Detailed documentation including architecture diagrams can be found in the `/documents` directory:
 - Use Case Diagram
 - Domain Models
 - Class Diagram
 
-## 🔜 Upcoming Features (TODO)
+## 🔜 Upcoming Features
 
-- User profiles
-- Settings management
-- Advertisement details page with:
-  - Image zoom functionality
-  - Rating and review system
-  - Social media sharing integration
-  - Advanced product visualization
+TBD
 
 ------------------------------------------------------------------------------------------------------------------
 

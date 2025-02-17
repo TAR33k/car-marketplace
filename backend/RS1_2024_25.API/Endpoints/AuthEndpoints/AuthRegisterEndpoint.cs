@@ -45,6 +45,8 @@ namespace RS1_2024_25.API.Endpoints.Auth
             };
 
             db.Users.Add(newUser);
+            await db.EnsureUserSettingsExistAsync(newUser.ID);
+
             await db.SaveChangesAsync(cancellationToken);
 
             // Generate an auth token for the new user

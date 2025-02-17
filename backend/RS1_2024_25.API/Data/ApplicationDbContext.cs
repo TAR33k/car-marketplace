@@ -4,6 +4,8 @@ using RS1_2024_25.API.Data.Models.Ad.Advertisement;
 using RS1_2024_25.API.Data.Models.Auth;
 using RS1_2024_25.API.Data.Models.Vehicle;
 using RS1_2024_25.API.Models;
+using RS1_2024_25.API.Services;
+using System.Threading;
 
 namespace RS1_2024_25.API.Data
 {
@@ -24,6 +26,29 @@ namespace RS1_2024_25.API.Data
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<AdvertisementQuestion> AdvertisementQuestions { get; set; }
         public DbSet<SavedAdvertisement> SavedAdvertisements { get; set; }
+        public DbSet<Settings> UserSettings { get; set; }
+
+        public async Task EnsureUserSettingsExistAsync(int userId)
+        {
+            var settingsExist = await UserSettings.AnyAsync(s => s.UserID == userId);
+            var user = await Users.FirstOrDefaultAsync(s => s.ID == userId);
+
+            if (user == null)
+                return;
+
+            if (!settingsExist)
+            {
+                UserSettings.Add(new Settings
+                {
+                    UserID = userId,
+                    User = user,
+                    showEmail = true,
+                    showPhone = true,
+                    showLocation = true
+                });
+                await SaveChangesAsync();
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -123,6 +148,10 @@ namespace RS1_2024_25.API.Data
             modelBuilder.Entity<SavedAdvertisement>()
                 .Property(sa => sa.SavedDate)
                 .HasDefaultValueSql("GETDATE()");
+
+            modelBuilder.Entity<Settings>()
+                .HasIndex(s => new { s.UserID })
+                .IsUnique();
         }
     }
 }

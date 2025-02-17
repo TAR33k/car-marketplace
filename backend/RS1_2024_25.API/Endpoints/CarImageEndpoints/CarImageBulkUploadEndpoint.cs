@@ -9,7 +9,6 @@ using static RS1_2024_25.API.Endpoints.CarImageEndpoints.CarImageBulkUploadEndpo
 
 namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
 {
-    [MyAuthorization(isAdmin: true)]
     [Route("car-images")]
     public class CarImageBulkUploadEndpoint(
         ApplicationDbContext db,

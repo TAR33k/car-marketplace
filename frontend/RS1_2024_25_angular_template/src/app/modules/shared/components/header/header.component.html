@@ -14,7 +14,10 @@
           <mat-icon>search</mat-icon>
           <span>Search Cars</span>
         </a>
-        <a mat-button routerLink="/sell" routerLinkActive="active">
+        <a mat-button
+           [routerLink]="isLoggedIn ? '/public/advertisements/create' : null"
+           routerLinkActive="active"
+           (click)="onSellClick($event)">
           <mat-icon>sell</mat-icon>
           <span>Sell Car</span>
         </a>

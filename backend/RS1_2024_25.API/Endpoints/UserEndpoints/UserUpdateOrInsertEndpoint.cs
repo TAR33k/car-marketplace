@@ -58,6 +58,8 @@ namespace RS1_2024_25.API.Endpoints.UserEndpoints
             user.Email = request.Email;
             user.Address = request.Address;
 
+            await db.EnsureUserSettingsExistAsync(user.ID);
+
             await db.SaveChangesAsync(cancellationToken);
 
             return new UserUpdateOrInsertResponse

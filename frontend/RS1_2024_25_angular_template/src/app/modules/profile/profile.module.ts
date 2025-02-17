@@ -30,15 +30,25 @@ import { ProfileActivityComponent } from './profile-activity/profile-activity.co
 import { ProfileStatisticsComponent } from './profile-statistics/profile-statistics.component';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {ChangePasswordDialogComponent} from './change-password-dialog/change-password-dialog.component';
+import { SettingsComponent } from './settings/settings.component';
+import {AuthGuard} from '../../auth-guards/auth-guard.service';
 
 const routes: Routes = [
+  {
+    path: 'settings',
+    component: SettingsComponent,
+    canActivate: [AuthGuard],
+    data: { requiresAuth: true }
+  },
   {
     path: ':id',
     component: ProfileComponent
   },
   {
     path: ':id/edit',
-    component: ProfileEditComponent
+    component: ProfileEditComponent,
+    canActivate: [AuthGuard],
+    data: { requiresAuth: true }
   },
   { path: '', redirectTo: '/public', pathMatch: 'full' },
   { path: '**', redirectTo: '/public', pathMatch: 'full' }
@@ -53,7 +63,8 @@ const routes: Routes = [
     AdvertisementGridComponent,
     ProfileActivityComponent,
     ProfileStatisticsComponent,
-    ChangePasswordDialogComponent
+    ChangePasswordDialogComponent,
+    SettingsComponent
   ],
   imports: [
     CommonModule,

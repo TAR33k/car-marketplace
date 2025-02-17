@@ -6,19 +6,23 @@ using RS1_2024_25.API.Data.Models;
 using RS1_2024_25.API.Data.Models.Ad.Advertisement;
 using RS1_2024_25.API.Helper;
 using RS1_2024_25.API.Helper.Api;
+using RS1_2024_25.API.Services;
 
 namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
 {
     [Route("advertisements/filter")]
     public class AdvertisementCarFilterEndpoint : MyEndpointBaseAsync
-        .WithRequest<AdvertisementFilterRequest>
-        .WithResult<MyPagedList<AdvertisementFilterResponse>>
+    .WithRequest<AdvertisementFilterRequest>
+    .WithResult<MyPagedList<AdvertisementFilterResponse>>
     {
         private readonly ApplicationDbContext _db;
+        private readonly MyAuthService _myAuthService;
+        private const string HIDDEN_INFO = "[Hidden]";
 
-        public AdvertisementCarFilterEndpoint(ApplicationDbContext db)
+        public AdvertisementCarFilterEndpoint(ApplicationDbContext db, MyAuthService myAuthService)
         {
             _db = db;
+            _myAuthService = myAuthService;
         }
 
         [HttpGet]
@@ -26,6 +30,9 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
             [FromQuery] AdvertisementFilterRequest request,
             CancellationToken cancellationToken = default)
         {
+            // Get current user info
+            var myAuthInfo = _myAuthService.GetAuthInfo();
+
             // Initialize default request if null
             request ??= new AdvertisementFilterRequest
             {
@@ -41,6 +48,7 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                 .Include(a => a.Status)
                 .Include(a => a.User)
                 .Include(a => a.Images)
+                .Include(a => a.User)
                 .AsQueryable();
 
             // Apply filters
@@ -70,8 +78,7 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                     .Where(i => !i.IsPrimary)
                     .Select(i => i.ImageUrl)
                     .ToList(),
-                ImageCount = a.Images
-                    .ToList().Count(),
+                ImageCount = a.Images.Count(),
                 // Car details
                 CarId = a.Car.ID,
                 CarName = a.Car.Name,
@@ -82,11 +89,15 @@ namespace RS1_2024_25.API.Endpoints.AdvertisementEndpoints
                 FuelType = a.Car.FuelType,
                 Transmission = a.Car.Transmission,
                 BodyType = a.Car.BodyType.Name,
-                // User details
+                // User details with privacy checks
                 UserId = a.UserID,
                 UserName = $"{a.User.FirstName} {a.User.LastName}",
-                UserEmail = a.User.Email,
-                UserPhone = a.User.PhoneNumber
+                UserEmail = (myAuthInfo != null && (myAuthInfo.IsAdmin || myAuthInfo.UserId == a.UserID ||
+                (_db.UserSettings.Any(s => s.UserID == a.UserID && s.showEmail))))
+                ? a.User.Email : HIDDEN_INFO,
+                UserPhone = (myAuthInfo != null && (myAuthInfo.IsAdmin || myAuthInfo.UserId == a.UserID ||
+                (_db.UserSettings.Any(s => s.UserID == a.UserID && s.showPhone))))
+                ? a.User.PhoneNumber : HIDDEN_INFO
             });
 
             return await MyPagedList<AdvertisementFilterResponse>.CreateAsync(

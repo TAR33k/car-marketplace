@@ -1,0 +1,373 @@
+<div class="page-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
+        {{ isEdit ? 'Edit Advertisement' : 'Create New Advertisement' }}
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-stepper #stepper linear>
+        <!-- Advertisement Details Step -->
+        <mat-step [stepControl]="advertisementForm" label="Advertisement Details">
+          <form [formGroup]="advertisementForm">
+            <div class="form-container">
+              <mat-form-field appearance="outline">
+                <mat-label>Title</mat-label>
+                <input matInput formControlName="title" required>
+                <mat-error *ngIf="advertisementForm.get('title')?.errors?.['required']">
+                  Title is required
+                </mat-error>
+                <mat-error *ngIf="advertisementForm.get('title')?.errors?.['minlength']">
+                  Title must be at least 3 characters
+                </mat-error>
+                <mat-error *ngIf="advertisementForm.get('title')?.errors?.['maxlength']">
+                  Title cannot exceed 100 characters
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description" rows="4" required></textarea>
+                <mat-error *ngIf="advertisementForm.get('description')?.errors?.['required']">
+                  Description is required
+                </mat-error>
+                <mat-error *ngIf="advertisementForm.get('description')?.errors?.['maxlength']">
+                  Description cannot exceed 1000 characters
+                </mat-error>
+              </mat-form-field>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Condition</mat-label>
+                  <mat-select formControlName="condition" required>
+                    <mat-option *ngFor="let condition of vehicleConditions" [value]="condition">
+                      {{ getConditionName(condition) }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="advertisementForm.get('condition')?.errors?.['required']">
+                    Condition is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Price</mat-label>
+                  <input matInput type="number" formControlName="price" required>
+                  <span matPrefix>&nbsp;€</span>
+                  <mat-error *ngIf="advertisementForm.get('price')?.errors?.['required']">
+                    Price is required
+                  </mat-error>
+                  <mat-error *ngIf="advertisementForm.get('price')?.errors?.['min']">
+                    Price must be greater than 0
+                  </mat-error>
+                  <mat-error *ngIf="advertisementForm.get('price')?.errors?.['max']">
+                    Price cannot exceed 1,000,000
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="step-actions">
+                <div>
+                  <button mat-button color="warn" (click)="onCancel()">Cancel</button>
+                  <button mat-raised-button color="primary" matStepperNext
+                          [disabled]="advertisementForm.invalid">
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Car Details Step -->
+        <mat-step [stepControl]="carForm" label="Car Details">
+          <form [formGroup]="carForm">
+            <div class="form-container">
+              <!-- Basic Car Info -->
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Car Name</mat-label>
+                  <input matInput formControlName="name" required>
+                  <mat-error *ngIf="carForm.get('name')?.errors?.['required']">
+                    Car name is required
+                  </mat-error>
+                  <mat-error *ngIf="carForm.get('name')?.errors?.['minlength']">
+                    Car name must be at least 2 characters
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Manufacturer</mat-label>
+                  <mat-select formControlName="manufacturerId" required>
+                    <mat-option *ngFor="let manufacturer of manufacturers" [value]="manufacturer.id">
+                      {{ manufacturer.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="carForm.get('manufacturerId')?.errors?.['required']">
+                    Manufacturer is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Model</mat-label>
+                  <mat-select formControlName="modelId" required>
+                    <mat-option *ngIf="!carForm.get('manufacturerId')?.value" disabled>
+                      Select manufacturer first
+                    </mat-option>
+                    <mat-option *ngFor="let model of models" [value]="model.id">
+                      {{ model.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="carForm.get('modelId')?.errors?.['required']">
+                    Model is required
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Technical Details -->
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Year</mat-label>
+                  <input matInput type="number" formControlName="year" required>
+                  <mat-error *ngIf="carForm.get('year')?.errors?.['min'] || carForm.get('year')?.errors?.['max']">
+                    Year must be between 1900 and {{ currentYear + 1 }}
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Engine Capacity (L)</mat-label>
+                  <input matInput type="number" formControlName="engineCapacity" required step="0.1">
+                  <mat-error *ngIf="carForm.get('engineCapacity')?.errors?.['required']">
+                    Engine capacity is required
+                  </mat-error>
+                  <mat-error *ngIf="carForm.get('engineCapacity')?.errors?.['min']">
+                    Engine capacity must be at least 0.1L
+                  </mat-error>
+                  <mat-error *ngIf="carForm.get('engineCapacity')?.errors?.['max']">
+                    Engine capacity cannot exceed 10L
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Fuel Type</mat-label>
+                  <mat-select formControlName="fuelType" required>
+                    <mat-option *ngFor="let type of fuelTypes" [value]="type">
+                      {{ getFuelTypeName(type) }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="carForm.get('fuelType')?.errors?.['required']">
+                    Fuel type is required
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Additional Details -->
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Transmission</mat-label>
+                  <mat-select formControlName="transmission" required>
+                    <mat-option *ngFor="let type of transmissionTypes" [value]="type">
+                      {{ getTransmissionName(type) }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="carForm.get('transmission')?.errors?.['required']">
+                    Transmission type is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Number of Doors</mat-label>
+                  <input matInput type="number" formControlName="doors" required>
+                  <mat-error *ngIf="carForm.get('doors')?.errors?.['required']">
+                    Number of doors is required
+                  </mat-error>
+                  <mat-error *ngIf="carForm.get('doors')?.errors?.['min']">
+                    Car must have at least 2 doors
+                  </mat-error>
+                  <mat-error *ngIf="carForm.get('doors')?.errors?.['max']">
+                    Car cannot have more than 8 doors
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Fuel Consumption (L/100km)</mat-label>
+                  <input matInput type="number" formControlName="fuelConsumption" required step="0.1">
+                  <mat-error *ngIf="carForm.get('fuelConsumption')?.errors?.['required']">
+                    Fuel consumption is required
+                  </mat-error>
+                  <mat-error *ngIf="carForm.get('fuelConsumption')?.errors?.['min']">
+                    Fuel consumption must be at least 0 L/100km
+                  </mat-error>
+                  <mat-error *ngIf="carForm.get('fuelConsumption')?.errors?.['max']">
+                    Fuel consumption cannot exceed 30 L/100km
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <!-- Location and Additional Info -->
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>City</mat-label>
+                  <mat-select formControlName="cityId" required>
+                    <mat-option *ngFor="let city of cities" [value]="city.id">
+                      {{ city.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="carForm.get('cityId')?.errors?.['required']">
+                    City is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Body Type</mat-label>
+                  <mat-select formControlName="bodyId" required>
+                    <mat-option *ngFor="let type of bodyTypes" [value]="type.id">
+                      {{ type.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="carForm.get('bodyId')?.errors?.['required']">
+                    Body type is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Color</mat-label>
+                  <input matInput formControlName="color" required>
+                  <mat-error *ngIf="carForm.get('color')?.errors?.['required']">
+                    Color is required
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Mileage (km)</mat-label>
+                  <input matInput type="number" formControlName="mileage" required>
+                  <mat-error *ngIf="carForm.get('mileage')?.errors?.['required']">
+                    Mileage is required
+                  </mat-error>
+                  <mat-error *ngIf="carForm.get('mileage')?.errors?.['min']">
+                    Mileage cannot be negative
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-checkbox formControlName="hasServiceHistory" class="service-history-checkbox">
+                  Has Service History
+                </mat-checkbox>
+              </div>
+
+              <div class="step-actions">
+                <div>
+                  <button mat-button color="warn" (click)="onCancel()">Cancel</button>
+                  <button mat-button matStepperPrevious>Back</button>
+                  <button mat-raised-button color="primary" matStepperNext
+                          [disabled]="carForm.invalid">
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Images Step -->
+        <mat-step label="Images">
+          <div class="existing-images" *ngIf="advertisementImages && advertisementImages.length > 0">
+            <h4>Existing Images ({{advertisementImages.length}})</h4>
+            <div class="image-grid">
+              <div class="image-item" *ngFor="let image of advertisementImages">
+                <img [src]="image.url"
+                     [alt]="'Advertisement image'"
+                     (error)="image.url = 'assets/placeholder-image.jpg'">
+                <div class="image-actions">
+                  <button mat-icon-button
+                          [color]="image.isPrimary ? 'accent' : 'primary'"
+                          (click)="setPrimaryImage(image.id)"
+                          [disabled]="image.isPrimary"
+                          matTooltipPosition="before"
+                          [matTooltip]="image.isPrimary ? 'Primary image' : 'Set as primary'">
+                    <mat-icon>{{image.isPrimary ? 'star' : 'star_border'}}</mat-icon>
+                  </button>
+                  <button mat-icon-button
+                          color="warn"
+                          (click)="deleteImage(image.id)"
+                          matTooltipPosition="before"
+                          matTooltip="Delete image">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+                <div class="primary-badge" *ngIf="image.isPrimary">
+                  Primary
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="image-upload-container"
+               [class.dragging]="isDragging"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event)">
+
+            <div class="drop-zone">
+              <mat-icon>cloud_upload</mat-icon>
+              <p>Drag and drop images here or</p>
+              <input type="file"
+                     #fileInput
+                     hidden
+                     multiple
+                     accept="image/*"
+                     (change)="onFileSelect($event)">
+              <button mat-stroked-button type="button" (click)="fileInput.click()">
+                Choose Files
+              </button>
+              <p class="hint-text">Maximum 10 images allowed</p>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="selected-files" *ngIf="selectedFiles.length > 0">
+              <h4>Selected Files:</h4>
+              <div class="preview-grid">
+                <div class="preview-item" *ngFor="let file of selectedFiles; let i = index">
+                  <img [src]="file | safeUrl" alt="Preview">
+                  <div class="image-actions">
+                    <button mat-icon-button
+                            [color]="selectedFilesPrimary === i ? 'accent' : 'primary'"
+                            (click)="setSelectedFilePrimary(i)"
+                            matTooltipPosition="before"
+                            [matTooltip]="selectedFilesPrimary === i ? 'Primary image' : 'Set as primary'">
+                      <mat-icon>{{selectedFilesPrimary === i ? 'star' : 'star_border'}}</mat-icon>
+                    </button>
+                    <button mat-icon-button
+                            color="warn"
+                            (click)="selectedFiles.splice(i, 1); selectedFilesPrimary = null"
+                            matTooltipPosition="before"
+                            matTooltip="Remove image">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                  <div class="primary-badge" *ngIf="selectedFilesPrimary === i">
+                    Primary
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-actions">
+            <div>
+              <button mat-button color="warn" (click)="onCancel()">Cancel</button>
+              <button mat-button matStepperPrevious>Back</button>
+              <button mat-raised-button color="primary"
+                      (click)="onSubmit()"
+                      [disabled]="loading || uploadingImages ||
+                     advertisementForm.invalid || carForm.invalid">
+                {{ isEdit ? 'Update' : 'Create' }} Advertisement
+              </button>
+            </div>
+          </div>
+        </mat-step>
+      </mat-stepper>
+    </mat-card-content>
+  </mat-card>
+</div>

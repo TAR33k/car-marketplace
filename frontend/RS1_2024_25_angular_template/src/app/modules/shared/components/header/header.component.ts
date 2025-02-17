@@ -6,6 +6,7 @@ import { MyAuthService } from '../../../../services/auth-services/my-auth.servic
 import {Subscription, Subject, takeUntil} from 'rxjs';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { ChatService } from '../../chat/services/chat.service';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-header',
@@ -25,7 +26,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private myAuthService: MyAuthService,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit() {
@@ -74,7 +76,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   navigateToSettings() {
-    this.router.navigate(['/client/settings']);
+    this.router.navigate(['/profile/settings']);
   }
 
   onLogout() {
@@ -102,5 +104,21 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.isLoggedIn = this.myAuthService.isLoggedIn();
     this.username = this.myAuthService.getUsername();
     this.isAdmin = this.myAuthService.isAdmin();
+  }
+
+  onSellClick(event: Event): void {
+    if (!this.isLoggedIn) {
+      event.preventDefault();
+      this.snackBar.open('Please log in to sell a car', 'Login', {
+        duration: 5000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom',
+        panelClass: ['warning-snackbar']
+      }).onAction().subscribe(() => {
+        this.router.navigate(['/auth/login'], {
+          queryParams: { returnUrl: '/public/advertisements/create' }
+        });
+      });
+    }
   }
 }

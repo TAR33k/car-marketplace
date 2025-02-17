@@ -1,10 +1,11 @@
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, CanActivate, Router} from '@angular/router';
-import {MyAuthService} from '../services/auth-services/my-auth.service';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
+import { MyAuthService } from '../services/auth-services/my-auth.service';
 
 export class AuthGuardData {
   isAdmin?: boolean;
   isManager?: boolean;
+  requiresAuth?: boolean;
 }
 
 @Injectable({
@@ -16,29 +17,28 @@ export class AuthGuard implements CanActivate {
   }
 
   canActivate(route: ActivatedRouteSnapshot): boolean {
-    const guardData = route.data as AuthGuardData;  // Cast to AuthGuardData
+    const guardData = route.data as AuthGuardData;
 
+    // Check if authentication is required
+    if (guardData.requiresAuth || guardData.isAdmin || guardData.isManager) {
+      if (!this.authService.isLoggedIn()) {
+        this.router.navigate(['/auth/login']);
+        return false;
+      }
+    }
 
-    // Provjera da li je korisnik prijavljen
-    /*
-    if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/auth/login']);
-      return false;
-    }*/
-
-    // Provjera prava pristupa za administratora
+    // Check admin access rights
     if (guardData.isAdmin && !this.authService.isAdmin()) {
       this.router.navigate(['/landing-page']);
       return false;
     }
 
-    // Provjera prava pristupa za menadžera
+    // Check manager access rights
     if (guardData.isManager && !this.authService.isManager()) {
       this.router.navigate(['/unauthorized']);
       return false;
     }
 
-    return true; // Dozvoljen pristup
+    return true; // Access allowed
   }
-
 }

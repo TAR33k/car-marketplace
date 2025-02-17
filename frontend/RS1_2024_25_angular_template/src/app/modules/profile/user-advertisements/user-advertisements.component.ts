@@ -10,6 +10,7 @@ import {MatDialog} from '@angular/material/dialog';
 import {Subject, takeUntil} from 'rxjs';
 import {AdvertisementCacheService} from '../../../services/advertisement-cache.service';
 import {AdvertisementRefreshService} from '../../../services/advertisement-refresh.service';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-user-advertisements',
@@ -37,7 +38,8 @@ export class UserAdvertisementsComponent implements OnInit, OnChanges, OnDestroy
     private deleteService: AdvertisementDeleteEndpointService,
     private cacheService: AdvertisementCacheService,
     private dialog: MatDialog,
-    private refreshService: AdvertisementRefreshService
+    private refreshService: AdvertisementRefreshService,
+    private router: Router,
   ) {
     this.cacheService.getCacheInvalidations()
       .pipe(takeUntil(this.destroy$))
@@ -125,7 +127,7 @@ export class UserAdvertisementsComponent implements OnInit, OnChanges, OnDestroy
     if (event.action === 'delete') {
       this.openDeleteConfirmDialog(event.adId);
     } else if (event.action === 'edit') {
-      // Handle edit action
+        this.router.navigate(['/public/advertisements/edit', event.adId]);
     }
   }
 

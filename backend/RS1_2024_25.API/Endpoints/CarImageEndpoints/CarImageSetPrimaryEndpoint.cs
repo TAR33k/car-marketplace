@@ -7,26 +7,28 @@ using static RS1_2024_25.API.Endpoints.CarImageEndpoints.CarImageSetPrimaryEndpo
 
 namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
 {
-    [MyAuthorization(isAdmin: true)]
     [Route("car-images")]
-    public class CarImageSetPrimaryEndpoint(ApplicationDbContext db) : MyEndpointBaseAsync
-        .WithRequest<CarImageSetPrimaryRequest>
-        .WithoutResult
+    public class CarImageSetPrimaryEndpoint(
+    ApplicationDbContext db,
+    MyAuthService myAuthService) : MyEndpointBaseAsync
+    .WithRequest<CarImageSetPrimaryRequest>
+    .WithActionResult
     {
         [HttpPut("set-primary")]
-        public override async Task HandleAsync(
-    CarImageSetPrimaryRequest request,
-    CancellationToken cancellationToken = default)
+        public override async Task<ActionResult> HandleAsync(
+            CarImageSetPrimaryRequest request,
+            CancellationToken cancellationToken = default)
         {
-            // Log the incoming request
-            Console.WriteLine($"Setting primary image with ID: {request.ImageId}");
-
             var image = await db.CarImages
                 .Include(i => i.Advertisement)
                 .FirstOrDefaultAsync(i => i.ID == request.ImageId, cancellationToken);
 
             if (image == null)
-                throw new KeyNotFoundException("Image not found");
+                return NotFound("Image not found");
+
+            var authInfo = myAuthService.GetAuthInfo();
+            if (image.Advertisement.UserID != authInfo.UserId && !authInfo.IsAdmin)
+                return Unauthorized();
 
             // Update all images for this advertisement
             var otherImages = await db.CarImages
@@ -39,6 +41,8 @@ namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
             }
 
             await db.SaveChangesAsync(cancellationToken);
+
+            return Ok();
         }
 
         public class CarImageSetPrimaryRequest

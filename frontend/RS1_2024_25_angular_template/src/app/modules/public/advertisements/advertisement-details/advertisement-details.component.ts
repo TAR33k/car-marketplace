@@ -207,10 +207,17 @@ export class AdvertisementDetailsComponent implements OnInit, OnDestroy {
   }
 
   editAdvertisement() {
-    this.router.navigate(['/public/advertisements', this.adId]);
+    this.router.navigate(['/public/advertisements/edit', this.adId]);
   }
 
   openGallery() {
+    if (!this.images || this.images.length === 0) {
+      this.snackBar.open('No images available for this advertisement', 'Close', {
+        duration: 3000
+      });
+      return;
+    }
+
     const dialogRef = this.dialog.open(ImageGalleryDialogComponent, {
       maxWidth: '100vw',
       maxHeight: '100vh',

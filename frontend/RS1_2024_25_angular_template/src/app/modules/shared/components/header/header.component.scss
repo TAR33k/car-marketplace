@@ -327,3 +327,13 @@
     }
   }
 }
+
+::ng-deep .warning-snackbar {
+  background: #ff9800;
+  color: white;
+
+  .mat-simple-snackbar-action {
+    color: white;
+    font-weight: bold;
+  }
+}

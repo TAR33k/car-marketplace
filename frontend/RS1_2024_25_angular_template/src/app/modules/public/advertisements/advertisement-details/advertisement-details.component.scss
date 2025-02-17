@@ -19,6 +19,11 @@
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 16px;
+    cursor: default;
+
+    &.has-images {
+      cursor: zoom-in;
+    }
 
     img {
       width: 100%;
@@ -33,13 +38,12 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       opacity: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: opacity 0.3s ease;
-      cursor: zoom-in;
 
       mat-icon {
         color: white;
@@ -49,10 +53,11 @@
       }
     }
 
-    &:hover {
+    &.has-images:hover {
       .zoom-overlay {
         opacity: 1;
       }
+
       img {
         transform: scale(1.05);
       }

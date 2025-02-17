@@ -70,14 +70,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const storedUser = sessionStorage.getItem('selectedChatUser');
     if (storedUser) {
       const chatUser = JSON.parse(storedUser);
-      // Add the user to the users list if not already present
+      if (chatUser.lastSeen) {
+        chatUser.lastSeen = new Date(chatUser.lastSeen);
+      }
+
       if (!this.users.some(u => u.id === chatUser.id)) {
         this.users = [...this.users, chatUser];
         this.filteredUsers = this.users;
       }
-      // Select the user
+
       this.selectedUser = chatUser;
-      // Clear the stored user
       sessionStorage.removeItem('selectedChatUser');
     }
   }
@@ -341,5 +343,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   toggleSounds() {
     this.soundsEnabled = !this.soundsEnabled;
     this.chatSoundService.toggleSounds(this.soundsEnabled);
+  }
+
+  navigateToUserProfile(user: ChatUser): void {
+    const userToStore = {
+      ...user,
+      lastSeen: user.lastSeen?.toISOString()
+    };
+    sessionStorage.setItem('selectedChatUser', JSON.stringify(userToStore));
+    this.router.navigate(['/profile', user.id]);
   }
 }

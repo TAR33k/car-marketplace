@@ -13,15 +13,15 @@
         <p class="username">{{ user.username }}</p>
 
         <div class="contact-info">
-          <span class="contact-item">
+          <span class="contact-item" *ngIf="user.email !== '[Hidden]'">
             <mat-icon>email</mat-icon>
             {{ user.email }}
           </span>
-          <span class="contact-item" *ngIf="user.phoneNumber">
+          <span class="contact-item" *ngIf="user.phoneNumber !== '[Hidden]'">
             <mat-icon>phone</mat-icon>
             {{ user.phoneNumber }}
           </span>
-          <span class="contact-item" *ngIf="user.address">
+          <span class="contact-item" *ngIf="user.address !== '[Hidden]'">
             <mat-icon>location_on</mat-icon>
             {{ user.address }}
           </span>

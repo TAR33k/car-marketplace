@@ -19,7 +19,8 @@
           <app-advertisement-grid
             [advertisements]="advertisements"
             [loading]="loading"
-            [showActions]="showExpired">
+            [showActions]="showExpired"
+            (actionTriggered)="onActionTriggered($event)">
           </app-advertisement-grid>
         </div>
       </ng-template>

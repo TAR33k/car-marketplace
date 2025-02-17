@@ -12,19 +12,18 @@ using System.IdentityModel;
 
 namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
 {
-    [MyAuthorization(isAdmin: true)]
     [Route("car-images")]
     public class CarImageUploadEndpoint(
-        ApplicationDbContext db,
-        IImageValidator imageValidator,
-        IImageProcessor imageProcessor,
-        IImageStorage imageStorage,
-        IWebHostEnvironment webHostEnvironment) : MyEndpointBaseAsync
-        .WithRequest<CarImageUploadRequest>
-        .WithResult<CarImageUploadResponse>
+    ApplicationDbContext db,
+    IImageValidator imageValidator,
+    IImageProcessor imageProcessor,
+    IImageStorage imageStorage,
+    MyAuthService myAuthService) : MyEndpointBaseAsync
+    .WithRequest<CarImageUploadRequest>
+    .WithActionResult<CarImageUploadResponse>
     {
         [HttpPost("upload")]
-        public override async Task<CarImageUploadResponse> HandleAsync(
+        public override async Task<ActionResult<CarImageUploadResponse>> HandleAsync(
             [FromForm] CarImageUploadRequest request,
             CancellationToken cancellationToken = default)
         {
@@ -34,7 +33,11 @@ namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
                     .FirstOrDefaultAsync(a => a.ID == request.AdvertisementID, cancellationToken);
 
                 if (advertisement == null)
-                    throw new KeyNotFoundException("Advertisement not found");
+                    return NotFound("Advertisement not found");
+
+                var authInfo = myAuthService.GetAuthInfo();
+                if (advertisement.UserID != authInfo.UserId && !authInfo.IsAdmin)
+                    return Unauthorized();
 
                 await imageValidator.ValidateAsync(request.Image);
                 var processedImage = await imageProcessor.ProcessImageAsync(request.Image);
@@ -70,18 +73,18 @@ namespace RS1_2024_25.API.Endpoints.CarImageEndpoints
                 db.CarImages.Add(carImage);
                 await db.SaveChangesAsync(cancellationToken);
 
-                return new CarImageUploadResponse
+                return Ok(new CarImageUploadResponse
                 {
                     ID = carImage.ID,
                     ImageUrl = carImage.ImageUrl,
                     IsPrimary = carImage.IsPrimary,
                     UploadedDate = carImage.UploadedDate,
                     AdvertisementID = carImage.AdvertisementID
-                };
+                });
             }
             catch (Exception ex) when (ex is ValidationException || ex is ArgumentException)
             {
-                throw new Exception(ex.Message);
+                return BadRequest(ex.Message);
             }
         }
 

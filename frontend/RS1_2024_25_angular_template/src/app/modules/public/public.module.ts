@@ -31,6 +31,10 @@ import {MatExpansionModule} from '@angular/material/expansion';
 import { AdvertisementQuestionsComponent } from './advertisements/advertisement-questions/advertisement-questions.component';
 import {MatDividerModule} from '@angular/material/divider';
 import {ImageGalleryDialogComponent} from './advertisements/advertisement-details/image-gallery-dialog.component';
+import {AuthGuard} from '../../auth-guards/auth-guard.service';
+import { AdvertisementCreateEditComponent } from './advertisement-create-edit/advertisement-create-edit.component';
+import {MatStepperModule} from '@angular/material/stepper';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 
 const routes: Routes = [
   {
@@ -40,6 +44,16 @@ const routes: Routes = [
   {
     path: 'advertisements',
     component: AdvertisementListComponent
+  },
+  {
+    path: 'advertisements/create',
+    component: AdvertisementCreateEditComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'advertisements/edit/:id',
+    component: AdvertisementCreateEditComponent,
+    canActivate: [AuthGuard]
   },
   {
     path: 'advertisements/:id',
@@ -53,7 +67,8 @@ const routes: Routes = [
     AdvertisementListComponent,
     AdvertisementDetailsComponent,
     AdvertisementQuestionsComponent,
-    ImageGalleryDialogComponent
+    ImageGalleryDialogComponent,
+    AdvertisementCreateEditComponent
   ],
   imports: [
     CommonModule,
@@ -80,7 +95,10 @@ const routes: Routes = [
     MatTableModule,
     HttpClientModule,
     MatExpansionModule,
-    MatDividerModule
+    MatDividerModule,
+    MatStepperModule,
+    MatCheckboxModule,
+    SharedModule
   ]
 })
 export class PublicModule { }
