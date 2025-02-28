@@ -1,81 +1,91 @@
 # 🚗 Car Marketplace
+A modern web application for buying, selling, and exchanging vehicles, built with **ASP.NET Core** and **Angular**.
 
-A modern web application for buying and selling vehicles, built with ASP.NET Core and Angular.
-
-## 🎯 About
-
-Car Marketplace is a comprehensive platform that connects vehicle buyers and sellers in a secure, user-friendly environment. The application streamlines the vehicle transaction process by providing advanced search capabilities, real-time chat functionality, and detailed vehicle listings.
+## 📌 Overview
+Car Marketplace is a feature-rich platform that connects buyers and sellers in a secure and user-friendly environment. The application streamlines the vehicle transaction process by offering **advanced search capabilities, real-time chat, and detailed vehicle listings**.
 
 ## ✨ Features
-
-- 🔐 User authentication and authorization
-- 📝 Vehicle listing creation and management
-- 🔍 Advanced search with multiple criteria
-- 💬 Real-time chat between users
-- 📱 Responsive design for all devices
+- **🔐 User Authentication & Authorization** – Secure login, registration, and role-based access.
+- **📝 Vehicle Listings** – Create, manage, and browse vehicle advertisements.
+- **🔍 Advanced Search & Filtering** – Find the perfect vehicle using multiple search criteria.
+- **💬 Real-Time Chat** – Communicate instantly with other users via **SignalR**.
+- **🌍 Multi-language Support** – Select preferred language for an improved user experience.
+- **📷 Image Management** – Upload, manage, and preview vehicle images.
+- **📱 Responsive Design** – Optimized for desktops, tablets, and mobile devices.
 
 ## 🛠️ Tech Stack
-
 ### Backend
-- ASP.NET Core
-- Entity Framework Core
-- C#
-- SignalR for real-time communications
+- **ASP.NET Core** – High-performance web framework
+- **Entity Framework Core** – ORM for database management
+- **C#** – Primary backend language
+- **SignalR** – Real-time communication
+- **FluentValidation** – Data validation
 
 ### Frontend
-- Angular
-- TypeScript
-- Angular Material
-- RxJS
+- **Angular** – Modern, component-based frontend framework
+- **TypeScript** – Strongly typed JavaScript
+- **Angular Material** – UI components for a polished look
+- **RxJS** – Reactive programming
 
 ### Development Tools
-- Microsoft Visual Studio
-- WebStorm
-- Azure DevOps
+- **Microsoft Visual Studio**
+- **WebStorm**
+- **SQL Server**
+- **Azure DevOps**
 
 ## 🚀 Getting Started
-
 ### Prerequisites
-- .NET 8.0 SDK or later
-- Node.js
-- npm
-- SQL Server
+Ensure you have the following installed:
+- **.NET 8.0 SDK** or later
+- **Node.js** & **npm**
+- **SQL Server**
 
 ### Installation
+#### 1️⃣ Clone the repository
+```
+git clone https://github.com/TAR33k/car-marketplace.git
+```
 
-1. Clone the repository
+#### 2️⃣ Backend Setup
+```
+update-database
+```
+Optionally, execute **DataSeedGenerateEndpoint** to populate initial data.
 
-	https://rs1-2024-25-carmarketplace@dev.azure.com/rs1-2024-25-carmarketplace/Car%20marketplace/_git/Car%20marketplace
+#### 3️⃣ Frontend Setup
+```
+npm install
+ng serve
+```
+Navigate to **http://localhost:4200** to view the application.
 
-2. Backend Setup
+## 📸 Screenshots
+![image](https://github.com/user-attachments/assets/6a630940-a800-412f-81f9-70ffebb2c773)
+![image](https://github.com/user-attachments/assets/1bd85d56-0af7-4df1-bf92-5c7acc3dd242)
+![image](https://github.com/user-attachments/assets/e389dd01-2b64-46f7-bff5-925790c10da8)
+![image](https://github.com/user-attachments/assets/18a72c8b-c710-4112-95e3-8a609ac190cc)
+![image](https://github.com/user-attachments/assets/c9bf1365-6a93-40a8-9864-51d3da170f86)
+![image](https://github.com/user-attachments/assets/333c7fc6-c449-4d07-ad86-8538445dd822)
+![image](https://github.com/user-attachments/assets/33f835b7-0bb9-45b8-ac10-b42ac9ff5097)
+![image](https://github.com/user-attachments/assets/a8b978e1-f377-427f-9e3d-cdc9107f5f97)
+![image](https://github.com/user-attachments/assets/96f50351-77b1-428c-8496-fab631c0d064)
 
-	update-database
 
-	run
-
-	execute DataSeedGenerateEndpoint
-
-3. Frontend Setup
-
-	npm install
-
-	ng serve
-
-4. Open your browser and navigate to `http://localhost:4200`
 
 ## 📝 Documentation
+Detailed system documentation is available in the `/documents` directory, including:
+- **Use Case Diagram**
+- **Domain Models**
+- **Class Diagram**
 
-Detailed documentation including architecture diagrams can be found in the `/documents` directory:
-- Use Case Diagram
-- Domain Models
-- Class Diagram
+## 🔜 Future Enhancements
+- Payment Integration
+- Advanced Analytics Dashboard
+- AI-Powered Price Estimation
 
-## 🔜 Upcoming Features
+## 🏫 About
+This project was developed as part of the **Faculty of Information Technologies, "Džemal Bijedić" University of Mostar** coursework.
 
-TBD
-
-------------------------------------------------------------------------------------------------------------------
-
-Developed as a student project at the Faculty of Information Technologies, "Džemal Bijedić" University of Mostar.
-
-Built by Tarik Kukuljac (IB220202), Aida Ušanović (IB220012)
+📌 Built by:
+- **Tarik Kukuljac** (IB220202)
+- **Aida Ušanović** (IB220012)
