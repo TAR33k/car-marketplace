@@ -45,13 +45,14 @@ export class ChatService {
   }
   private async initializeConnection() {
     const loginToken = this.authService.getLoginToken();
-    if (!loginToken?.token) {
+    if (!loginToken) {
       console.error('No auth token available');
       return;
     }
+
     try {
       this.hubConnection = new HubConnectionBuilder()
-        .withUrl(`${this.hubUrl}?my-auth-token=${loginToken.token}`)
+        .withUrl(`${this.hubUrl}?my-auth-token=${loginToken}`)
         .withAutomaticReconnect()
         .build();
       this.setupHubEvents();
@@ -60,6 +61,7 @@ export class ChatService {
       console.error('Error initializing connection:', err);
     }
   }
+
   updateUsers(users: ChatUser[]) {
     // Preserve any stored user that might not be in the users list
     const storedUser = sessionStorage.getItem('selectedChatUser');
@@ -209,7 +211,7 @@ export class ChatService {
       }
     });
   }
-  private async startConnection(): Promise<void> {
+  public async startConnection(): Promise<void> {
     if (!this.hubConnection) {
       console.error('Hub connection not initialized');
       return;
@@ -241,7 +243,14 @@ export class ChatService {
       }
     }
   }
-
+  stopConnection() {
+    if (this.hubConnection) {
+      this.hubConnection
+        .stop()
+        .then(() => console.log('SignalR connection stopped'))
+        .catch((err) => console.error('Error while stopping SignalR connection:', err));
+    }
+  }
   async sendMessage(messageRequest: SendMessageRequest): Promise<boolean> {
     if (!this.isConnected()) {
       console.error('Cannot send message: Not connected');

@@ -53,6 +53,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
   ngOnInit() {
     // Check for stored session first
+    console.log('Checking stored session:', this.authService.hasValidStoredSession());
     if (this.authService.hasValidStoredSession()) {
       this.initializeChatService();
     }

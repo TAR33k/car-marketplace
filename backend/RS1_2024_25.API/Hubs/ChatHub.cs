@@ -26,7 +26,7 @@ namespace RS1_2024_25.API.Hubs
         public async Task<List<ChatMessage>> GetChatHistory(int otherUserId)
         {
             var tokenString = Context.GetHttpContext()?.Request.Query["my-auth-token"].ToString();
-            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            var authInfo = _myAuthService.GetAuthInfoFromJwtToken(tokenString);
 
             if (!authInfo.IsLoggedIn)
                 throw new HubException("Unauthorized");
@@ -62,7 +62,7 @@ namespace RS1_2024_25.API.Hubs
         public override async Task OnConnectedAsync()
         {
             var tokenString = GetMyAuthToken();
-            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            var authInfo = _myAuthService.GetAuthInfoFromJwtToken(tokenString);
 
             if (authInfo.IsLoggedIn)
             {
@@ -104,7 +104,7 @@ namespace RS1_2024_25.API.Hubs
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var tokenString = GetMyAuthToken();
-            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            var authInfo = _myAuthService.GetAuthInfoFromJwtToken(tokenString);
 
             if (authInfo.IsLoggedIn)
             {
@@ -143,7 +143,7 @@ namespace RS1_2024_25.API.Hubs
         public async Task SendMessage(SendMessageRequest request)
         {
             var tokenString = GetMyAuthToken();
-            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            var authInfo = _myAuthService.GetAuthInfoFromJwtToken(tokenString);
             if (!authInfo.IsLoggedIn)
                 throw new HubException("Unauthorized.");
 
@@ -169,7 +169,7 @@ namespace RS1_2024_25.API.Hubs
         public async Task UserTyping(int receiverId)
         {
             var tokenString = GetMyAuthToken();
-            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            var authInfo = _myAuthService.GetAuthInfoFromJwtToken(tokenString);
             if (!authInfo.IsLoggedIn)
                 throw new HubException("Unauthorized.");
 
@@ -180,17 +180,17 @@ namespace RS1_2024_25.API.Hubs
         public async Task StopTyping(int receiverId)
         {
             var tokenString = GetMyAuthToken();
-            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            var authInfo = _myAuthService.GetAuthInfoFromJwtToken(tokenString);
             if (!authInfo.IsLoggedIn)
                 throw new HubException("Unauthorized.");
 
             await Clients.Group($"user_{receiverId}")
                         .SendAsync("UserTyping", new { userId = authInfo.UserId, isTyping = false });
         }
-        public async Task MarkMessagesAsDelivered(int senderId)
+        public async Task MarkMessageAsDelivered(int senderId)
         {
             var tokenString = GetMyAuthToken();
-            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            var authInfo = _myAuthService.GetAuthInfoFromJwtToken(tokenString);
             if (!authInfo.IsLoggedIn)
                 throw new HubException("Unauthorized.");
 
@@ -216,7 +216,7 @@ namespace RS1_2024_25.API.Hubs
         public async Task MarkMessageAsRead(int messageId)
         {
             var tokenString = GetMyAuthToken();
-            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            var authInfo = _myAuthService.GetAuthInfoFromJwtToken(tokenString);
             if (!authInfo.IsLoggedIn)
                 throw new HubException("Unauthorized.");
             var message = await _db.ChatMessages.FindAsync(messageId);
@@ -231,7 +231,7 @@ namespace RS1_2024_25.API.Hubs
         public async Task<List<UnreadMessageCount>> GetUnreadMessageCounts()
         {
             var tokenString = GetMyAuthToken();
-            var authInfo = _myAuthService.GetAuthInfoFromTokenString(tokenString);
+            var authInfo = _myAuthService.GetAuthInfoFromJwtToken(tokenString);
             if (!authInfo.IsLoggedIn)
                 throw new HubException("Unauthorized");
 

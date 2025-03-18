@@ -3,10 +3,12 @@ import { Router } from '@angular/router';
 import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MyAuthService } from '../../../../services/auth-services/my-auth.service';
-import {Subscription, Subject, takeUntil} from 'rxjs';
+import { SendInviteEmailService } from '../../../../services/invite-service/send-invite-email.service';
+import { NotificationService } from '../../../../services/notification.service';
+import { Subscription, Subject, takeUntil } from 'rxjs';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { ChatService } from '../../chat/services/chat.service';
-import {MatSnackBar} from '@angular/material/snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-header',
@@ -19,6 +21,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   isAdmin = false;
   username: string | null = null;
+  email: string = ''; // Email za pozivnicu
+  isInviteModalOpen = false;
+  emailError: string | null = null;
   private authSubscription: Subscription = new Subscription();
   private destroy$ = new Subject<void>();
   totalUnreadCount: number = 0;
@@ -26,34 +31,36 @@ export class HeaderComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private myAuthService: MyAuthService,
+    private sendInviteEmailService: SendInviteEmailService,
+    private notificationService: NotificationService,
     private chatService: ChatService,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit() {
-    this.searchControl.valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged()
-    ).subscribe(value => {
-      if (value) {
-        this.handleSearch(value);
-      }
-    });
+    this.searchControl.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(value => {
+        if (value) {
+          this.handleSearch(value);
+        }
+      });
 
     this.authSubscription = this.myAuthService.authStateObservable().subscribe(authState => {
       this.isLoggedIn = !!authState;
-      this.username = authState?.myAuthInfo?.username ?? null;
-      this.isAdmin = authState?.myAuthInfo?.isAdmin ?? false;
+      this.username = authState?.username ?? null;
+      this.isAdmin = authState?.isAdmin ?? false;
     });
 
-    // Initialize user state
     this.updateUserState();
+    if (this.isLoggedIn) {
+      this.chatService.startConnection();
+    }
 
     this.chatService.unreadCounts$
       .pipe(takeUntil(this.destroy$))
       .subscribe(counts => {
-        this.totalUnreadCount = Array.from(counts.values())
-          .reduce((total, count) => total + count, 0);
+        this.totalUnreadCount = Array.from(counts.values()).reduce((total, count) => total + count, 0);
       });
   }
 
@@ -61,6 +68,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.authSubscription.unsubscribe();
     this.destroy$.next();
     this.destroy$.complete();
+    this.chatService.stopConnection();
   }
 
   handleSearch(searchTerm: string) {
@@ -72,7 +80,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   navigateToProfile() {
-    this.router.navigate(['/profile', this.myAuthService.getMyAuthInfo()!.userId]);
+    this.router.navigate(['/profile', this.myAuthService.getMyAuthInfo()?.userId]);
   }
 
   navigateToSettings() {
@@ -86,18 +94,50 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.isLoggedIn = false;
     this.isAdmin = false;
     this.username = null;
+    this.chatService.stopConnection();
   }
 
   switchModule() {
-    if (this.isOnAdminPage()) {
-      this.router.navigate(['/']);
-    } else {
-      this.router.navigate(['/admin']);
-    }
+    this.router.navigate([this.isOnAdminPage() ? '/' : '/admin']);
   }
 
   isOnAdminPage(): boolean {
     return this.router.url.startsWith('/admin');
+  }
+
+  openInviteModal() {
+    this.isInviteModalOpen = true;
+    this.emailError = null;
+  }
+
+  closeInviteModal() {
+    this.isInviteModalOpen = false;
+  }
+
+  validateEmail() {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    this.emailError = !this.email ? null : !emailRegex.test(this.email) ? 'Please enter a valid email address (e.g., name@example.com)' : null;
+  }
+
+  sendInvite() {
+    if (this.emailError) return;
+
+    const token = this.myAuthService.getLoginToken();
+
+    if (!token) {
+      this.notificationService.notifyUserAction('No valid token found, please log in.');
+      return;
+    }
+
+    this.sendInviteEmailService.sendInviteEmail(this.email).subscribe(
+      () => {
+        this.notificationService.notifyUserAction('Invitation sent successfully! Your friend will receive the email shortly.');
+        this.closeInviteModal();
+      },
+      () => {
+        this.notificationService.notifyUserAction('Error! We couldn’t send the invitation email. Please try again later.');
+      }
+    );
   }
 
   private updateUserState() {
@@ -109,16 +149,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
   onSellClick(event: Event): void {
     if (!this.isLoggedIn) {
       event.preventDefault();
-      this.snackBar.open('Please log in to sell a car', 'Login', {
-        duration: 5000,
-        horizontalPosition: 'center',
-        verticalPosition: 'bottom',
-        panelClass: ['warning-snackbar']
-      }).onAction().subscribe(() => {
-        this.router.navigate(['/auth/login'], {
-          queryParams: { returnUrl: '/public/advertisements/create' }
+      this.snackBar
+        .open('Please log in to sell a car', 'Login', {
+          duration: 5000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom',
+          panelClass: ['warning-snackbar']
+        })
+        .onAction()
+        .subscribe(() => {
+          this.router.navigate(['/auth/login'], {
+            queryParams: { returnUrl: '/public/advertisements/create' }
+          });
         });
-      });
     }
   }
 }

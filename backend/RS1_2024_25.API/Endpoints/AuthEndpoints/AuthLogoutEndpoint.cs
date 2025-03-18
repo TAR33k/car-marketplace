@@ -12,14 +12,16 @@ namespace RS1_2024_25.API.Endpoints.AuthEndpoints;
 
 [Route("auth")]
 public class AuthLogoutEndpoint(ApplicationDbContext db, MyAuthService authService) : MyEndpointBaseAsync
-    .WithoutRequest
-    .WithResult<LogoutResponse>
+        .WithoutRequest
+        .WithResult<LogoutResponse>
 {
     [HttpPost("logout")]
     public override async Task<LogoutResponse> HandleAsync(CancellationToken cancellationToken = default)
     {
+        // Extract the token from the request header
         string? authToken = Request.Headers["my-auth-token"];
 
+        // If the token is missing, return an error response
         if (string.IsNullOrEmpty(authToken))
         {
             return new LogoutResponse
@@ -29,27 +31,31 @@ public class AuthLogoutEndpoint(ApplicationDbContext db, MyAuthService authServi
             };
         }
 
-        // Get user info before revoking token
-        var authInfo = authService.GetAuthInfoFromTokenString(authToken);
+        // Get user information from the token
+        var authInfo = authService.GetAuthInfoFromJwtToken(authToken);
+
+        // If the user is logged in, proceed with logout logic
         if (authInfo.IsLoggedIn)
         {
+            // Retrieve the user from the database
             var user = await db.Users.FindAsync(authInfo.UserId);
+
             if (user != null)
             {
-                // Update online status and last seen
+                // Update the user's online status and last seen time
                 user.IsOnline = false;
                 user.LastSeen = DateTime.UtcNow;
+
+                // Save changes to the database
                 await db.SaveChangesAsync(cancellationToken);
             }
         }
 
-        // Revoke token
-        bool isRevoked = await authService.RevokeAuthToken(authToken, cancellationToken);
-
+        // Return a successful logout response
         return new LogoutResponse
         {
-            IsSuccess = isRevoked,
-            Message = isRevoked ? "Logout successful." : "Invalid token or already logged out."
+            IsSuccess = true,
+            Message = "Logout successful."
         };
     }
 

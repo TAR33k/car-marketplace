@@ -1,5 +1,4 @@
-﻿using Azure;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RS1_2024_25.API.Helper.Api;
 using RS1_2024_25.API.Services;
 using System.Threading;
@@ -16,15 +15,22 @@ namespace RS1_2024_25.API.Endpoints.AuthEndpoints
         [HttpGet]
         public override async Task<ActionResult<AuthGetResponse>> HandleAsync(CancellationToken cancellationToken = default)
         {
-            // Retrieve user info based on the token
-            var authInfo = authService.GetAuthInfo();
+            // Dohvati token iz zaglavlja Authorization
+            var token = HttpContext.Request.Headers["my-auth-token"].ToString();
 
-            if (!authInfo.IsLoggedIn)
+            if (string.IsNullOrEmpty(token))
             {
-                return Unauthorized("Invalid or expired token");
+                return Unauthorized("Token nije poslan!");
             }
 
-            // Return user information if the token is valid
+            // Testiraj funkciju GetAuthInfoFromJwtToken
+            var authInfo = authService.GetAuthInfoFromJwtToken(token);
+
+            if (authInfo == null || !authInfo.IsLoggedIn)
+            {
+                return Unauthorized("Neispravan ili istekao token");
+            }
+
             return Ok(new AuthGetResponse
             {
                 MyAuthInfo = authInfo

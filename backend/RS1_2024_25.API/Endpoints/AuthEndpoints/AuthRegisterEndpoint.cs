@@ -50,12 +50,12 @@ namespace RS1_2024_25.API.Endpoints.Auth
             await db.SaveChangesAsync(cancellationToken);
 
             // Generate an auth token for the new user
-            var newAuthToken = await authService.GenerateAuthToken(newUser, cancellationToken);
-            var authInfo = authService.GetAuthInfo(newAuthToken);
+            var newAuthToken = authService.GenerateJwtToken(newUser);
+            var authInfo = authService.GetAuthInfo();
 
             return new RegisterResponse
             {
-                Token = newAuthToken.Value,
+                Token = newAuthToken,
                 MyAuthInfo = authInfo
             };
         }

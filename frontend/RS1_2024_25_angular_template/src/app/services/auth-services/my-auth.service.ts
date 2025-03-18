@@ -1,27 +1,43 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { MyAuthInfo } from './dto/my-auth-info';
-import { LoginTokenDto } from './dto/login-token-dto';
+import { HttpClient } from '@angular/common/http';
+import { MyConfig } from '../../my-config';
+import { jwtDecode } from 'jwt-decode';
+import {ChatService} from '../../modules/shared/chat/services/chat.service';
+
+export interface MyAuthInfo {
+  userId: number;
+  username: string;
+  firstName: string;
+  lastName: string;
+  isAdmin: boolean;
+  isManager: boolean;
+  isLoggedIn: boolean;
+  slikaPath?: string;
+}
+
+export interface LoginTokenDto {
+  token: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MyAuthService {
-  private authState = new BehaviorSubject<LoginTokenDto | null>(null);
+  private authState = new BehaviorSubject<MyAuthInfo | null>(null);
+  private apiUrl = `${MyConfig.api_address}/auth`;
 
-  constructor() {
-    // Initialize with stored token on service creation
+  constructor(private http: HttpClient) {
     const storedToken = this.getLoginToken();
     if (storedToken) {
-      // Emit the stored token to trigger auth state observers
       this.setLoggedInUser(storedToken);
     }
   }
 
   getMyAuthInfo(): MyAuthInfo | null {
-    return this.authState.getValue()?.myAuthInfo ?? null;
+    return this.authState.getValue();
   }
 
   isLoggedIn(): boolean {
-    return this.getMyAuthInfo() != null && this.getMyAuthInfo()!.isLoggedIn;
+    return this.getLoginToken() !== null;
   }
 
   isAdmin(): boolean {
@@ -29,37 +45,55 @@ export class MyAuthService {
   }
 
   isManager(): boolean {
-    return this.getMyAuthInfo()?.isManager ?? false;  // Assuming isManager is stored in myAuthInfo
-  }
-
-  setLoggedInUser(x: LoginTokenDto | null) {
-    if (x == null) {
-      window.localStorage.setItem('my-auth-token', '');
-    } else {
-      window.localStorage.setItem('my-auth-token', JSON.stringify(x));
-    }
-    this.authState.next(x); // Notify subscribers of the state change
-  }
-
-  getLoginToken(): LoginTokenDto | null {
-    let tokenString = window.localStorage.getItem('my-auth-token') ?? '';
-    try {
-      return JSON.parse(tokenString);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  authStateObservable(): Observable<LoginTokenDto | null> {
-    return this.authState.asObservable(); // Expose the observable for other components
+    return this.getMyAuthInfo()?.isManager ?? false;
   }
 
   getUsername(): string | null {
     return this.getMyAuthInfo()?.username ?? null;
   }
 
+  setLoggedInUser(token: string | null) {
+    if (!token) {
+      localStorage.removeItem('my-auth-token');
+      this.authState.next(null);
+      return;
+    }
+
+    localStorage.setItem('my-auth-token', token);
+    const decodedToken = this.decodeToken(token);
+    if (decodedToken) {
+      this.authState.next(decodedToken);
+    }
+  }
+
+  getLoginToken(): string | null {
+    return localStorage.getItem('my-auth-token');
+  }
+
+  private decodeToken(token: string): MyAuthInfo | null {
+    try {
+      const decoded = jwtDecode<any>(token);
+      return {
+        userId: parseInt(decoded.UserId, 10),
+        username: decoded.Username,
+        firstName: decoded.FirstName,
+        lastName: decoded.LastName,
+        isAdmin: decoded.IsAdmin === true || decoded.IsAdmin === "True",
+        isManager: decoded.IsManager === true || decoded.IsManager === "True",
+        isLoggedIn: true,
+        slikaPath: decoded.SlikaPath ?? null,
+      };
+    } catch (e) {
+      console.error("Invalid token format", e);
+      return null;
+    }
+  }
+
   hasValidStoredSession(): boolean {
-    const token = this.getLoginToken();
-    return token !== null && token.myAuthInfo?.isLoggedIn === true;
+    return this.isLoggedIn() && this.authState.getValue() !== null;
+  }
+
+  authStateObservable(): Observable<MyAuthInfo | null> {
+    return this.authState.asObservable();
   }
 }

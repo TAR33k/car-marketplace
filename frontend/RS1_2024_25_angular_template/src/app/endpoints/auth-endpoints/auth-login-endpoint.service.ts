@@ -4,20 +4,23 @@ import { Observable, throwError } from 'rxjs';
 import { tap, delay, finalize } from 'rxjs/operators';
 import { MyConfig } from '../../my-config';
 import { MyAuthService } from '../../services/auth-services/my-auth.service';
-import { LoginTokenDto } from '../../services/auth-services/dto/login-token-dto';
 import { Router } from '@angular/router';
 import { MyBaseEndpointAsync } from '../../helper/my-base-endpoint-async.interface';
-import {ChatService} from '../../modules/shared/chat/services/chat.service';
+import { ChatService } from '../../modules/shared/chat/services/chat.service';
 
 export interface LoginRequest {
   username: string;
   password: string;
 }
 
+export interface LoginResponse {
+  token: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
-export class AuthLoginEndpointService implements MyBaseEndpointAsync<LoginRequest, LoginTokenDto> {
+export class AuthLoginEndpointService implements MyBaseEndpointAsync<LoginRequest, LoginResponse> {
   private apiUrl = `${MyConfig.api_address}/auth/login`;
   private isLoggingIn = false;
 
@@ -28,31 +31,23 @@ export class AuthLoginEndpointService implements MyBaseEndpointAsync<LoginReques
     private chatService: ChatService
   ) {}
 
-  handleAsync(request: LoginRequest): Observable<LoginTokenDto> {
+  handleAsync(request: LoginRequest): Observable<LoginResponse> {
     if (this.isLoggingIn) {
       return throwError(() => new Error('Login already in progress'));
     }
 
     this.isLoggingIn = true;
 
-    return this.httpClient.post<LoginTokenDto>(`${this.apiUrl}`, request).pipe(
+    return this.httpClient.post<LoginResponse>(this.apiUrl, request).pipe(
       tap((response) => {
         localStorage.clear();
-
-        const userInfo = response.myAuthInfo;
-        if (userInfo) {
-          this.storeAuthData(response);
-          this.myAuthService.setLoggedInUser({
-            token: response.token,
-            myAuthInfo: response.myAuthInfo
-          });
-        }
+        this.storeAuthData(response.token);
+        this.myAuthService.setLoggedInUser(response.token);
       }),
       delay(100),
-      tap(async (response) => {
-        // Initialize chat service before navigation
+      tap(async () => {
         await this.chatService.initializeChat();
-        this.handleNavigation(response.myAuthInfo?.isAdmin);
+        this.handleNavigation();
       }),
       finalize(() => {
         this.isLoggingIn = false;
@@ -60,29 +55,16 @@ export class AuthLoginEndpointService implements MyBaseEndpointAsync<LoginReques
     );
   }
 
-  private storeAuthData(response: LoginTokenDto): void {
-    const userInfo = response.myAuthInfo;
-    if (userInfo) {
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('username', userInfo.username);
-      localStorage.setItem('isAdmin', JSON.stringify(userInfo.isAdmin));
-
-      if (userInfo.userId) {
-        localStorage.setItem('userId', userInfo.userId.toString());
-      }
-    }
+  private storeAuthData(token: string): void {
+    localStorage.setItem('my-auth-token', token);
   }
 
-  private handleNavigation(isAdmin: boolean | undefined): void {
-    try {
-      const targetRoute = isAdmin ? '/admin-dashboard' : '/landing-page';
-
-      this.router.navigate([targetRoute]);
-    } catch (error) {
+  private handleNavigation(): void {
+    const isAdmin = this.myAuthService.isAdmin();
+    const targetRoute = isAdmin ? '/admin-dashboard' : '/landing-page';
+    this.router.navigate([targetRoute]).catch(error => {
       console.error('Navigation error:', error);
       this.router.navigate(['/']);
-    }
+    });
   }
-
-
 }

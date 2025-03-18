@@ -1,5 +1,8 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using RS1_2024_25.API.Data;
 using RS1_2024_25.API.Endpoints.AdvertisementEndpoints;
 using RS1_2024_25.API.Endpoints.UserEndpoints;
@@ -9,6 +12,7 @@ using RS1_2024_25.API.Hubs;
 using RS1_2024_25.API.Options;
 using RS1_2024_25.API.Services;
 using RS1_2024_25.API.Services.Interfaces;
+using System.Text;
 using static RS1_2024_25.API.Endpoints.AdvertisementEndpoints.AdvertisementUpdateOrInsertEndpoint;
 using static RS1_2024_25.API.Endpoints.UserEndpoints.UserUpdateOrInsertEndpoint;
 
@@ -23,6 +27,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(config.GetConnectionString("db1")));
+
+builder.Services.AddTransient<MyAuthService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -45,6 +51,36 @@ builder.Services.AddScoped<IValidator<UserUpdateOrInsertRequest>, UserUpdateOrIn
 
 builder.Services.AddHostedService<UserStatusCleanupService>();
 
+var jwtSettings = config.GetSection("JwtSettings");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]))
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Headers.ContainsKey("my-auth-token"))
+                {
+                    context.Token = context.Request.Headers["my-auth-token"];
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -59,7 +95,7 @@ app.UseCors(
         .AllowCredentials()
 ); //This needs to set everything allowed
 
-
+app.UseAuthentication();
 app.UseAuthorization();
 app.UseStaticFiles();
 

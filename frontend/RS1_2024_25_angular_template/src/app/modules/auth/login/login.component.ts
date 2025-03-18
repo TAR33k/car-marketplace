@@ -21,6 +21,7 @@ export class LoginComponent {
   onLogin(): void {
     this.authLoginService.handleAsync(this.loginRequest).subscribe({
       next: (response) => {
+        this.authService.setLoggedInUser(response.token);
         console.log('Login successful');
         setTimeout(() => {
           if (this.authService.isAdmin()) {

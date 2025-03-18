@@ -33,11 +33,10 @@ export class LogoutComponent implements OnInit {
     });
   }
 
-  // Metoda za zajedničko uklanjanje tokena i preusmjeravanje
   private handleLogoutSuccessOrError(): void {
     this.authService.setLoggedInUser(null);
     setTimeout(() => {
-      this.router.navigate(['/auth/login']); // Preusmjeravanje na login nakon 3 sekunde
+      this.router.navigate(['/auth/login']);
     }, 3000);
   }
 }

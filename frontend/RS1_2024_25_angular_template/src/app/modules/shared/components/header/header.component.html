@@ -25,6 +25,50 @@
 
       <!-- Right Section: User Actions -->
       <div class="right-section">
+        <button
+          *ngIf="isLoggedIn && !isAdmin"
+          mat-raised-button
+          color="primary"
+          (click)="openInviteModal()"
+        >
+          Send Invitation
+        </button>
+        <!-- Modal -->
+        <div
+          class="invite-modal"
+          *ngIf="isInviteModalOpen"
+          role="dialog"
+          aria-labelledby="inviteModalTitle"
+          aria-modal="true"
+        >
+          <h2 id="inviteModalTitle">Invite a Friend</h2>
+          <mat-form-field appearance="outline" class="email-field">
+            <mat-label>Email</mat-label>
+            <input
+              matInput
+              [(ngModel)]="email"
+              placeholder="Enter email address"
+              (input)="validateEmail()"
+            />
+          </mat-form-field>
+          <p *ngIf="emailError" class="error-message">
+            {{ emailError }}
+          </p>
+
+          <div class="modal-buttons">
+            <button mat-button color="warn" (click)="closeInviteModal()">
+              Close
+            </button>
+            <button
+              mat-raised-button
+              color="primary"
+              [disabled]="!!emailError"
+              (click)="sendInvite()"
+            >
+              Send
+            </button>
+          </div>
+        </div>
         <!-- Chat Button (Only for logged-in users) -->
         <button *ngIf="isLoggedIn"
                 mat-icon-button
@@ -38,7 +82,6 @@
             chat
           </mat-icon>
         </button>
-
         <!-- User Menu (When logged in) -->
         <div *ngIf="isLoggedIn" class="user-menu">
           <button mat-button [matMenuTriggerFor]="userMenu" class="user-button">
@@ -78,6 +121,6 @@
           </button>
         </div>
       </div>
-    </div>
+  </div>
   </div>
 </mat-toolbar>

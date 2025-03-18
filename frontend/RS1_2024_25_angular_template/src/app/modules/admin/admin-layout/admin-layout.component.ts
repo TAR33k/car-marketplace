@@ -15,9 +15,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   constructor(private authService: MyAuthService) {}
 
   ngOnInit(): void {
-    // Subscribe to auth state for real-time updates
-    this.authSubscription = this.authService.authStateObservable().subscribe((token) => {
-      this.adminInfo = token?.myAuthInfo ?? null;
+    this.authSubscription = this.authService.authStateObservable().subscribe((authState) => {
+      this.adminInfo = authState; // Direkno postavi adminInfo na authState
     });
   }
 

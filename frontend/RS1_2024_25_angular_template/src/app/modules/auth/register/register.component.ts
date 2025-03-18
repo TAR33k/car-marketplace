@@ -50,7 +50,9 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         username: ['', [Validators.required]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', [Validators.required]],
-        emailAddress: ['', [Validators.required, Validators.email]]
+        emailAddress: ['', [Validators.required, Validators.email, Validators.pattern(
+          '^[a-zA-Z0-9._%+-]+@(?:gmail\\.com|outlook\\.com|yahoo\\.com|hotmail\\.com|live\\.com|icloud\\.com|aol\\.com|zoho\\.com|protonmail\\.com|yandex\\.com)$'
+        )]]
       },
       {
         validator: passwordMatchValidator('password', 'confirmPassword')

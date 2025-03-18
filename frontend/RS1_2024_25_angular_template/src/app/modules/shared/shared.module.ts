@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { ReactiveFormsModule } from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 // Material Imports
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -55,7 +55,8 @@ import {SafeUrlPipe} from './safe-url.pipe';
     MatTooltipModule,
     MatProgressBarModule,
     MatRippleModule,
-    MatBadgeModule
+    MatBadgeModule,
+    FormsModule
   ],
   exports: [
     UnauthorizedComponent,
